@@ -4031,9 +4031,24 @@ function calcGoalFund() {
     var savResult = Math.round(principal + preTaxInt * (1 - 0.154));
     var savInterest = savResult - principal;
 
-    // 펀드: 세후 월복리 (배당소득세 15.4% + 수수료 1.2%)
-    var netFundR = rate * (1 - 0.154 - 0.012) / 100 / 12;
-    var fundResult = netFundR > 0 ? Math.round(reqMonthly * (Math.pow(1 + netFundR, totalMonths) - 1) / netFundR) : Math.round(reqMonthly * totalMonths);
+    // 펀드: 월별 루프 (선취수수료 1% + 운용보수 연1.2%/월 + 환매 시 배당소득세 15.4%)
+    var fundResult = 0;
+    if (rate > 0) {
+        var _fBal = 0;
+        var _fMonthlyR = rate / 100 / 12;
+        var _fMgmtMonthly = 0.012 / 12; // 운용보수 연 1.2% → 매월 잔고 차감
+        var _fTotalPaid = 0;
+        for (var _fm = 0; _fm < totalMonths; _fm++) {
+            var _fNetPrem = reqMonthly * (1 - 0.01); // 선취수수료 1% 차감
+            _fTotalPaid += _fNetPrem;
+            _fBal = _fBal * (1 + _fMonthlyR) * (1 - _fMgmtMonthly) + _fNetPrem;
+        }
+        // 환매 시 수익분에 배당소득세 15.4%
+        var _fGain = Math.max(0, _fBal - _fTotalPaid);
+        fundResult = Math.round(_fBal - _fGain * 0.154);
+    } else {
+        fundResult = Math.round(reqMonthly * totalMonths);
+    }
 
     // 변액: 비과세 월복리 (납입사업비 + 운용관리비 월별 루프)
     var etfResult = 0;
@@ -4142,9 +4157,18 @@ function calcGoalComparison() {
         var preTaxInt = totalMonthly * (savRate / 100) * months * (months + 1) / 24;
         var savResult = principal + Math.round(preTaxInt * (1 - 0.154));
 
-        // 펀드: 월복리 (배당소득세 15.4% + 수수료 1.2%)
-        var netFundR = fundRate * (1 - 0.154 - 0.012) / 100 / 12;
-        var fundResult = netFundR > 0 ? Math.round(totalMonthly * (Math.pow(1 + netFundR, months) - 1) / netFundR) : principal;
+        // 펀드: 월별 루프 (선취 1% + 운용보수 월차감 + 환매시 세금)
+        var fundResult = principal;
+        if (fundRate > 0) {
+            var _fb = 0, _fmr = fundRate / 100 / 12, _fmg = 0.012 / 12, _ftp = 0;
+            for (var _fi = 0; _fi < months; _fi++) {
+                var _fnp = totalMonthly * (1 - 0.01);
+                _ftp += _fnp;
+                _fb = _fb * (1 + _fmr) * (1 - _fmg) + _fnp;
+            }
+            var _fg = Math.max(0, _fb - _ftp);
+            fundResult = Math.round(_fb - _fg * 0.154);
+        }
 
         // 변액: 비과세 월별 루프 (납입사업비 + 운용관리비)
         var etfResult = principal;
