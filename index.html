@@ -3069,7 +3069,7 @@ function calcHoldingTax() {
         if (dedRate > 0) {
             jongbuTax = Math.round(jongbuTax * (1 - dedRate));
             dedInfo.style.display = 'block';
-            dedInfo.innerHTML = '\u2705 \uC138\uC561\uACF5\uC81C \uC801\uC6A9: \uC5F0\uB839\uACF5\uC81C ' + (ageDed * 100) + '% + \uBCF4\uC720\uACF5\uC81C ' + (periodDed * 100) + '% = <strong>' + (dedRate * 100) + '%</strong> (\uD55C\uB3C4 80%)';
+            dedInfo.innerHTML = '\u2705 \uC138\uC561\uACF5\uC81C \uC801\uC6A9: \uC5F0\uB839\uACF5\uC81C ' + Math.round(ageDed * 100) + '% + \uBCF4\uC720\uACF5\uC81C ' + Math.round(periodDed * 100) + '% = <strong>' + Math.round(dedRate * 100) + '%</strong> (\uD55C\uB3C4 80%)';
         } else {
             dedInfo.style.display = 'none';
         }
