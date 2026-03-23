@@ -2210,6 +2210,8 @@ function switchTab(tabId, el) {
     // close mobile sidebar
     document.getElementById('sidebar').classList.remove('open');
     document.getElementById('sidebarOverlay').classList.remove('open');
+    // 현재 탭 저장 (새로고침 시 복원용)
+    try { localStorage.setItem('pro_calc_active_tab', tabId); } catch(e) {}
 }
 
 function toggleSidebar() {
@@ -4542,6 +4544,15 @@ document.addEventListener('DOMContentLoaded', function() {
             else { sidebar.scrollTop = newTop; e.preventDefault(); }
         }, { passive: false });
     }
+
+    // 새로고침 시 마지막 탭 복원
+    try {
+        var savedTab = localStorage.getItem('pro_calc_active_tab');
+        if (savedTab && document.getElementById(savedTab)) {
+            var menuLink = document.querySelector('#sidebarMenu a[onclick*="' + savedTab + '"]');
+            switchTab(savedTab, menuLink);
+        }
+    } catch(e) {}
 });
 </script>
 
