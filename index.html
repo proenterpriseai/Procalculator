@@ -181,6 +181,10 @@ body {
     line-height: 1.5;
     text-align: center;
     padding: 0 8px;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    display: block;
 }
 
 /* ============================================================
@@ -765,14 +769,26 @@ details.expander .expander-body {
 }
 
 /* Presentation mode */
-body.presentation .main-content {
+body.presentation-mode .main-content {
     font-size: 1.15rem;
 }
-body.presentation h1.page-title {
+body.presentation-mode h1.page-title {
     font-size: 2.2rem;
 }
-body.presentation .result-card .rc-value {
+body.presentation-mode .result-card .rc-value {
     font-size: 2rem;
+}
+body.presentation-mode .two-col > div:first-child,
+body.presentation-mode .two-col.left-wide > div:first-child,
+body.presentation-mode .input-card {
+    display: none !important;
+}
+body.presentation-mode .two-col {
+    grid-template-columns: 1fr !important;
+}
+body.presentation-mode .two-col > div:last-child {
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
 /* hidden helper */
@@ -824,7 +840,7 @@ body.presentation .result-card .rc-value {
             </div>
         </div>
         <div class="sidebar-disclaimer">
-            본 계산기는 참고용이며, 실제 세금 및 금융 상품의 조건은 관련 법규 및 금융기관의 약관에 따라 달라질 수 있습니다. 정확한 정보는 전문가와 상담하시기 바랍니다.
+            본 계산기는 참고용이며, 실제 세금 및 금융 상품의 조건은 관련 법규 및 금융기관의 약관에 따라 달라질 수 있습니다. 정확한 판단은 전문가 상담을 권장합니다.
         </div>
     </div>
 </nav>
@@ -1830,6 +1846,22 @@ body.presentation .result-card .rc-value {
             </div>
         </div>
     </div>
+
+    <!-- 스마트 자산 증식 전략 비교 리포트 -->
+    <details class="expander" style="margin-top:24px;">
+        <summary>&#x1F4CA; 스마트 자산 증식 전략 비교 리포트</summary>
+        <div class="expander-body" id="goal-strategy-report-body">
+            <p style="font-size:0.88rem;color:#64748b;">위 입력값을 설정하면 자동으로 생성됩니다.</p>
+        </div>
+    </details>
+
+    <!-- 금융기관별 상품 비교 -->
+    <details class="expander" style="margin-top:16px;">
+        <summary>&#x1F3E6; 금융기관별 상품 비교</summary>
+        <div class="expander-body" id="goal-product-compare-body">
+            <p style="font-size:0.88rem;color:#64748b;">위 입력값을 설정하면 자동으로 생성됩니다.</p>
+        </div>
+    </details>
 </div>
 
 <!-- ============================================================
@@ -1873,30 +1905,42 @@ body.presentation .result-card .rc-value {
                     <label>추가납입 금액 ($)</label>
                     <input type="number" id="dol-extra" value="0" min="0" step="100" oninput="calcDollar();">
                 </div>
+                <div id="dol-krw-conversion" style="background:linear-gradient(135deg,#eff6ff,#dbeafe); border-left:4px solid #3b82f6; border-radius:10px; padding:14px 18px; margin-top:8px;">
+                    <div style="font-size:0.85rem; color:#64748b;">원화 환산</div>
+                    <div id="dol-krw-value" style="font-size:1.3rem; font-weight:700; color:#1e3a8a;">월 0원 <span style="font-size:0.85rem; color:#64748b;">(@1,430원)</span></div>
+                </div>
             </div>
             <div class="input-card">
                 <h3>&#x1F4B1; 환율 시나리오</h3>
                 <div class="form-group">
                     <label>현재 환율 (원/$)</label>
-                    <input type="number" id="dol-rate-now" value="1430" min="500" max="3000" step="10" oninput="calcDollar();">
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="number" id="dol-rate-now" value="1430.0" min="500" max="3000" step="0.1" oninput="calcDollar();" style="flex:1;">
+                        <button type="button" onclick="fetchExchangeRate();" style="white-space:nowrap;padding:10px 14px;border:1.5px solid #3b82f6;border-radius:8px;background:#eff6ff;color:#3b82f6;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:inherit;">&#x1F504; 실시간 수신</button>
+                    </div>
+                    <div id="dol-rate-timestamp" style="font-size:0.75rem;color:#64748b;margin-top:4px;display:none;"></div>
                 </div>
                 <div class="form-group">
                     <label>AI 예측 평균 환율 (원/$)</label>
-                    <input type="number" id="dol-rate-avg" value="1350" min="500" max="3000" step="10" oninput="calcDollar();">
+                    <input type="number" id="dol-rate-avg" value="1350.0" min="500" max="3000" step="0.1" oninput="calcDollar();">
                 </div>
                 <div class="form-group">
                     <label>하락(비관) 시나리오 (원/$)</label>
-                    <input type="number" id="dol-rate-low" value="1100" min="500" max="3000" step="10" oninput="calcDollar();">
+                    <input type="number" id="dol-rate-low" value="1100.0" min="500" max="3000" step="0.1" oninput="calcDollar();">
                 </div>
                 <div class="form-group">
                     <label>보합(중립) 시나리오 (원/$)</label>
-                    <input type="number" id="dol-rate-mid" value="1350" min="500" max="3000" step="10" oninput="calcDollar();">
+                    <input type="number" id="dol-rate-mid" value="1350.0" min="500" max="3000" step="0.1" oninput="calcDollar();">
                 </div>
                 <div class="form-group">
                     <label>상승(낙관) 시나리오 (원/$)</label>
-                    <input type="number" id="dol-rate-high" value="1550" min="500" max="3000" step="10" oninput="calcDollar();">
+                    <input type="number" id="dol-rate-high" value="1550.0" min="500" max="3000" step="0.1" oninput="calcDollar();">
                 </div>
             </div>
+            <div class="chart-container">
+                <canvas id="dol-history-chart"></canvas>
+            </div>
+            <div class="result-cards" style="grid-template-columns:1fr 1fr 1fr 1fr;" id="dol-history-cards"></div>
         </div>
         <div>
             <div class="result-cards" style="grid-template-columns:1fr 1fr 1fr;" id="dol-result-cards"></div>
@@ -1908,10 +1952,6 @@ body.presentation .result-card .rc-value {
             <div class="chart-container">
                 <canvas id="dol-scenario-chart"></canvas>
             </div>
-            <div class="chart-container">
-                <canvas id="dol-history-chart"></canvas>
-            </div>
-            <div class="result-cards" style="grid-template-columns:1fr 1fr 1fr 1fr;" id="dol-history-cards"></div>
             <details class="expander">
                 <summary>&#x1F4DD; 손익분기 환율 산출 근거</summary>
                 <div class="expander-body" id="dol-bep-body"></div>
@@ -2133,7 +2173,7 @@ function toggleSidebar() {
 }
 
 function togglePresentation(on) {
-    document.body.classList.toggle('presentation', on);
+    document.body.classList.toggle('presentation-mode', on);
 }
 
 /* ============================================================
@@ -3808,6 +3848,15 @@ function calcRetirement() {
 /* ============================================================
    TARGET FUND
    ============================================================ */
+function _goalCompRow(label, col1, col2, col3, idx) {
+    var bg = idx % 2 === 0 ? '#f8fafc' : '#fff';
+    return '<tr style="background:' + bg + ';">' +
+        '<td style="padding:10px 12px;font-weight:700;border-bottom:1px solid #f1f5f9;">' + label + '</td>' +
+        '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid #f1f5f9;">' + col1 + '</td>' +
+        '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid #f1f5f9;">' + col2 + '</td>' +
+        '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid #f1f5f9;color:#2563eb;font-weight:600;">' + col3 + '</td></tr>';
+}
+
 var goalCalcType = 'target';
 function setGoalCalcType(label, type) {
     goalCalcType = type;
@@ -3920,6 +3969,81 @@ function calcGoalFund() {
         '<div class="step-box"><div class="step-num">\uBCC0\uC561</div>' +
         '<div class="step-title">\uBCC0\uC561\uBCF4\uD5D8 (\uC6D4 \uBCF5\uB9AC, \uBE44\uACFC\uC138)</div>' +
         '<div class="step-content">\uB9E4\uC6D4 ' + f_kr(reqMonthly) + ' \uD22C\uC790 \xD7 ' + period + '\uB144<br>\uBE44\uACFC\uC138 \uC218\uC775\uB960: ' + rate.toFixed(2) + '%<br>10\uB144 \uC774\uC0C1 \uC720\uC9C0 \uC2DC \uBE44\uACFC\uC138 \uD61C\uD0DD</div></div>';
+
+    // ========== 스마트 자산 증식 전략 비교 리포트 ==========
+    var customerName = document.getElementById('goal-name').value || '\uACE0\uAC1D';
+    var age = parseInt(document.getElementById('goal-age').value) || 40;
+    var totalMonths = period * 12;
+    var principal = reqMonthly * totalMonths;
+
+    // 적금: 단리 + 15.4% tax
+    var preTaxInt = reqMonthly * (savRate / 100) * totalMonths * (totalMonths + 1) / 24;
+    var savResult = Math.round(principal + preTaxInt * (1 - 0.154));
+    var savInterest = savResult - principal;
+
+    // 펀드: 세후 월복리
+    var netFundR = rate * (1 - 0.154) / 100 / 12;
+    var fundResult = netFundR > 0 ? Math.round(reqMonthly * (Math.pow(1 + netFundR, totalMonths) - 1) / netFundR) : Math.round(reqMonthly * totalMonths);
+
+    // 변액: 비과세 월복리
+    var netEtfR = rate / 100 / 12;
+    var etfResult = netEtfR > 0 ? Math.round(reqMonthly * (Math.pow(1 + netEtfR, totalMonths) - 1) / netEtfR) : Math.round(reqMonthly * totalMonths);
+
+    var savNetRate = (savRate * (1 - 0.154)).toFixed(2);
+    var fundNetRate2 = (rate * (1 - 0.154)).toFixed(2);
+    var etfFundGap = etfResult - fundResult;
+    var savWarning = savResult < target ? '<div style="margin-top:8px;padding:10px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:0.85rem;color:#dc2626;">\u26A0\uFE0F \uC801\uAE08\uB9CC\uC73C\uB85C\uB294 \uBAA9\uD45C \uAE08\uC561\uC5D0 <strong>' + f_kr(target - savResult) + '</strong> \uBD80\uC871\uD569\uB2C8\uB2E4.</div>' : '';
+    var fundWarning = fundResult < target ? '<div style="margin-top:8px;padding:10px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:0.85rem;color:#92400e;">\u26A0\uFE0F \uB9E4\uB144 \uC138\uAE08\uC774 \uBCF5\uB9AC\uB97C \uAE4E\uC544\uBA39\uC5B4, \uC2E4\uC9C8 \uC790\uC0B0 \uC99D\uC2DD \uC18D\uB3C4 \uC800\uD558</div>' : '';
+
+    document.getElementById('goal-strategy-report-body').innerHTML =
+        '<h3 style="font-size:1.1rem;font-weight:800;color:#1e3a8a;margin-bottom:20px;">\uD83D\uDCCB ' + customerName + '\uB2D8\uC744 \uC704\uD55C \uC2A4\uB9C8\uD2B8 \uC790\uC0B0 \uC99D\uC2DD \uC804\uB7B5 \uBE44\uAD50</h3>' +
+        '<div class="step-box" style="border-left-color:#f59e0b;">' +
+        '<div class="step-num" style="background:#f59e0b;">Step 1</div>' +
+        '<div class="step-title">\uD83D\uDCCC \uBAA9\uD45C \uBD84\uC11D</div>' +
+        '<div class="step-content">' + period + '\uB144 \uD6C4(' + (age + period) + '\uC138) \uBAA9\uD45C \uAE08\uC561 <strong>' + f_kr(target) + '</strong><br>\uB9E4\uC6D4 \uD544\uC694 \uC800\uCD95\uC561 <strong>' + f_kr(reqMonthly) + '</strong></div></div>' +
+        '<div class="step-box" style="border-left-color:#3b82f6;">' +
+        '<div class="step-num" style="background:#3b82f6;">Step 2</div>' +
+        '<div class="step-title">\uD83C\uDFE6 \uC801\uAE08\uC73C\uB85C \uC900\uBE44\uD558\uBA74?</div>' +
+        '<div class="step-content">\uC5F0 ' + savRate + '% \uD655\uC815\uAE08\uB9AC (\uC774\uC790\uC18C\uB4DD\uC138 15.4% \uCC28\uAC10) \u2192 \uC138\uD6C4 \uC5F0 ' + savNetRate + '%<br>' +
+        period + '\uB144 \uD6C4 \uCD1D \uC790\uC0B0: <strong>' + f_kr(savResult) + '</strong> (\uCD1D \uC6D0\uAE08 ' + f_kr(principal) + ', \uC774\uC790 \uC218\uC775 ' + f_kr(savInterest) + ')' +
+        savWarning + '</div></div>' +
+        '<div class="step-box" style="border-left-color:#f59e0b;">' +
+        '<div class="step-num" style="background:#f59e0b;">Step 3</div>' +
+        '<div class="step-title">\uD83D\uDCCA \uC77C\uBC18 \uD380\uB4DC\uB85C \uC900\uBE44\uD558\uBA74?</div>' +
+        '<div class="step-content">\uC5F0 ' + rate + '% \uAE30\uB300\uC218\uC775\uB960 (\uBC30\uB2F9\uC18C\uB4DD\uC138 15.4% \uCC28\uAC10) \u2192 \uC138\uD6C4 \uC5F0 ' + fundNetRate2 + '%<br>' +
+        period + '\uB144 \uD6C4 \uCD1D \uC790\uC0B0: <strong>' + f_kr(fundResult) + '</strong>' +
+        fundWarning + '</div></div>' +
+        '<div class="step-box" style="border-left-color:#22c55e;">' +
+        '<div class="step-num" style="background:#22c55e;">Step 4</div>' +
+        '<div class="step-title">\uD83D\uDE80 \uBCC0\uC561\uC73C\uB85C \uC900\uBE44\uD558\uBA74?</div>' +
+        '<div class="step-content">\uC5F0 ' + rate + '% \uAE30\uB300\uC218\uC775\uB960 (10\uB144 \uC774\uC0C1 \uC720\uC9C0 \uC2DC <strong>\uBE44\uACFC\uC138</strong>) \u2192 \uC2E4\uC9C8 \uC5F0 ' + rate + '%<br>' +
+        period + '\uB144 \uD6C4 \uCD1D \uC790\uC0B0: <strong style="color:#22c55e;">' + f_kr(etfResult) + '</strong><br>' +
+        '<div style="margin-top:10px;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:0.88rem;color:#166534;">\u2705 \uBE44\uACFC\uC138 \uBCF5\uB9AC + \uB0AE\uC740 \uBCC0\uB3D9\uC131 + \uC0AC\uB9DD\uBCF4\uC7A5\uAE4C\uC9C0! \uD380\uB4DC \uB300\uBE44 <strong>+' + f_kr(etfFundGap) + '</strong> \uCD94\uAC00 \uD655\uBCF4</div>' +
+        '</div></div>';
+
+    // ========== 금융기관별 상품 비교 테이블 ==========
+    document.getElementById('goal-product-compare-body').innerHTML =
+        '<h3 style="font-size:1.05rem;font-weight:800;color:#1e3a8a;margin-bottom:16px;">\uAE08\uC735\uAE30\uAD00\uBCC4 \uBAA9\uC801\uC790\uAE08 \uB9C8\uB828 \uC0C1\uD488 \uBE44\uAD50</h3>' +
+        '<div style="overflow-x:auto;">' +
+        '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;">' +
+        '<thead><tr style="background:#1e3a8a;color:#fff;">' +
+        '<th style="padding:12px;text-align:left;font-weight:700;">\uD56D\uBAA9</th>' +
+        '<th style="padding:12px;text-align:center;font-weight:700;">\uD83C\uDFE6 \uC740\uD589 (\uC801\uAE08)</th>' +
+        '<th style="padding:12px;text-align:center;font-weight:700;">\uD83D\uDCCA \uC99D\uAD8C\uC0AC (\uD380\uB4DC)</th>' +
+        '<th style="padding:12px;text-align:center;font-weight:700;">\uD83D\uDE80 \uBCF4\uD5D8\uC0AC (\uBCC0\uC561)</th>' +
+        '</tr></thead><tbody>' +
+        _goalCompRow('\uB300\uD45C \uC0C1\uD488', '\uC815\uAE30\uC801\uAE08', '\uC8FC\uC2DD\uD615/\uD63C\uD569\uD615 \uD380\uB4DC', '\uBCC0\uC561\uC720\uB2C8\uBC84\uC15C\uBCF4\uD5D8', 0) +
+        _goalCompRow('\uC218\uC775\uB960', savRate + '% (\uB2E8\uB9AC)', rate + '% (\uBCF5\uB9AC)', rate + '% (\uBCF5\uB9AC)', 1) +
+        _goalCompRow('\uACFC\uC138', '\uC774\uC790\uC18C\uB4DD\uC138 15.4%', '\uBC30\uB2F9/\uC591\uB3C4\uC138 15.4%', '\uBE44\uACFC\uC138 (10\uB144 \uC774\uC0C1)', 0) +
+        _goalCompRow('\uBCC0\uB3D9\uC131 \uAD00\uB9AC', '\uC5C6\uC74C (\uD655\uC815\uAE08\uB9AC)', '\uC81C\uD55C\uC801', 'GMP, \uC790\uB3D9\uC7AC\uBC30\uBD84', 1) +
+        _goalCompRow('\uC0AC\uB9DD \uBCF4\uC7A5', '\uC5C6\uC74C', '\uC5C6\uC74C', '\uAE30\uBCF8\uC0AC\uB9DD\uBCF4\uC7A5 \uD3EC\uD568', 0) +
+        _goalCompRow('\uCD5C\uC800 \uBCF4\uC99D', '\uC608\uAE08\uC790\uBCF4\uD638 5\uCC9C\uB9CC', '\uC5C6\uC74C', '\uCD5C\uC800\uBCF4\uC99D\uC635\uC158(GMAB)', 1) +
+        _goalCompRow('ETF \uD22C\uC790', '\uBD88\uAC00', '\uAC00\uB2A5', '\uAC00\uB2A5 (\uBCC0\uC561 \uB0B4 \uD380\uB4DC)', 0) +
+        _goalCompRow('\uC7A5\uAE30 \uBCF5\uB9AC', '\uB2E8\uB9AC\uAD6C\uC870', '\uBCF5\uB9AC \uAC00\uB2A5', '\uBE44\uACFC\uC138 \uBCF5\uB9AC', 1) +
+        _goalCompRow('\uC911\uB3C4 \uC778\uCD9C', '\uD574\uC57D \uC2DC \uC774\uC790 \uC190\uC2E4', '\uC790\uC720\uB85C\uC6C0', '\uBD80\uBD84\uC778\uCD9C \uAC00\uB2A5', 0) +
+        '</tbody></table></div>' +
+        '<div style="margin-top:16px;background:#eff6ff;border-radius:10px;padding:14px 18px;font-size:0.88rem;color:#1e3a8a;line-height:1.7;">' +
+        '\uD83D\uDCA1 <strong>\uD575\uC2EC \uD3EC\uC778\uD2B8</strong>: \uB3D9\uC77C\uD55C \uC218\uC775\uB960\uC774\uB77C\uB3C4 \uC138\uAE08\uC774 \uB9E4\uB144 \uAE4E\uC774\uB294 \uD380\uB4DC \uB300\uBE44, \uBE44\uACFC\uC138 \uBCF5\uB9AC\uB85C \uAD74\uB7EC\uAC00\uB294 \uBCC0\uC561\uC740 \uC2DC\uAC04\uC774 \uAE38\uC5B4\uC9C8\uC218\uB85D <strong>\uAE30\uD558\uAE09\uC218\uC801</strong>\uC73C\uB85C \uCC28\uC774\uAC00 \uBC8C\uC5B4\uC9D1\uB2C8\uB2E4.</div>';
 }
 
 /* ============================================================
@@ -4083,9 +4207,9 @@ function calcGoalComparison() {
 function getRefundCurve(ptype, period) {
     var base;
     if (ptype === '\uBA54\uD2B8\uB77C\uC774\uD504') {
-        if (period === 5) base = [0,35,60,78,93,102.5,106,110,114,119];
-        else if (period === 7) base = [0,25,45,62,73,82,93,104.2,110,117];
-        else if (period === 10) base = [0,18,34,48,58,66,72,77,82,84.3];
+        if (period === 5) base = [0,35,60,78,93,102.5,106,110,114,124.86];
+        else if (period === 7) base = [0,25,45,62,73,82,93,104.2,110,124.96];
+        else if (period === 10) base = [0,18,34,48,58,66,72,77,82,124.00];
         else base = [0,8,15,22,28,34,39,44,49,55];
     } else {
         if (period === 5) base = [0,30,50,68,85,95,98,101,104,107];
@@ -4116,6 +4240,23 @@ function calcBankEquivYield(monthlyKrw, monthsPaid, totalKrwPaid, krwRetMid) {
     return ((lo + hi) / 2) * 100;
 }
 
+async function fetchExchangeRate() {
+    try {
+        var res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+        var data = await res.json();
+        var rate = data.rates.KRW;
+        document.getElementById('dol-rate-now').value = rate.toFixed(1);
+        var now = new Date();
+        var ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
+        var tsEl = document.getElementById('dol-rate-timestamp');
+        tsEl.textContent = '\uC218\uC2E0: ' + ts;
+        tsEl.style.display = 'block';
+        calcDollar();
+    } catch(e) {
+        alert('\uD658\uC728 \uC218\uC2E0 \uC2E4\uD328. \uC218\uB3D9\uC73C\uB85C \uC785\uB825\uD574\uC8FC\uC138\uC694.');
+    }
+}
+
 var dolRefundChart = null, dolScenarioChart = null, dolHistoryChart = null;
 function calcDollar() {
     var ptype = document.getElementById('dol-product').value;
@@ -4132,6 +4273,8 @@ function calcDollar() {
     document.getElementById('dol-extra-group').classList.toggle('hidden', !hasExtra);
 
     var totalPremMonthly = monthly + extra;
+    var krwMonthly = Math.round(totalPremMonthly * rateNow);
+    document.getElementById('dol-krw-value').innerHTML = '\uC6D4 ' + f_w(krwMonthly) + '\uC6D0 <span style="font-size:0.85rem; color:#64748b;">(@' + f_w(rateNow) + '\uC6D0)</span>';
     var totalUsdPaid = totalPremMonthly * payPeriod * 12;
     var totalKrwPaid = totalUsdPaid * avgRate;
     var curve = getRefundCurve(ptype, payPeriod);
