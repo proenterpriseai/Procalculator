@@ -4137,13 +4137,33 @@ function calcGoalComparison() {
             plugins: {
                 legend: { display: true, position: 'top' },
                 tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + toMan(ctx.raw); } } },
-                title: { display: true, text: '3종 상품 기간별 예상 수령액', font: { size: 14, weight: 'bold' }, color: '#1e3a8a' }
+                title: { display: true, text: '3종 상품 기간별 예상 수령액', font: { size: 14, weight: 'bold' }, color: '#1e3a8a' },
+                datalabels: { display: false }
             },
             scales: {
                 y: { beginAtZero: true, ticks: { callback: function(v) { return f_w(v); } }, grid: { color: 'rgba(0,0,0,0.05)' } },
                 x: { grid: { display: false } }
             }
-        }
+        },
+        plugins: [{
+            id: 'barTopLabels',
+            afterDatasetsDraw: function(chart) {
+                var ctx2 = chart.ctx;
+                chart.data.datasets.forEach(function(ds, i) {
+                    var meta = chart.getDatasetMeta(i);
+                    meta.data.forEach(function(bar, idx) {
+                        var val = ds.data[idx];
+                        var label = toMan(val);
+                        ctx2.save();
+                        ctx2.font = 'bold 11px Pretendard';
+                        ctx2.fillStyle = '#1e293b';
+                        ctx2.textAlign = 'center';
+                        ctx2.fillText(label, bar.x, bar.y - 6);
+                        ctx2.restore();
+                    });
+                });
+            }
+        }]
     });
 
     // Period cards
@@ -4153,15 +4173,14 @@ function calcGoalComparison() {
         var gapEtfSav = etfResults[ci] - savResults[ci];
         var gapEtfFund = etfResults[ci] - fundResults[ci];
         cardsHtml += '<div style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);border-radius:12px;padding:16px;color:#fff;">' +
-            '<div style="font-weight:800;font-size:1.05rem;margin-bottom:10px;">' + periods[ci] + '년 유지</div>' +
-            '<div style="font-size:0.85rem;line-height:1.7;">' +
-            '&#x1F3E6; 적금: <strong>' + toMan(savResults[ci]) + '</strong><br>' +
-            '&#x1F4CA; 펀드: <strong>' + toMan(fundResults[ci]) + '</strong><br>' +
-            '&#x1F680; 변액: <strong>' + toMan(etfResults[ci]) + '</strong>' +
+            '<div style="font-weight:800;font-size:1.05rem;margin-bottom:10px;text-align:center;">' + periods[ci] + '년 유지</div>' +
+            '<div style="font-size:0.85rem;line-height:2;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.12);border-radius:8px;padding:4px 10px;margin-bottom:4px;">&#x1F3E6; 적금 <strong>' + f_w(savResults[ci]) + '원</strong></div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.12);border-radius:8px;padding:4px 10px;margin-bottom:4px;">&#x1F4CA; 펀드 <strong>' + f_w(fundResults[ci]) + '원</strong></div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.12);border-radius:8px;padding:4px 10px;">&#x1F680; 변액 <strong>' + f_w(etfResults[ci]) + '원</strong></div>' +
             '</div>' +
-            '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.25);font-size:0.82rem;">' +
-            '변액-적금 격차: <strong style="color:#fbbf24;">+' + toMan(gapEtfSav) + '</strong><br>' +
-            '변액-펀드 격차: <strong style="color:#93c5fd;">+' + toMan(gapEtfFund) + '</strong>' +
+            '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.25);font-size:0.78rem;text-align:center;">' +
+            '변액-적금 <strong style="color:#fbbf24;">' + (gapEtfSav >= 0 ? '+' : '') + f_w(gapEtfSav) + '원</strong>&nbsp;&nbsp;변액-펀드 <strong style="color:#93c5fd;">' + (gapEtfFund >= 0 ? '+' : '') + f_w(gapEtfFund) + '원</strong>' +
             '</div></div>';
     }
     cardsHtml += '</div>' +
