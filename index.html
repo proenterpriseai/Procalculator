@@ -3918,6 +3918,7 @@ function setGoalCalcType(label, type) {
     document.getElementById('goal-target-group').classList.toggle('hidden', type !== 'target');
     document.getElementById('goal-save-group').classList.toggle('hidden', type !== 'save');
     calcGoalFund();
+    if (document.getElementById('goal-comp-toggle') && document.getElementById('goal-comp-toggle').checked) calcGoalComparison();
 }
 
 var goalGrowthChart = null;
@@ -4101,6 +4102,10 @@ function calcGoalFund() {
         '<div style="margin-top:10px;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:0.88rem;color:#166534;">\u2705 \uBE44\uACFC\uC138 \uBCF5\uB9AC + \uB0AE\uC740 \uBCC0\uB3D9\uC131 + \uC0AC\uB9DD\uBCF4\uC7A5\uAE4C\uC9C0! \uD380\uB4DC \uB300\uBE44 <strong>+' + f_kr(etfFundGap) + '</strong> \uCD94\uAC00 \uD655\uBCF4</div>' +
         '</div></div>';
 
+    // 3종 비교가 활성화되어 있으면 함께 업데이트
+    if (document.getElementById('goal-comp-toggle') && document.getElementById('goal-comp-toggle').checked) {
+        calcGoalComparison();
+    }
 }
 
 /* ============================================================
