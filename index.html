@@ -4365,11 +4365,25 @@ function calcDollar() {
         '<div class="rc-label">10\uB144 \uC6D0\uD654 \uAC00\uCE58 (\uBCF4\uD569)</div><div class="rc-value">' + f_kr(krwMid) + '</div>' +
         '<div class="rc-formula">$' + f_w(Math.round(usdVal10)) + ' \xD7 ' + f_w(rateMid) + '\uC6D0</div></div>';
 
+    var _krwMonthlyDisplay = f_w(krwMonthly);
+    var _bankYieldDisplay = bankYield.toFixed(2);
+    var _krwMidMan = Math.round(krwMid / 10000);
     document.getElementById('dol-bank-yield-banner').innerHTML =
-        '<div style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);color:#fff;border-radius:14px;padding:20px 24px;text-align:center;box-shadow:0 4px 16px rgba(59,130,246,0.3);">' +
-        '<div style="font-size:0.85rem;opacity:0.85;margin-bottom:6px;">\uC801\uAE08 \uD658\uC0B0 \uC218\uC775\uB960 (\uBCF4\uD569 \uC2DC\uB098\uB9AC\uC624)</div>' +
-        '<div style="font-size:2rem;font-weight:800;">\uC5F0 ' + bankYield.toFixed(2) + '%</div>' +
-        '<div style="font-size:0.75rem;opacity:0.7;margin-top:4px;">\uC138\uD6C4 \uC801\uAE08 \uD658\uC0B0 \uAE30\uC900 (15.4% \uC774\uC790\uC18C\uB4DD\uC138 \uBC18\uC601)</div></div>';
+        '<div style="background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff;border-radius:16px;padding:32px 28px;text-align:center;box-shadow:0 8px 32px rgba(30,58,138,0.4);">' +
+        '<div style="display:inline-block;background:rgba(255,255,255,0.15);border-radius:20px;padding:6px 16px;font-size:0.82rem;font-weight:600;margin-bottom:16px;">\uD83C\uDFE6 \uC740\uD589 \uC801\uAE08 \uD658\uC0B0 \uAE08\uB9AC</div>' +
+        '<div style="font-size:0.95rem;line-height:1.7;margin-bottom:20px;opacity:0.9;">\uB9E4\uC6D4 \uB3D9\uC77C\uD55C \uAE08\uC561(\uC6D4 ' + _krwMonthlyDisplay + '\uC6D0)\uC744 \uC2DC\uC911\uC740\uD589 \uC801\uAE08\uC5D0 \uB123\uC744 \uB54C,<br><strong>\uC774\uC790\uC18C\uB4DD\uC138 15.4%\uB97C \uACF5\uC81C\uD558\uACE0\uB3C4</strong> 10\uB144 \uD6C4 \uB3D9\uC77C\uD55C \uC6D0\uD654\uB97C \uB9CC\uB4E4\uB824\uBA74 \uD544\uC694\uD55C<br><strong>\uC138\uC804 \uAE08\uB9AC</strong>\uC785\uB2C8\uB2E4.</div>' +
+        '<div style="display:inline-block;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);border-radius:14px;padding:20px 40px;margin-bottom:20px;">' +
+        '<div style="font-size:2.5rem;font-weight:800;letter-spacing:-1px;">\uC5F0 ' + _bankYieldDisplay + '%</div>' +
+        '<div style="font-size:0.8rem;opacity:0.7;margin-top:6px;">\uC138\uC804 \uAE30\uC900 (\uBE44\uACFC\uC138 \uC0C1\uD488 \uB300\uBE44)</div></div>' +
+        '<div style="display:flex;justify-content:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">' +
+        '<div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px 18px;flex:1;min-width:140px;">' +
+        '<div style="font-size:0.75rem;opacity:0.7;">\uB2EC\uB7EC \uC885\uC2E0\uC740 \uBE44\uACFC\uC138</div><div style="font-size:1rem;font-weight:700;color:#60a5fa;margin-top:4px;">\uC138\uAE08 0\uC6D0</div></div>' +
+        '<div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px 18px;flex:1;min-width:140px;">' +
+        '<div style="font-size:0.75rem;opacity:0.7;">\uC740\uD589 \uC801\uAE08\uC740 \uACFC\uC138</div><div style="font-size:1rem;font-weight:700;color:#fbbf24;margin-top:4px;">\uC774\uC790\uC758 15.4%</div></div>' +
+        '<div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:12px 18px;flex:1;min-width:140px;">' +
+        '<div style="font-size:0.75rem;opacity:0.7;">\uCD94\uAC00 \uD61C\uD0DD</div><div style="font-size:1rem;font-weight:700;color:#34d399;margin-top:4px;">\uC885\uC2E0 \uBCF4\uC7A5 \uD3EC\uD568</div></div></div>' +
+        '<div style="background:rgba(255,255,255,0.06);border-radius:10px;padding:14px 18px;font-size:0.85rem;line-height:1.6;text-align:left;">' +
+        '\uD83D\uDCA1 \uB9E4\uC6D4 ' + _krwMonthlyDisplay + '\uC6D0\uC529 \uC740\uD589 \uC801\uAE08\uC5D0 \uB123\uB294\uB2E4\uBA74, <strong>\uC138\uC804 \uC5F0 ' + _bankYieldDisplay + '%</strong>\uB97C \uBC1B\uC544\uC57C 10\uB144 \uD6C4 \uC138\uD6C4 \uB3D9\uC77C\uD55C \uAE08\uC561(' + f_w(_krwMidMan) + '\uB9CC\uC6D0)\uC744 \uB9CC\uB4E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uC5EC\uAE30\uC5D0 <strong>\uC885\uC2E0 \uC0AC\uB9DD\uBCF4\uC7A5</strong>\uAE4C\uC9C0 \uD3EC\uD568\uB429\uB2C8\uB2E4.</div></div>';
 
     var profitLow = krwLow - totalKrwPaid;
     var profitMid = krwMid - totalKrwPaid;
