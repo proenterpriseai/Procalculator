@@ -1846,13 +1846,6 @@ body.presentation-mode .two-col > div:last-child {
 
                 <div style="margin-top:24px;" id="goal-comp-table-wrap"></div>
 
-                <!-- 금융기관별 상품 비교 -->
-                <details class="expander" style="margin-top:16px;">
-                    <summary>&#x1F3E6; 금융기관별 상품 비교</summary>
-                    <div class="expander-body" id="goal-product-compare-body">
-                        <p style="font-size:0.88rem;color:#64748b;">위 입력값을 설정하면 자동으로 생성됩니다.</p>
-                    </div>
-                </details>
             </div>
         </div>
     </div>
@@ -4027,29 +4020,6 @@ function calcGoalFund() {
         '<div style="margin-top:10px;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:0.88rem;color:#166534;">\u2705 \uBE44\uACFC\uC138 \uBCF5\uB9AC + \uB0AE\uC740 \uBCC0\uB3D9\uC131 + \uC0AC\uB9DD\uBCF4\uC7A5\uAE4C\uC9C0! \uD380\uB4DC \uB300\uBE44 <strong>+' + f_kr(etfFundGap) + '</strong> \uCD94\uAC00 \uD655\uBCF4</div>' +
         '</div></div>';
 
-    // ========== 금융기관별 상품 비교 테이블 ==========
-    document.getElementById('goal-product-compare-body').innerHTML =
-        '<h3 style="font-size:1.05rem;font-weight:800;color:#1e3a8a;margin-bottom:16px;">\uAE08\uC735\uAE30\uAD00\uBCC4 \uBAA9\uC801\uC790\uAE08 \uB9C8\uB828 \uC0C1\uD488 \uBE44\uAD50</h3>' +
-        '<div style="overflow-x:auto;">' +
-        '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;">' +
-        '<thead><tr style="background:#1e3a8a;color:#fff;">' +
-        '<th style="padding:12px;text-align:left;font-weight:700;">\uD56D\uBAA9</th>' +
-        '<th style="padding:12px;text-align:center;font-weight:700;">\uD83C\uDFE6 \uC740\uD589 (\uC801\uAE08)</th>' +
-        '<th style="padding:12px;text-align:center;font-weight:700;">\uD83D\uDCCA \uC99D\uAD8C\uC0AC (\uD380\uB4DC)</th>' +
-        '<th style="padding:12px;text-align:center;font-weight:700;">\uD83D\uDE80 \uBCF4\uD5D8\uC0AC (\uBCC0\uC561)</th>' +
-        '</tr></thead><tbody>' +
-        _goalCompRow('\uB300\uD45C \uC0C1\uD488', '\uC815\uAE30\uC801\uAE08', '\uC8FC\uC2DD\uD615/\uD63C\uD569\uD615 \uD380\uB4DC', '\uBCC0\uC561\uC720\uB2C8\uBC84\uC15C\uBCF4\uD5D8', 0) +
-        _goalCompRow('\uC218\uC775\uB960', savRate + '% (\uB2E8\uB9AC)', rate + '% (\uBCF5\uB9AC)', rate + '% (\uBCF5\uB9AC)', 1) +
-        _goalCompRow('\uACFC\uC138', '\uC774\uC790\uC18C\uB4DD\uC138 15.4%', '\uBC30\uB2F9/\uC591\uB3C4\uC138 15.4%', '\uBE44\uACFC\uC138 (10\uB144 \uC774\uC0C1)', 0) +
-        _goalCompRow('\uBCC0\uB3D9\uC131 \uAD00\uB9AC', '\uC5C6\uC74C (\uD655\uC815\uAE08\uB9AC)', '\uC81C\uD55C\uC801', 'GMP, \uC790\uB3D9\uC7AC\uBC30\uBD84', 1) +
-        _goalCompRow('\uC0AC\uB9DD \uBCF4\uC7A5', '\uC5C6\uC74C', '\uC5C6\uC74C', '\uAE30\uBCF8\uC0AC\uB9DD\uBCF4\uC7A5 \uD3EC\uD568', 0) +
-        _goalCompRow('\uCD5C\uC800 \uBCF4\uC99D', '\uC608\uAE08\uC790\uBCF4\uD638 5\uCC9C\uB9CC', '\uC5C6\uC74C', '\uCD5C\uC800\uBCF4\uC99D\uC635\uC158(GMAB)', 1) +
-        _goalCompRow('ETF \uD22C\uC790', '\uBD88\uAC00', '\uAC00\uB2A5', '\uAC00\uB2A5 (\uBCC0\uC561 \uB0B4 \uD380\uB4DC)', 0) +
-        _goalCompRow('\uC7A5\uAE30 \uBCF5\uB9AC', '\uB2E8\uB9AC\uAD6C\uC870', '\uBCF5\uB9AC \uAC00\uB2A5', '\uBE44\uACFC\uC138 \uBCF5\uB9AC', 1) +
-        _goalCompRow('\uC911\uB3C4 \uC778\uCD9C', '\uD574\uC57D \uC2DC \uC774\uC790 \uC190\uC2E4', '\uC790\uC720\uB85C\uC6C0', '\uBD80\uBD84\uC778\uCD9C \uAC00\uB2A5', 0) +
-        '</tbody></table></div>' +
-        '<div style="margin-top:16px;background:#eff6ff;border-radius:10px;padding:14px 18px;font-size:0.88rem;color:#1e3a8a;line-height:1.7;">' +
-        '\uD83D\uDCA1 <strong>\uD575\uC2EC \uD3EC\uC778\uD2B8</strong>: \uB3D9\uC77C\uD55C \uC218\uC775\uB960\uC774\uB77C\uB3C4 \uC138\uAE08\uC774 \uB9E4\uB144 \uAE4E\uC774\uB294 \uD380\uB4DC \uB300\uBE44, \uBE44\uACFC\uC138 \uBCF5\uB9AC\uB85C \uAD74\uB7EC\uAC00\uB294 \uBCC0\uC561\uC740 \uC2DC\uAC04\uC774 \uAE38\uC5B4\uC9C8\uC218\uB85D <strong>\uAE30\uD558\uAE09\uC218\uC801</strong>\uC73C\uB85C \uCC28\uC774\uAC00 \uBC8C\uC5B4\uC9D1\uB2C8\uB2E4.</div>';
 }
 
 /* ============================================================
@@ -4266,20 +4236,36 @@ function calcBankEquivYield(monthlyKrw, monthsPaid, totalKrwPaid, krwRetMid) {
 }
 
 async function fetchExchangeRate() {
+    var btn = document.querySelector('[onclick="fetchExchangeRate();"]');
+    if (btn) btn.textContent = '수신 중...';
     try {
-        var res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-        var data = await res.json();
-        var rate = data.rates.KRW;
-        document.getElementById('dol-rate-now').value = rate.toFixed(1);
-        var now = new Date();
-        var ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
-        var tsEl = document.getElementById('dol-rate-timestamp');
-        tsEl.textContent = '\uC218\uC2E0: ' + ts;
-        tsEl.style.display = 'block';
-        calcDollar();
+        // 1차: 한국수출입은행 OPEN API (가장 정확)
+        var rate = null;
+        try {
+            var res1 = await fetch('https://m.exchange.co.kr/last/exchange_data.php');
+            var txt = await res1.text();
+            var m = txt.match(/USD[\s\S]*?(\d{1,2},?\d{3}\.?\d*)/);
+            if (m) rate = parseFloat(m[1].replace(',', ''));
+        } catch(e1) {}
+        // 2차: exchangerate-api fallback
+        if (!rate) {
+            var res2 = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+            var data2 = await res2.json();
+            rate = data2.rates.KRW;
+        }
+        if (rate) {
+            document.getElementById('dol-rate-now').value = rate.toFixed(1);
+            var now = new Date();
+            var ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
+            var tsEl = document.getElementById('dol-rate-timestamp');
+            tsEl.textContent = '\uC218\uC2E0: ' + ts;
+            tsEl.style.display = 'block';
+            calcDollar();
+        }
     } catch(e) {
         alert('\uD658\uC728 \uC218\uC2E0 \uC2E4\uD328. \uC218\uB3D9\uC73C\uB85C \uC785\uB825\uD574\uC8FC\uC138\uC694.');
     }
+    if (btn) btn.textContent = '🔄 실시간 수신';
 }
 
 var dolRefundChart = null, dolScenarioChart = null, dolHistoryChart = null;
