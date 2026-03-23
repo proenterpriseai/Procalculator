@@ -4313,10 +4313,18 @@ function calcDollar() {
     var hasExtra = document.getElementById('dol-extra-toggle').checked;
     var extra = hasExtra ? (parseFloat(document.getElementById('dol-extra').value) || 0) : 0;
     var rateNow = parseFloat(document.getElementById('dol-rate-now').value) || 1430;
-    var avgRate = parseFloat(document.getElementById('dol-rate-avg').value) || 1350;
     var rateLow = parseFloat(document.getElementById('dol-rate-low').value) || 1100;
     var rateMid = parseFloat(document.getElementById('dol-rate-mid').value) || 1350;
     var rateHigh = parseFloat(document.getElementById('dol-rate-high').value) || 1550;
+
+    // AI 예측 평균 환율: 납입기간에 따라 가중 평균 자동 산출
+    // 납입기간이 짧을수록 현재 환율에 가깝고, 길수록 10년 평균에 가까움
+    var _histRates = [1390, 1364, 1306, 1292, 1144, 1180, 1166, 1100, 1131, 1161];
+    var _allRates = [Math.round(rateNow)].concat(_histRates);
+    var _ltm = Math.round(_allRates.reduce(function(a,b){return a+b;}, 0) / _allRates.length);
+    var _weightCurr = Math.max(0, (20 - payPeriod) / 20);
+    var avgRate = Math.round((rateNow * _weightCurr + _ltm * (1 - _weightCurr)) * 10) / 10;
+    document.getElementById('dol-rate-avg').value = avgRate.toFixed(1);
 
     document.getElementById('dol-extra-group').classList.toggle('hidden', !hasExtra);
 
