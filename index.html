@@ -3675,7 +3675,10 @@ function calcInheritance() {
 
     var spouseDed = 0;
     if (spouseAlive) {
-        spouseDed = Math.max(5e8, Math.min(spouseDedInput, 30e8));
+        // 법정상속분 계산: 배우자 1.5 / (1.5 + 자녀수)
+        var _inhChildren = parseInt(document.getElementById('inh-children') ? document.getElementById('inh-children').value : '2') || 2;
+        var _legalSpShare = (_inhChildren + 1.5) > 0 ? Math.round(netEstate * 1.5 / (1.5 + _inhChildren)) : netEstate;
+        spouseDed = Math.max(5e8, Math.min(spouseDedInput, _legalSpShare, 30e8));
     }
 
     var basicDed = 0;
