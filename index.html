@@ -1178,45 +1178,836 @@ body.presentation .result-card .rc-value {
      PLACEHOLDER TABS
      ============================================================ -->
 <div class="tab-content hidden" id="tab-realestate">
-    <div class="placeholder-content">
-        <div class="ph-icon">&#x1F6A7;</div>
-        <div class="ph-text">준비 중입니다</div>
-        <div class="ph-sub">&#x1F3E0; 부동산 통합</div>
+    <h1 class="page-title">&#x1F3E0; 부동산 세금 통합 분석</h1>
+    <div class="sub-tabs">
+        <button class="sub-tab-btn active" onclick="switchRealEstateSubTab('acq',this)">&#x1F3F7;&#xFE0F; 취득세</button>
+        <button class="sub-tab-btn" onclick="switchRealEstateSubTab('hold',this)">&#x1F3E0; 보유세</button>
+        <button class="sub-tab-btn" onclick="switchRealEstateSubTab('transfer',this)">&#x1F4B0; 양도소득세</button>
+    </div>
+
+    <!-- ====== 취득세 SUB-TAB ====== -->
+    <div id="re-sub-acq">
+        <div class="two-col left-wide">
+            <div>
+                <div class="input-card">
+                    <h3>&#x1F3E0; 매물 기본정보</h3>
+                    <div class="form-group">
+                        <label>부동산 종류</label>
+                        <select id="re-acq-type" style="width:100%;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.95rem;font-family:inherit;color:#1e293b;background:#fff;" onchange="calcAcquisitionTax();">
+                            <option value="주택(매매)">주택(매매)</option>
+                            <option value="주택(증여)">주택(증여)</option>
+                            <option value="주택(상속)">주택(상속)</option>
+                            <option value="농지(자경)">농지(자경)</option>
+                            <option value="농지(비자경)">농지(비자경)</option>
+                            <option value="농지(증여)">농지(증여)</option>
+                            <option value="농지(상속)">농지(상속)</option>
+                            <option value="법인(취득)">법인(취득)</option>
+                            <option value="기타 토지/상가">기타 토지/상가</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>전용면적 (㎡)</label>
+                        <input type="number" id="re-acq-area" value="84.0" min="0" step="0.1" onchange="calcAcquisitionTax();" oninput="calcAcquisitionTax();">
+                    </div>
+                    <div class="form-group">
+                        <label>취득 가액 (실거래가/원)</label>
+                        <input type="text" id="re-acq-price" value="0" oninput="formatNumberInput(this); calcAcquisitionTax();">
+                    </div>
+                </div>
+                <div class="input-card">
+                    <h3>&#x1F4B0; 세율 조건</h3>
+                    <div class="form-group">
+                        <label>주택수</label>
+                        <select id="re-acq-hcount" style="width:100%;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.95rem;font-family:inherit;color:#1e293b;background:#fff;" onchange="calcAcquisitionTax();">
+                            <option value="1주택">1주택</option>
+                            <option value="2주택">2주택</option>
+                            <option value="3주택">3주택</option>
+                            <option value="4주택 이상">4주택 이상</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                        <input type="checkbox" id="re-acq-adj" style="width:18px;height:18px;accent-color:#3b82f6;" onchange="calcAcquisitionTax();">
+                        <label for="re-acq-adj" style="margin-bottom:0;">조정대상지역 여부</label>
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                        <input type="checkbox" id="re-acq-first" style="width:18px;height:18px;accent-color:#3b82f6;" onchange="calcAcquisitionTax();">
+                        <label for="re-acq-first" style="margin-bottom:0;">생애최초 주택 취득 감면 (한도 200만원)</label>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="result-cards" style="grid-template-columns:1fr;">
+                    <div class="result-card" style="background:linear-gradient(135deg,#0f172a,#1e3a8a);box-shadow:0 4px 16px rgba(30,58,138,0.25);">
+                        <div class="rc-label">취득세 합계</div>
+                        <div class="rc-value" id="re-acq-total">0원</div>
+                        <div class="rc-formula" id="re-acq-desc"></div>
+                    </div>
+                </div>
+                <div class="result-cards" style="grid-template-columns:1fr 1fr 1fr;">
+                    <div class="metric-card">
+                        <div class="mc-label">취득세</div>
+                        <div class="mc-value" id="re-acq-tax-val">0원</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="mc-label">지방교육세</div>
+                        <div class="mc-value" id="re-acq-edu-val">0원</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="mc-label">농어촌특별세</div>
+                        <div class="mc-value" id="re-acq-rural-val">0원</div>
+                    </div>
+                </div>
+                <div id="re-acq-first-msg" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:20px;font-size:0.88rem;color:#16a34a;font-weight:600;"></div>
+                <div class="chart-container">
+                    <canvas id="re-acq-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== 보유세 SUB-TAB ====== -->
+    <div id="re-sub-hold" class="hidden">
+        <div class="two-col left-wide">
+            <div>
+                <div class="input-card">
+                    <h3>&#x1F3E0; 보유세 기본정보</h3>
+                    <div class="form-group">
+                        <label>주택 공시가격 (총합/원)</label>
+                        <input type="text" id="re-hold-price" value="0" oninput="formatNumberInput(this); calcHoldingTax();">
+                    </div>
+                    <div class="form-group">
+                        <label>보유 형태</label>
+                        <div class="radio-group" id="re-hold-type-group">
+                            <input type="radio" name="re-hold-type" id="re-hold-single" value="single" checked>
+                            <label for="re-hold-single" class="active" onclick="setReHoldType(this,'single')">1주택(단독)</label>
+                            <input type="radio" name="re-hold-type" id="re-hold-joint" value="joint">
+                            <label for="re-hold-joint" onclick="setReHoldType(this,'joint')">1주택(공동명의)</label>
+                            <input type="radio" name="re-hold-type" id="re-hold-multi" value="multi">
+                            <label for="re-hold-multi" onclick="setReHoldType(this,'multi')">다주택</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>연령: <strong id="re-hold-age-label">60</strong>세</label>
+                        <div class="slider-row">
+                            <input type="range" id="re-hold-age" min="20" max="90" value="60" oninput="document.getElementById('re-hold-age-label').textContent=this.value; calcHoldingTax();">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>보유기간(년): <strong id="re-hold-period-label">10</strong>년</label>
+                        <div class="slider-row">
+                            <input type="range" id="re-hold-period" min="0" max="30" value="10" oninput="document.getElementById('re-hold-period-label').textContent=this.value; calcHoldingTax();">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="result-cards" style="grid-template-columns:1fr 1fr;">
+                    <div class="result-card" style="background:linear-gradient(135deg,#0f172a,#1e3a8a);box-shadow:0 4px 16px rgba(30,58,138,0.25);">
+                        <div class="rc-label">재산세</div>
+                        <div class="rc-value" id="re-hold-prop-tax">0원</div>
+                    </div>
+                    <div class="result-card" style="background:linear-gradient(135deg,#172554,#3b82f6);box-shadow:0 4px 16px rgba(59,130,246,0.25);">
+                        <div class="rc-label">종합부동산세</div>
+                        <div class="rc-value" id="re-hold-jongbu-tax">0원</div>
+                        <div class="rc-formula" id="re-hold-jongbu-desc"></div>
+                    </div>
+                </div>
+                <div class="result-cards" style="grid-template-columns:1fr;">
+                    <div class="result-card" style="background:linear-gradient(135deg,#78350f,#f59e0b);box-shadow:0 4px 16px rgba(245,158,11,0.25);">
+                        <div class="rc-label">보유세 합계 (재산세+종부세)</div>
+                        <div class="rc-value" id="re-hold-total">0원</div>
+                    </div>
+                </div>
+                <div id="re-hold-ded-info" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:20px;font-size:0.85rem;color:#16a34a;line-height:1.7;display:none;"></div>
+                <div class="chart-container">
+                    <canvas id="re-hold-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== 양도소득세 SUB-TAB ====== -->
+    <div id="re-sub-transfer" class="hidden">
+        <div class="two-col left-wide">
+            <div>
+                <div class="input-card">
+                    <h3>&#x1F4B0; 양도 기본정보</h3>
+                    <div class="form-group">
+                        <label>자산 유형</label>
+                        <select id="re-tf-asset" style="width:100%;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.95rem;font-family:inherit;color:#1e293b;background:#fff;" onchange="calcTransferTax();">
+                            <option value="주택">주택</option>
+                            <option value="분양권(2021년 이후 취득)">분양권(2021년 이후 취득)</option>
+                            <option value="비사업용 토지">비사업용 토지</option>
+                            <option value="일반 건물/상가">일반 건물/상가</option>
+                            <option value="토지(일반)">토지(일반)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>양도가액 (원)</label>
+                        <input type="text" id="re-tf-sell" value="0" oninput="formatNumberInput(this); calcTransferTax();">
+                    </div>
+                    <div class="form-group">
+                        <label>취득가액 (원)</label>
+                        <input type="text" id="re-tf-buy" value="0" oninput="formatNumberInput(this); calcTransferTax();">
+                    </div>
+                    <div class="form-group">
+                        <label>필요경비 (원)</label>
+                        <input type="text" id="re-tf-expenses" value="0" oninput="formatNumberInput(this); calcTransferTax();">
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                        <input type="checkbox" id="re-tf-1h" style="width:18px;height:18px;accent-color:#3b82f6;" onchange="calcTransferTax();">
+                        <label for="re-tf-1h" style="margin-bottom:0;">1세대 1주택 비과세</label>
+                    </div>
+                    <div class="form-group">
+                        <label>다주택 중과</label>
+                        <select id="re-tf-multi" style="width:100%;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.95rem;font-family:inherit;color:#1e293b;background:#fff;" onchange="calcTransferTax();">
+                            <option value="없음">없음</option>
+                            <option value="2주택 (+20%p)">2주택 (+20%p)</option>
+                            <option value="3주택 이상 (+30%p)">3주택 이상 (+30%p)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>보유기간(년): <strong id="re-tf-hold-label">5</strong>년</label>
+                        <div class="slider-row">
+                            <input type="range" id="re-tf-hold" min="0" max="30" value="5" oninput="document.getElementById('re-tf-hold-label').textContent=this.value; calcTransferTax();">
+                        </div>
+                    </div>
+                    <div class="form-group" id="re-tf-reside-group">
+                        <label>거주기간(년): <strong id="re-tf-reside-label">2</strong>년</label>
+                        <div class="slider-row">
+                            <input type="range" id="re-tf-reside" min="0" max="30" value="2" oninput="document.getElementById('re-tf-reside-label').textContent=this.value; calcTransferTax();">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="result-cards" style="grid-template-columns:1fr 1fr 1fr;">
+                    <div class="result-card" style="background:linear-gradient(135deg,#0f172a,#1e3a8a);box-shadow:0 4px 16px rgba(30,58,138,0.25);">
+                        <div class="rc-label">양도소득세</div>
+                        <div class="rc-value" id="re-tf-tax-val">0원</div>
+                    </div>
+                    <div class="result-card" style="background:linear-gradient(135deg,#172554,#3b82f6);box-shadow:0 4px 16px rgba(59,130,246,0.25);">
+                        <div class="rc-label">지방소득세</div>
+                        <div class="rc-value" id="re-tf-local-val">0원</div>
+                    </div>
+                    <div class="result-card" style="background:linear-gradient(135deg,#14532d,#22c55e);box-shadow:0 4px 16px rgba(34,197,94,0.25);">
+                        <div class="rc-label">세후 실수령액</div>
+                        <div class="rc-value" id="re-tf-net-val">0원</div>
+                    </div>
+                </div>
+                <div id="re-tf-info" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px;margin-bottom:20px;font-size:0.85rem;color:#1e3a8a;line-height:1.7;"></div>
+                <div class="chart-container">
+                    <canvas id="re-tf-chart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+<!-- ============================================================
+     TAB: 상속 및 증여세
+     ============================================================ -->
 <div class="tab-content hidden" id="tab-inheritance">
-    <div class="placeholder-content">
-        <div class="ph-icon">&#x1F6A7;</div>
-        <div class="ph-text">준비 중입니다</div>
-        <div class="ph-sub">&#x1F381; 상속 및 증여세</div>
+    <h1 class="page-title">&#x1F381; 상속 및 증여세</h1>
+    <p class="page-desc">증여세와 상속세를 <strong>실시간</strong>으로 계산하고, 절세 전략을 분석합니다.</p>
+
+    <div class="sub-tabs">
+        <button class="sub-tab-btn active" onclick="switchInhSubTab('gift',this)">&#x1F381; 증여세 계산기</button>
+        <button class="sub-tab-btn" onclick="switchInhSubTab('inherit',this)">&#x1F3DB;&#xFE0F; 상속세 계산기</button>
+    </div>
+
+    <!-- ====== 증여세 SUB-TAB ====== -->
+    <div id="inh-gift">
+        <div class="two-col">
+            <div>
+                <div class="input-card">
+                    <h3>&#x1F4B0; 증여 금액</h3>
+                    <div class="form-group">
+                        <label>증여 가액 (원)</label>
+                        <input type="text" id="gift-amount" value="500,000,000" oninput="formatNumberInput(this); calcGift();">
+                    </div>
+                    <div class="form-group">
+                        <label>10년 내 사전증여액 (원)</label>
+                        <input type="text" id="gift-prev" value="0" oninput="formatNumberInput(this); calcGift();">
+                    </div>
+                    <div class="form-group">
+                        <label>기납부 증여세액 (원)</label>
+                        <input type="text" id="gift-prev-tax" value="0" oninput="formatNumberInput(this); calcGift();">
+                    </div>
+                    <div class="form-group">
+                        <label>부담부 채무액 (원)</label>
+                        <input type="text" id="gift-debt" value="0" oninput="formatNumberInput(this); calcGift();">
+                    </div>
+                </div>
+                <div class="input-card">
+                    <h3>&#x1F464; 수증자 정보</h3>
+                    <div class="form-group">
+                        <label>수증자 관계</label>
+                        <select id="gift-relation" style="width:100%;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.95rem;font-family:inherit;color:#1e293b;" onchange="calcGift();">
+                            <option value="배우자">배우자 (6억)</option>
+                            <option value="성년" selected>성년 자녀 (5천만)</option>
+                            <option value="미성년">미성년 자녀 (2천만)</option>
+                            <option value="직계존속">직계존속 (5천만)</option>
+                            <option value="기타">기타친족 (1천만)</option>
+                            <option value="형제">형제자매 (1천만)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>10년 내 이미 사용한 공제액 (원)</label>
+                        <input type="text" id="gift-used-ded" value="0" oninput="formatNumberInput(this); calcGift();">
+                    </div>
+                    <div class="form-group" style="display:flex;flex-direction:column;gap:10px;">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
+                            <input type="checkbox" id="gift-startup" onchange="calcGift();" style="width:18px;height:18px;accent-color:#3b82f6;">
+                            창업자금 증여 과세특례
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
+                            <input type="checkbox" id="gift-overseas" onchange="calcGift();" style="width:18px;height:18px;accent-color:#3b82f6;">
+                            국외 재산 증여
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
+                            <input type="checkbox" id="gift-gen-skip" onchange="calcGift();" style="width:18px;height:18px;accent-color:#3b82f6;">
+                            세대생략 증여
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
+                            <input type="checkbox" id="gift-minor" onchange="calcGift();" style="width:18px;height:18px;accent-color:#3b82f6;">
+                            수증자 미성년
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="result-cards" style="grid-template-columns:1fr 1fr;" id="gift-result-cards"></div>
+                <div class="chart-container">
+                    <canvas id="gift-pie-chart"></canvas>
+                </div>
+                <details class="expander">
+                    <summary>&#x1F4DD; 증여세 산출 과정</summary>
+                    <div class="expander-body" id="gift-steps-body"></div>
+                </details>
+                <div class="expert-card" id="gift-payment-info" style="background:linear-gradient(to bottom,#eff6ff,#dbeafe);border:1px solid #bfdbfe;">
+                    <h3>&#x1F4CB; 납부 안내</h3>
+                    <div id="gift-payment-text" style="font-size:0.88rem;color:#334155;line-height:1.7;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== 상속세 SUB-TAB ====== -->
+    <div id="inh-inherit" class="hidden">
+        <div class="two-col">
+            <div>
+                <div class="input-card">
+                    <h3>&#x1F4B0; 상속 재산</h3>
+                    <div class="form-group">
+                        <label>상속 재산 총액 (원)</label>
+                        <input type="text" id="inh-estate" value="2,000,000,000" oninput="formatNumberInput(this); calcInheritance();">
+                    </div>
+                    <div class="form-group">
+                        <label>비과세 재산 (원)</label>
+                        <input type="text" id="inh-nontax" value="0" oninput="formatNumberInput(this); calcInheritance();">
+                    </div>
+                    <div class="form-group">
+                        <label>상속인 10년내 사전증여 (원)</label>
+                        <input type="text" id="inh-prev-gift" value="0" oninput="formatNumberInput(this); calcInheritance();">
+                    </div>
+                    <div class="form-group">
+                        <label>상속인 외 5년내 사전증여 (원)</label>
+                        <input type="text" id="inh-prev-gift-other" value="0" oninput="formatNumberInput(this); calcInheritance();">
+                    </div>
+                    <div class="form-group">
+                        <label>기납부 증여세 (원)</label>
+                        <input type="text" id="inh-prev-tax" value="0" oninput="formatNumberInput(this); calcInheritance();">
+                    </div>
+                    <div class="form-group">
+                        <label>공제대상 채무 (원)</label>
+                        <input type="text" id="inh-debt" value="0" oninput="formatNumberInput(this); calcInheritance();">
+                    </div>
+                    <div class="form-group">
+                        <label>장례비용 (원)</label>
+                        <input type="text" id="inh-funeral" value="10,000,000" oninput="formatNumberInput(this); calcInheritance();">
+                    </div>
+                </div>
+                <div class="input-card">
+                    <h3>&#x2699;&#xFE0F; 상속 공제 설정</h3>
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
+                            <input type="checkbox" id="inh-spouse-alive" checked onchange="calcInheritance();" style="width:18px;height:18px;accent-color:#3b82f6;">
+                            배우자 생존
+                        </label>
+                    </div>
+                    <div class="form-group" id="inh-spouse-ded-group">
+                        <label>배우자 상속공제액 (원) <span style="font-size:0.75rem;color:#64748b;">(max 30억, 법정상속분 한도)</span></label>
+                        <input type="text" id="inh-spouse-ded" value="500,000,000" oninput="formatNumberInput(this); calcInheritance();">
+                    </div>
+                    <div class="form-group">
+                        <label>공제 방식</label>
+                        <div class="radio-group" id="inh-ded-method-group">
+                            <input type="radio" name="inh-ded-method" id="inh-ded-lump" value="lump" checked>
+                            <label for="inh-ded-lump" class="active" onclick="setInhDedMethod(this,'lump')">일괄공제 (5억)</label>
+                            <input type="radio" name="inh-ded-method" id="inh-ded-detail" value="detail">
+                            <label for="inh-ded-detail" onclick="setInhDedMethod(this,'detail')">기초+인적공제</label>
+                        </div>
+                    </div>
+                    <div id="inh-detail-inputs" class="hidden">
+                        <div class="form-group">
+                            <label>자녀 수</label>
+                            <input type="number" id="inh-children" value="2" min="0" max="20" oninput="calcInheritance();">
+                        </div>
+                        <div class="form-group">
+                            <label>미성년 자녀 수</label>
+                            <input type="number" id="inh-minor-children" value="0" min="0" max="20" oninput="calcInheritance();">
+                        </div>
+                        <div class="form-group">
+                            <label>미성년 자녀 나이 (가장 어린)</label>
+                            <input type="number" id="inh-minor-age" value="10" min="0" max="18" oninput="calcInheritance();">
+                        </div>
+                        <div class="form-group">
+                            <label>65세 이상 피부양자 수</label>
+                            <input type="number" id="inh-elderly" value="0" min="0" max="20" oninput="calcInheritance();">
+                        </div>
+                        <div class="form-group">
+                            <label>장애인 수</label>
+                            <input type="number" id="inh-disabled" value="0" min="0" max="20" oninput="calcInheritance();">
+                        </div>
+                        <div class="form-group">
+                            <label>장애인 기대여명 (년)</label>
+                            <input type="number" id="inh-disabled-years" value="30" min="1" max="80" oninput="calcInheritance();">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>순금융재산가액 (원)</label>
+                        <input type="text" id="inh-finance" value="0" oninput="formatNumberInput(this); calcInheritance();">
+                    </div>
+                    <div class="form-group">
+                        <label>동거주택 상속공제 (원) <span style="font-size:0.75rem;color:#64748b;">(한도 6억)</span></label>
+                        <input type="text" id="inh-housing-ded" value="0" oninput="formatNumberInput(this); calcInheritance();">
+                    </div>
+                    <div class="form-group">
+                        <label>가업상속공제 (원) <span style="font-size:0.75rem;color:#64748b;">(한도 600억)</span></label>
+                        <input type="text" id="inh-business-ded" value="0" oninput="formatNumberInput(this); calcInheritance();">
+                    </div>
+                    <div class="form-group">
+                        <label>영농상속공제 (원) <span style="font-size:0.75rem;color:#64748b;">(한도 300억)</span></label>
+                        <input type="text" id="inh-farm-ded" value="0" oninput="formatNumberInput(this); calcInheritance();">
+                    </div>
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
+                            <input type="checkbox" id="inh-gen-skip" onchange="calcInheritance();" style="width:18px;height:18px;accent-color:#3b82f6;">
+                            세대생략 상속
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="result-cards" style="grid-template-columns:1fr 1fr;" id="inh-result-cards"></div>
+                <div class="chart-container">
+                    <canvas id="inh-waterfall-chart"></canvas>
+                </div>
+                <details class="expander">
+                    <summary>&#x1F4DD; 상속세 산출 과정</summary>
+                    <div class="expander-body" id="inh-steps-body"></div>
+                </details>
+                <div class="expert-card" style="background:linear-gradient(to bottom,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;">
+                    <h3>&#x1F3E6; 종신보험 전략</h3>
+                    <div id="inh-insurance-strategy" style="font-size:0.88rem;color:#334155;line-height:1.7;"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- ============================================================
+     TAB: 은퇴자금 설계
+     ============================================================ -->
 <div class="tab-content hidden" id="tab-retirement">
-    <div class="placeholder-content">
-        <div class="ph-icon">&#x1F6A7;</div>
-        <div class="ph-text">준비 중입니다</div>
-        <div class="ph-sub">&#x1F3D6;&#xFE0F; 은퇴자금 설계</div>
+    <h1 class="page-title">&#x23F3; 은퇴자금 계산</h1>
+    <p class="page-desc">고객님의 현재 나이와 목표, 경제 변수를 반영한 <strong>1:1 맞춤형 은퇴 설계 솔루션</strong>입니다.</p>
+
+    <div class="two-col">
+        <div>
+            <div class="input-card">
+                <h3>&#x1F464; 고객정보</h3>
+                <div class="form-group">
+                    <label>고객 성함</label>
+                    <input type="text" id="ret-name" value="" placeholder="고객명 입력" oninput="calcRetirement();">
+                </div>
+                <div class="form-group">
+                    <label>현재 나이</label>
+                    <input type="number" id="ret-age" value="35" min="20" max="100" oninput="calcRetirement();">
+                </div>
+            </div>
+            <div class="input-card">
+                <h3>&#x1F4B0; 은퇴 목표</h3>
+                <div class="form-group">
+                    <label>희망 월 생활비 (원)</label>
+                    <input type="text" id="ret-goal" value="3,000,000" oninput="formatNumberInput(this); calcRetirement();">
+                </div>
+            </div>
+            <div class="input-card">
+                <h3>&#x1F4C5; 은퇴 타임라인</h3>
+                <div class="form-group">
+                    <label>납입 기간 (년): <strong id="ret-pay-label">10</strong>년</label>
+                    <div class="slider-row">
+                        <input type="range" id="ret-pay-slider" min="1" max="20" value="10" oninput="document.getElementById('ret-pay-label').textContent=this.value; calcRetirement();">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>은퇴 목표 나이: <strong id="ret-retire-label">65</strong>세</label>
+                    <div class="slider-row">
+                        <input type="range" id="ret-retire-slider" min="40" max="110" value="65" oninput="document.getElementById('ret-retire-label').textContent=this.value; calcRetirement();">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>기대 수명: <strong id="ret-life-label">100</strong>세</label>
+                    <div class="slider-row">
+                        <input type="range" id="ret-life-slider" min="60" max="110" value="100" oninput="document.getElementById('ret-life-label').textContent=this.value; calcRetirement();">
+                    </div>
+                </div>
+            </div>
+            <div class="input-card">
+                <h3>&#x1F4CA; 재무 변수</h3>
+                <div class="form-group">
+                    <label>물가상승률 (%): <strong id="ret-inf-label">3.0</strong>%</label>
+                    <div class="slider-row">
+                        <input type="range" id="ret-inf-slider" min="0" max="100" step="0.1" value="3.0" oninput="document.getElementById('ret-inf-label').textContent=parseFloat(this.value).toFixed(1); calcRetirement();">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>투자수익률 (%): <strong id="ret-yield-label">6.0</strong>%</label>
+                    <div class="slider-row">
+                        <input type="range" id="ret-yield-slider" min="0" max="100" step="0.1" value="6.0" oninput="document.getElementById('ret-yield-label').textContent=parseFloat(this.value).toFixed(1); calcRetirement();">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="result-cards" style="grid-template-columns:1fr;" id="ret-result-cards"></div>
+            <div class="chart-container">
+                <canvas id="ret-lifecycle-chart"></canvas>
+            </div>
+            <details class="expander">
+                <summary>&#x1F4DD; 은퇴 설계 상세 리포트</summary>
+                <div class="expander-body" id="ret-steps-body"></div>
+            </details>
+        </div>
     </div>
 </div>
+
+<!-- ============================================================
+     TAB: 목적자금 설계
+     ============================================================ -->
 <div class="tab-content hidden" id="tab-goalfund">
-    <div class="placeholder-content">
-        <div class="ph-icon">&#x1F6A7;</div>
-        <div class="ph-text">준비 중입니다</div>
-        <div class="ph-sub">&#x1F3AF; 목적자금 설계</div>
+    <h1 class="page-title">&#x1F3AF; 목적자금 설계</h1>
+    <p class="page-desc">투자와 적금을 비교하여 <strong>목표 자금 달성</strong>을 위한 최적의 전략을 설계합니다.</p>
+
+    <div class="two-col">
+        <div>
+            <div class="input-card">
+                <h3>&#x1F464; 고객정보</h3>
+                <div class="form-group">
+                    <label>성함</label>
+                    <input type="text" id="goal-name" value="" placeholder="고객명 입력" oninput="calcGoalFund();">
+                </div>
+                <div class="form-group">
+                    <label>나이</label>
+                    <input type="number" id="goal-age" value="40" min="1" max="100" oninput="calcGoalFund();">
+                </div>
+            </div>
+            <div class="input-card">
+                <h3>&#x1F3AF; 목표 설정</h3>
+                <div class="form-group">
+                    <label>계산 방식</label>
+                    <div class="radio-group" id="goal-calc-type-group">
+                        <input type="radio" name="goal-calc-type" id="goal-type-target" value="target" checked>
+                        <label for="goal-type-target" class="active" onclick="setGoalCalcType(this,'target')">목표 필요 자금</label>
+                        <input type="radio" name="goal-calc-type" id="goal-type-save" value="save">
+                        <label for="goal-type-save" onclick="setGoalCalcType(this,'save')">매월 저축(투자) 금액</label>
+                    </div>
+                </div>
+                <div class="form-group" id="goal-target-group">
+                    <label>목표 금액 (원)</label>
+                    <input type="text" id="goal-target" value="50,000,000" oninput="formatNumberInput(this); calcGoalFund();">
+                </div>
+                <div class="form-group hidden" id="goal-save-group">
+                    <label>매월 저축(투자) 금액 (원)</label>
+                    <input type="text" id="goal-monthly-save" value="500,000" oninput="formatNumberInput(this); calcGoalFund();">
+                </div>
+            </div>
+            <div class="input-card">
+                <h3>&#x1F4CA; 수익률 설정</h3>
+                <div class="form-group">
+                    <label>준비 기간 (년): <strong id="goal-period-label">10</strong>년</label>
+                    <div class="slider-row">
+                        <input type="range" id="goal-period-slider" min="1" max="30" value="10" oninput="document.getElementById('goal-period-label').textContent=this.value; calcGoalFund();">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>적금 금리 (%): <strong id="goal-sav-label">2.5</strong>%</label>
+                    <div class="slider-row">
+                        <input type="range" id="goal-sav-slider" min="0" max="100" step="0.1" value="2.5" oninput="document.getElementById('goal-sav-label').textContent=parseFloat(this.value).toFixed(1); calcGoalFund();">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>기대 수익률 (%): <strong id="goal-yield-label">5.0</strong>%</label>
+                    <div class="slider-row">
+                        <input type="range" id="goal-yield-slider" min="0" max="100" step="0.1" value="5.0" oninput="document.getElementById('goal-yield-label').textContent=parseFloat(this.value).toFixed(1); calcGoalFund();">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="result-cards" style="grid-template-columns:1fr;" id="goal-result-cards"></div>
+            <div class="chart-container">
+                <canvas id="goal-growth-chart"></canvas>
+            </div>
+            <details class="expander">
+                <summary>&#x1F4DD; 전략 리포트</summary>
+                <div class="expander-body" id="goal-steps-body"></div>
+            </details>
+        </div>
     </div>
 </div>
+
+<!-- ============================================================
+     TAB: 달러 설계
+     ============================================================ -->
 <div class="tab-content hidden" id="tab-dollar">
-    <div class="placeholder-content">
-        <div class="ph-icon">&#x1F6A7;</div>
-        <div class="ph-text">준비 중입니다</div>
-        <div class="ph-sub">&#x1F4B5; 달러 설계</div>
+    <h1 class="page-title">&#x1F4B5; 달러 저축성 보험 시뮬레이터</h1>
+    <p class="page-desc">달러 종신보험의 환급률과 환율 시나리오를 분석하여 <strong>적금 환산 수익률</strong>을 계산합니다.</p>
+
+    <div class="two-col">
+        <div>
+            <div class="input-card">
+                <h3>&#x1F4CB; 기본 정보</h3>
+                <div class="form-group">
+                    <label>상품 선택</label>
+                    <select id="dol-product" style="width:100%;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.95rem;font-family:inherit;color:#1e293b;" onchange="calcDollar();">
+                        <option value="메트라이프" selected>메트라이프 (백만인을 위한 달러종신)</option>
+                        <option value="타사">타사 달러보험 (일반형)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>납입 기간</label>
+                    <select id="dol-pay-period" style="width:100%;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.95rem;font-family:inherit;color:#1e293b;" onchange="calcDollar();">
+                        <option value="5">5년</option>
+                        <option value="7">7년</option>
+                        <option value="10" selected>10년</option>
+                        <option value="20">20년</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>월 납입 보험료 ($)</label>
+                    <input type="number" id="dol-monthly" value="500" min="0" step="100" oninput="calcDollar();">
+                </div>
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
+                        <input type="checkbox" id="dol-extra-toggle" onchange="calcDollar();" style="width:18px;height:18px;accent-color:#3b82f6;">
+                        추가납입
+                    </label>
+                </div>
+                <div class="form-group hidden" id="dol-extra-group">
+                    <label>추가납입 금액 ($)</label>
+                    <input type="number" id="dol-extra" value="0" min="0" step="100" oninput="calcDollar();">
+                </div>
+            </div>
+            <div class="input-card">
+                <h3>&#x1F4B1; 환율 시나리오</h3>
+                <div class="form-group">
+                    <label>현재 환율 (원/$)</label>
+                    <input type="number" id="dol-rate-now" value="1430" min="500" max="3000" step="10" oninput="calcDollar();">
+                </div>
+                <div class="form-group">
+                    <label>AI 예측 평균 환율 (원/$)</label>
+                    <input type="number" id="dol-rate-avg" value="1350" min="500" max="3000" step="10" oninput="calcDollar();">
+                </div>
+                <div class="form-group">
+                    <label>하락(비관) 시나리오 (원/$)</label>
+                    <input type="number" id="dol-rate-low" value="1100" min="500" max="3000" step="10" oninput="calcDollar();">
+                </div>
+                <div class="form-group">
+                    <label>보합(중립) 시나리오 (원/$)</label>
+                    <input type="number" id="dol-rate-mid" value="1350" min="500" max="3000" step="10" oninput="calcDollar();">
+                </div>
+                <div class="form-group">
+                    <label>상승(낙관) 시나리오 (원/$)</label>
+                    <input type="number" id="dol-rate-high" value="1550" min="500" max="3000" step="10" oninput="calcDollar();">
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="result-cards" style="grid-template-columns:1fr 1fr 1fr;" id="dol-result-cards"></div>
+            <div id="dol-bank-yield-banner" style="margin-bottom:20px;"></div>
+            <div class="result-cards" style="grid-template-columns:1fr 1fr 1fr;" id="dol-scenario-cards"></div>
+            <div class="chart-container">
+                <canvas id="dol-refund-chart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="dol-scenario-chart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="dol-history-chart"></canvas>
+            </div>
+            <div class="result-cards" style="grid-template-columns:1fr 1fr 1fr 1fr;" id="dol-history-cards"></div>
+            <details class="expander">
+                <summary>&#x1F4DD; 손익분기 환율 산출 근거</summary>
+                <div class="expander-body" id="dol-bep-body"></div>
+            </details>
+        </div>
     </div>
 </div>
 <div class="tab-content hidden" id="tab-incometax">
-    <div class="placeholder-content">
-        <div class="ph-icon">&#x1F6A7;</div>
-        <div class="ph-text">준비 중입니다</div>
-        <div class="ph-sub">&#x1F4CA; 종합소득세 계산</div>
+    <h1 class="page-title">&#x1F4BC; 종합소득세 시뮬레이터</h1>
+    <p class="page-desc">다양한 소득원을 입력하면 <strong>종합과세 vs 분리과세</strong>를 비교합니다.</p>
+
+    <div class="two-col left-wide">
+        <!-- LEFT: INPUTS -->
+        <div>
+            <div class="input-card">
+                <h3>&#x1F4BC; 근로소득</h3>
+                <div class="form-group">
+                    <label>총급여 (원/년)</label>
+                    <input type="text" id="it-salary" value="0" oninput="formatNumberInput(this); calcIncomeTaxTab();">
+                </div>
+            </div>
+
+            <div class="input-card">
+                <h3>&#x1F4B0; 금융소득 (이자/배당)</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div class="form-group">
+                        <label>이자소득 (원/년)</label>
+                        <input type="text" id="it-interest" value="0" oninput="formatNumberInput(this); calcIncomeTaxTab();">
+                    </div>
+                    <div class="form-group">
+                        <label>배당소득 (원/년)</label>
+                        <input type="text" id="it-dividend" value="0" oninput="formatNumberInput(this); calcIncomeTaxTab();">
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-card">
+                <h3>&#x1F3E2; 사업소득</h3>
+                <div class="form-group">
+                    <label>사업소득금액 (매출-필요경비)</label>
+                    <input type="text" id="it-business" value="0" oninput="formatNumberInput(this); calcIncomeTaxTab();">
+                </div>
+            </div>
+
+            <div class="input-card">
+                <h3>&#x1F4CB; 연금·기타소득</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div class="form-group">
+                        <label>연금소득금액 (공적/사적 연금)</label>
+                        <input type="text" id="it-pension" value="0" oninput="formatNumberInput(this); calcIncomeTaxTab();">
+                    </div>
+                    <div class="form-group">
+                        <label>기타소득금액 (강연료/인세 등)</label>
+                        <input type="text" id="it-etc" value="0" oninput="formatNumberInput(this); calcIncomeTaxTab();">
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-card">
+                <h3>&#x1F9FE; 공제 항목</h3>
+                <div class="form-group">
+                    <label>인적공제·기본공제 (원)</label>
+                    <input type="text" id="it-deduction" value="0" oninput="formatNumberInput(this); calcIncomeTaxTab();">
+                </div>
+            </div>
+
+            <details class="expander" open>
+                <summary>&#x2139;&#xFE0F; 종합과세 vs 분리과세 가이드</summary>
+                <div class="expander-body">
+                    <div class="step-box">
+                        <div class="step-num">&#x1F4CC; 종합과세란?</div>
+                        <div class="step-content">이자, 배당, 사업(부동산임대), 근로, 연금, 기타소득을 <strong>모두 합산</strong>하여 누진세율(6%~45%)을 적용하는 방식입니다.</div>
+                    </div>
+                    <div class="step-box">
+                        <div class="step-num">&#x1F4CC; 분리과세란?</div>
+                        <div class="step-content">특정 소득을 합산하지 않고 <strong>단일 세율(14% 등)</strong>로 별도 과세하여 종결하는 방식입니다.</div>
+                    </div>
+                    <div class="step-box">
+                        <div class="step-num">&#x1F4A1; 유불리 판단</div>
+                        <div class="step-content">
+                            <ol style="margin:0;padding-left:20px;line-height:2;">
+                                <li>소득이 적을 때: 종합과세 유리 (6% &lt; 14%)</li>
+                                <li>소득이 많을 때: 분리과세 유리 (45% 회피)</li>
+                                <li>금융소득 2,000만원 초과: 무조건 종합과세</li>
+                                <li>주택임대 2,000만원 이하: 분리과세(14%) 선택 가능</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <!-- RIGHT: RESULTS -->
+        <div>
+            <div class="result-cards" style="grid-template-columns:1fr;">
+                <div class="result-card" style="background:linear-gradient(135deg,#0f172a,#1e3a8a);box-shadow:0 4px 16px rgba(30,58,138,0.25);">
+                    <div class="rc-label">총 소득금액</div>
+                    <div class="rc-value" id="it-total-income">0원</div>
+                </div>
+                <div class="result-card" style="background:linear-gradient(135deg,#172554,#3b82f6);box-shadow:0 4px 16px rgba(59,130,246,0.25);">
+                    <div class="rc-label">과세표준</div>
+                    <div class="rc-value" id="it-taxable">0원</div>
+                    <div class="rc-formula" id="it-rate-caption"></div>
+                </div>
+            </div>
+
+            <!-- 종합과세 vs 분리과세 비교 -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+                <div id="it-comp-box" style="border:2px solid #1e3a8a;border-radius:14px;padding:22px;background:linear-gradient(to bottom,#eff6ff,#dbeafe);">
+                    <div style="font-size:0.82rem;font-weight:700;color:#1e3a8a;margin-bottom:12px;">&#x1F4CA; 종합과세</div>
+                    <div style="font-size:0.78rem;color:#475569;margin-bottom:6px;">산출세액</div>
+                    <div style="font-size:1.3rem;font-weight:800;color:#1e3a8a;" id="it-comp-tax">0원</div>
+                    <div style="font-size:0.78rem;color:#475569;margin-top:8px;margin-bottom:4px;">지방소득세</div>
+                    <div style="font-size:1rem;font-weight:700;color:#334155;" id="it-comp-local">0원</div>
+                    <div style="font-size:0.78rem;color:#475569;margin-top:8px;margin-bottom:4px;">총 납부세액</div>
+                    <div style="font-size:1.3rem;font-weight:800;color:#dc2626;" id="it-comp-total">0원</div>
+                </div>
+                <div id="it-sep-box" style="border:2px solid #22c55e;border-radius:14px;padding:22px;background:linear-gradient(to bottom,#f0fdf4,#dcfce7);">
+                    <div style="font-size:0.82rem;font-weight:700;color:#16a34a;margin-bottom:12px;" id="it-sep-title">&#x1F4B0; 분리과세</div>
+                    <div id="it-sep-content">
+                        <div style="font-size:0.78rem;color:#475569;margin-bottom:6px;">금융소득 분리세액 (14%)</div>
+                        <div style="font-size:1rem;font-weight:700;color:#334155;" id="it-sep-fin-tax">0원</div>
+                        <div style="font-size:0.78rem;color:#475569;margin-top:8px;margin-bottom:4px;">나머지 소득 세액</div>
+                        <div style="font-size:1rem;font-weight:700;color:#334155;" id="it-sep-rest-tax">0원</div>
+                        <div style="font-size:0.78rem;color:#475569;margin-top:8px;margin-bottom:4px;">지방소득세</div>
+                        <div style="font-size:1rem;font-weight:700;color:#334155;" id="it-sep-local">0원</div>
+                        <div style="font-size:0.78rem;color:#475569;margin-top:8px;margin-bottom:4px;">총 납부세액</div>
+                        <div style="font-size:1.3rem;font-weight:800;color:#16a34a;" id="it-sep-total">0원</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="verdict-card" id="it-verdict">
+            </div>
+
+            <div class="chart-container">
+                <canvas id="it-pie-chart"></canvas>
+            </div>
+
+            <details class="expander">
+                <summary>&#x1F4D0; 2025 종합소득세 누진세율표</summary>
+                <div class="expander-body">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>과세표준</th><th>세율</th><th>누진공제</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>1,400만원 이하</td><td>6%</td><td>-</td></tr>
+                            <tr><td>1,400만~5,000만원</td><td>15%</td><td>126만원</td></tr>
+                            <tr><td>5,000만~8,800만원</td><td>24%</td><td>576만원</td></tr>
+                            <tr><td>8,800만~1.5억원</td><td>35%</td><td>1,544만원</td></tr>
+                            <tr><td>1.5억~3억원</td><td>38%</td><td>1,994만원</td></tr>
+                            <tr><td>3억~5억원</td><td>40%</td><td>2,594만원</td></tr>
+                            <tr><td>5억~10억원</td><td>42%</td><td>3,594만원</td></tr>
+                            <tr><td>10억원 초과</td><td>45%</td><td>6,594만원</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+        </div>
     </div>
 </div>
 
@@ -1857,6 +2648,1300 @@ function calcJeonwolse() {
 }
 
 /* ============================================================
+   INCOME TAX CALCULATION (종합소득세)
+   ============================================================ */
+var itPieChart = null;
+
+function calcSalaryDeduction(salary) {
+    if (salary <= 5000000) return salary * 0.7;
+    if (salary <= 15000000) return 3500000 + (salary - 5000000) * 0.4;
+    if (salary <= 45000000) return 7500000 + (salary - 15000000) * 0.15;
+    if (salary <= 100000000) return 12000000 + (salary - 45000000) * 0.05;
+    return Math.min(14750000 + (salary - 100000000) * 0.02, 20000000);
+}
+
+function calcProgressiveTax(taxable) {
+    var brackets = [
+        [14000000, 0.06, 0],
+        [50000000, 0.15, 1260000],
+        [88000000, 0.24, 5760000],
+        [150000000, 0.35, 15440000],
+        [300000000, 0.38, 19940000],
+        [500000000, 0.40, 25940000],
+        [1000000000, 0.42, 35940000],
+        [Infinity, 0.45, 65940000]
+    ];
+    for (var i = 0; i < brackets.length; i++) {
+        if (taxable <= brackets[i][0]) {
+            var tax = taxable * brackets[i][1] - brackets[i][2];
+            return { tax: Math.max(0, tax), rate: brackets[i][1], desc: (brackets[i][1]*100)+'%' };
+        }
+    }
+    return { tax: 0, rate: 0, desc: '0%' };
+}
+
+function calcIncomeTaxTab() {
+    var salary = parseNumberInput(document.getElementById('it-salary'));
+    var interest = parseNumberInput(document.getElementById('it-interest'));
+    var dividend = parseNumberInput(document.getElementById('it-dividend'));
+    var business = parseNumberInput(document.getElementById('it-business'));
+    var pension = parseNumberInput(document.getElementById('it-pension'));
+    var etc = parseNumberInput(document.getElementById('it-etc'));
+    var basicDed = parseNumberInput(document.getElementById('it-deduction'));
+
+    var salaryDed = calcSalaryDeduction(salary);
+    var earned = Math.max(0, salary - salaryDed);
+    var financial = interest + dividend;
+    var total = earned + financial + business + pension + etc;
+    var taxable = Math.max(0, total - basicDed);
+    var progResult = calcProgressiveTax(taxable);
+    var incomeTax = progResult.tax;
+    var localTax = incomeTax * 0.1;
+    var totalTax = incomeTax + localTax;
+
+    // Display total income & taxable
+    document.getElementById('it-total-income').textContent = f_kr(total);
+    document.getElementById('it-taxable').textContent = f_kr(taxable);
+    document.getElementById('it-rate-caption').textContent = '\uC801\uC6A9 \uC138\uC728: ' + progResult.desc;
+
+    // 종합과세 box
+    document.getElementById('it-comp-tax').textContent = f_kr(incomeTax);
+    document.getElementById('it-comp-local').textContent = f_kr(localTax);
+    document.getElementById('it-comp-total').textContent = f_kr(totalTax);
+
+    // 분리과세 calculation
+    var sepBox = document.getElementById('it-sep-box');
+    var sepContent = document.getElementById('it-sep-content');
+    var sepTitle = document.getElementById('it-sep-title');
+
+    if (financial > 20000000) {
+        // 금융소득 > 2천만 -> 비교산출세액
+        sepBox.style.borderColor = '#94a3b8';
+        sepBox.style.background = 'linear-gradient(to bottom,#f8fafc,#f1f5f9)';
+        sepTitle.innerHTML = '&#x1F4B0; \uBD84\uB9AC\uACFC\uC138';
+        sepTitle.style.color = '#64748b';
+        sepContent.innerHTML =
+            '<div style="font-size:0.92rem;font-weight:700;color:#ef4444;margin-bottom:8px;">\uC120\uD0DD \uBD88\uAC00</div>' +
+            '<div style="font-size:0.82rem;color:#64748b;line-height:1.6;">\uAE08\uC735\uC18C\uB4DD 2,000\uB9CC\uC6D0 \uCD08\uACFC \u2192 \uBB34\uC870\uAC74 \uC885\uD569\uACFC\uC138</div>';
+
+        // 비교산출세액
+        var taxA = incomeTax;
+        var excess = financial - 20000000;
+        var compTaxable = Math.max(0, earned + business + pension + etc + excess - basicDed);
+        var taxBprog = calcProgressiveTax(compTaxable).tax;
+        var taxB = taxBprog + 20000000 * 0.14;
+        var finalTax = Math.max(taxA, taxB);
+        var finalLocal = finalTax * 0.1;
+        var finalTotal = finalTax + finalLocal;
+
+        document.getElementById('it-comp-tax').textContent = f_kr(finalTax);
+        document.getElementById('it-comp-local').textContent = f_kr(finalLocal);
+        document.getElementById('it-comp-total').textContent = f_kr(finalTotal);
+
+        // verdict
+        document.getElementById('it-verdict').innerHTML =
+            '<div class="verdict-icon">&#x26A0;&#xFE0F;</div>' +
+            '<div class="verdict-title">\uAE08\uC735\uC18C\uB4DD 2,000\uB9CC\uC6D0 \uCD08\uACFC \u2192 \uBE44\uAD50\uC0B0\uCD9C\uC138\uC561 \uC801\uC6A9</div>' +
+            '<div class="verdict-text">\uCD1D \uB0A9\uBD80\uC138\uC561: <strong>' + f_kr(finalTotal) + '</strong></div>';
+    } else if (financial > 0) {
+        // 분리과세 가능
+        sepBox.style.borderColor = '#22c55e';
+        sepBox.style.background = 'linear-gradient(to bottom,#f0fdf4,#dcfce7)';
+        sepTitle.innerHTML = '&#x1F4B0; \uBD84\uB9AC\uACFC\uC138';
+        sepTitle.style.color = '#16a34a';
+
+        var sepFinTax = financial * 0.14;
+        var sepRemaining = earned + business + pension + etc;
+        var sepTaxable = Math.max(0, sepRemaining - basicDed);
+        var sepIncomeTax = calcProgressiveTax(sepTaxable).tax;
+        var sepLocalTax = (sepIncomeTax + sepFinTax) * 0.1;
+        var sepTotalTax = sepIncomeTax + sepFinTax + sepLocalTax;
+
+        sepContent.innerHTML =
+            '<div style="font-size:0.78rem;color:#475569;margin-bottom:6px;">\uAE08\uC735\uC18C\uB4DD \uBD84\uB9AC\uC138\uC561 (14%)</div>' +
+            '<div style="font-size:1rem;font-weight:700;color:#334155;">' + f_kr(sepFinTax) + '</div>' +
+            '<div style="font-size:0.78rem;color:#475569;margin-top:8px;margin-bottom:4px;">\uB098\uBA38\uC9C0 \uC18C\uB4DD \uC138\uC561</div>' +
+            '<div style="font-size:1rem;font-weight:700;color:#334155;">' + f_kr(sepIncomeTax) + '</div>' +
+            '<div style="font-size:0.78rem;color:#475569;margin-top:8px;margin-bottom:4px;">\uC9C0\uBC29\uC18C\uB4DD\uC138</div>' +
+            '<div style="font-size:1rem;font-weight:700;color:#334155;">' + f_kr(sepLocalTax) + '</div>' +
+            '<div style="font-size:0.78rem;color:#475569;margin-top:8px;margin-bottom:4px;">\uCD1D \uB0A9\uBD80\uC138\uC561</div>' +
+            '<div style="font-size:1.3rem;font-weight:800;color:#16a34a;">' + f_kr(sepTotalTax) + '</div>';
+
+        var diff = totalTax - sepTotalTax;
+        if (diff > 0) {
+            document.getElementById('it-verdict').innerHTML =
+                '<div class="verdict-icon">&#x2705;</div>' +
+                '<div class="verdict-title">\uBD84\uB9AC\uACFC\uC138\uAC00 ' + f_kr(diff) + ' \uC720\uB9AC\uD569\uB2C8\uB2E4</div>' +
+                '<div class="verdict-text">\uC885\uD569\uACFC\uC138 ' + f_kr(totalTax) + ' vs \uBD84\uB9AC\uACFC\uC138 ' + f_kr(sepTotalTax) + '</div>';
+        } else if (diff < 0) {
+            document.getElementById('it-verdict').innerHTML =
+                '<div class="verdict-icon">&#x1F4CA;</div>' +
+                '<div class="verdict-title">\uC885\uD569\uACFC\uC138\uAC00 ' + f_kr(-diff) + ' \uC720\uB9AC\uD569\uB2C8\uB2E4</div>' +
+                '<div class="verdict-text">\uC885\uD569\uACFC\uC138 ' + f_kr(totalTax) + ' vs \uBD84\uB9AC\uACFC\uC138 ' + f_kr(sepTotalTax) + '</div>';
+        } else {
+            document.getElementById('it-verdict').innerHTML =
+                '<div class="verdict-icon">&#x2696;&#xFE0F;</div>' +
+                '<div class="verdict-title">\uC885\uD569\uACFC\uC138\uC640 \uBD84\uB9AC\uACFC\uC138 \uC138\uC561\uC774 \uB3D9\uC77C\uD569\uB2C8\uB2E4</div>' +
+                '<div class="verdict-text">\uC591\uCABD \uBAA8\uB450 ' + f_kr(totalTax) + '</div>';
+        }
+    } else {
+        // 금융소득 없음
+        sepBox.style.borderColor = '#94a3b8';
+        sepBox.style.background = 'linear-gradient(to bottom,#f8fafc,#f1f5f9)';
+        sepTitle.innerHTML = '&#x1F4B0; \uBD84\uB9AC\uACFC\uC138';
+        sepTitle.style.color = '#64748b';
+        sepContent.innerHTML =
+            '<div style="font-size:0.92rem;color:#94a3b8;margin-top:20px;text-align:center;">\uAE08\uC735\uC18C\uB4DD\uC774 \uC5C6\uC5B4 \uBE44\uAD50 \uB300\uC0C1\uC774 \uC544\uB2D9\uB2C8\uB2E4</div>';
+
+        if (totalTax > 0) {
+            document.getElementById('it-verdict').innerHTML =
+                '<div class="verdict-icon">&#x1F4CA;</div>' +
+                '<div class="verdict-title">\uCD1D \uB0A9\uBD80\uC138\uC561: ' + f_kr(totalTax) + '</div>' +
+                '<div class="verdict-text">\uC885\uD569\uC18C\uB4DD\uC138 ' + f_kr(incomeTax) + ' + \uC9C0\uBC29\uC18C\uB4DD\uC138 ' + f_kr(localTax) + '</div>';
+        } else {
+            document.getElementById('it-verdict').innerHTML =
+                '<div class="verdict-icon">&#x2705;</div>' +
+                '<div class="verdict-title">\uB0A9\uBD80\uD560 \uC138\uAE08\uC774 \uC5C6\uC2B5\uB2C8\uB2E4</div>' +
+                '<div class="verdict-text">\uC18C\uB4DD\uC744 \uC785\uB825\uD574\uC8FC\uC138\uC694.</div>';
+        }
+    }
+
+    // Pie chart
+    var pieLabels = [];
+    var pieData = [];
+    var pieColors = ['#1e3a8a', '#3b82f6', '#f59e0b', '#8b5cf6', '#10b981', '#6366f1'];
+    var allIncomes = [
+        { label: '\uADFC\uB85C\uC18C\uB4DD', val: earned },
+        { label: '\uC774\uC790\uC18C\uB4DD', val: interest },
+        { label: '\uBC30\uB2F9\uC18C\uB4DD', val: dividend },
+        { label: '\uC0AC\uC5C5\uC18C\uB4DD', val: business },
+        { label: '\uC5F0\uAE08\uC18C\uB4DD', val: pension },
+        { label: '\uAE30\uD0C0\uC18C\uB4DD', val: etc }
+    ];
+    var usedColors = [];
+    for (var i = 0; i < allIncomes.length; i++) {
+        if (allIncomes[i].val > 0) {
+            pieLabels.push(allIncomes[i].label);
+            pieData.push(allIncomes[i].val);
+            usedColors.push(pieColors[i]);
+        }
+    }
+
+    var pieCtx = document.getElementById('it-pie-chart').getContext('2d');
+    if (itPieChart) itPieChart.destroy();
+    if (pieData.length > 0) {
+        itPieChart = new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: pieLabels,
+                datasets: [{
+                    data: pieData,
+                    backgroundColor: usedColors,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } },
+                    title: { display: true, text: '\uC18C\uB4DD \uAD6C\uC131 \uBD84\uC11D', font: { size: 14, weight: 'bold' }, color: '#1e3a8a' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) { return ctx.label + ': ' + f_kr(ctx.raw) + ' (' + ((ctx.raw / total * 100) || 0).toFixed(1) + '%)'; }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        itPieChart = new Chart(pieCtx, {
+            type: 'doughnut',
+            data: { labels: ['\uC18C\uB4DD \uC5C6\uC74C'], datasets: [{ data: [1], backgroundColor: ['#e2e8f0'], borderWidth: 0 }] },
+            options: { responsive: true, plugins: { legend: { display: false }, title: { display: true, text: '\uC18C\uB4DD \uAD6C\uC131 \uBD84\uC11D', font: { size: 14, weight: 'bold' }, color: '#1e3a8a' } } }
+        });
+    }
+}
+
+/* ============================================================
+   REAL ESTATE: SUB-TAB SWITCHING
+   ============================================================ */
+function switchRealEstateSubTab(which, btn) {
+    document.getElementById('re-sub-acq').classList.toggle('hidden', which !== 'acq');
+    document.getElementById('re-sub-hold').classList.toggle('hidden', which !== 'hold');
+    document.getElementById('re-sub-transfer').classList.toggle('hidden', which !== 'transfer');
+    btn.parentElement.querySelectorAll('.sub-tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+}
+
+/* ============================================================
+   REAL ESTATE: 취득세 CALCULATION
+   ============================================================ */
+var reAcqChart = null;
+
+function calcAcquisitionTax() {
+    var propType = document.getElementById('re-acq-type').value;
+    var area = parseFloat(document.getElementById('re-acq-area').value) || 0;
+    var price = parseNumberInput(document.getElementById('re-acq-price'));
+    var hCount = document.getElementById('re-acq-hcount').value;
+    var isAdj = document.getElementById('re-acq-adj').checked;
+    var isFirstHome = document.getElementById('re-acq-first').checked;
+
+    var isHousing = propType.indexOf('\uC8FC\uD0DD') >= 0;
+    var isSpecial = propType.indexOf('\uC0C1\uC18D') >= 0 || propType.indexOf('\uC99D\uC5EC') >= 0;
+
+    // 세율 계산
+    var result = getAcquisitionTaxRate(price, propType, hCount, isAdj);
+    var rate = result.rate;
+    var desc = result.desc;
+
+    var tax = price * rate;
+
+    // 지방교육세
+    var eduTax;
+    if (rate > 0.03 && isHousing) {
+        var stdRate;
+        if (price <= 600000000) stdRate = 0.01;
+        else if (price <= 900000000) stdRate = (price * 2 / 300000000 - 3) / 100;
+        else stdRate = 0.03;
+        eduTax = price * stdRate * 0.10;
+    } else {
+        eduTax = tax * 0.10;
+    }
+
+    // 농어촌특별세
+    var ruralTax = (area > 85 && isHousing && !isSpecial) ? tax * 0.10 : 0;
+
+    var totalTax = tax + eduTax + ruralTax;
+
+    // 생애최초 감면
+    var reduction = 0;
+    var firstMsg = document.getElementById('re-acq-first-msg');
+    if (isFirstHome && propType === '\uC8FC\uD0DD(\uB9E4\uB9E4)') {
+        reduction = Math.min(totalTax, 2000000);
+        totalTax = totalTax - reduction;
+        firstMsg.style.display = 'block';
+        firstMsg.textContent = '\u2705 \uC0DD\uC560\uCD5C\uCD08 \uAC10\uBA74 \uC801\uC6A9: -' + f_kr(reduction) + ' (\uD55C\uB3C4 200\uB9CC\uC6D0)';
+    } else {
+        firstMsg.style.display = 'none';
+    }
+
+    document.getElementById('re-acq-total').textContent = f_kr(totalTax);
+    document.getElementById('re-acq-desc').textContent = '\uC138\uC728 ' + (rate * 100).toFixed(2) + '% \u2014 ' + desc;
+    document.getElementById('re-acq-tax-val').textContent = f_kr(tax);
+    document.getElementById('re-acq-edu-val').textContent = f_kr(eduTax);
+    document.getElementById('re-acq-rural-val').textContent = f_kr(ruralTax);
+
+    // Bar chart
+    var ctx = document.getElementById('re-acq-chart').getContext('2d');
+    if (reAcqChart) reAcqChart.destroy();
+    reAcqChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['\uCDE8\uB4DD\uC138', '\uC9C0\uBC29\uAD50\uC721\uC138', '\uB18D\uC5B4\uCD0C\uD2B9\uBCC4\uC138'],
+            datasets: [{
+                label: '\uAE08\uC561',
+                data: [Math.round(tax), Math.round(eduTax), Math.round(ruralTax)],
+                backgroundColor: ['#1e3a8a', '#3b82f6', '#f59e0b'],
+                borderRadius: 6,
+                barPercentage: 0.5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: function(ctx) { return f_w(ctx.raw) + '\uC6D0'; } } }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: function(v) { return f_w(v); } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+function getAcquisitionTaxRate(price, propType, hCount, isAdj) {
+    if (propType.indexOf('\uBC95\uC778') >= 0) return { rate: 0.12, desc: '\uBC95\uC778 \uCDE8\uB4DD 12%' };
+    if (propType.indexOf('\uC0C1\uC18D') >= 0) {
+        return { rate: propType.indexOf('\uB18D\uC9C0') >= 0 ? 0.023 : 0.028, desc: '\uC0C1\uC18D \uCDE8\uB4DD' };
+    }
+    if (propType.indexOf('\uC99D\uC5EC') >= 0) {
+        if (propType.indexOf('\uB18D\uC9C0') >= 0) return { rate: 0.035, desc: '\uB18D\uC9C0 \uC99D\uC5EC 3.5%' };
+        if (isAdj && hCount !== '1\uC8FC\uD0DD') return { rate: 0.12, desc: '\uC870\uC815\uC9C0\uC5ED \uB2E4\uC8FC\uD0DD \uC99D\uC5EC 12%' };
+        return { rate: 0.035, desc: '\uC99D\uC5EC \uCDE8\uB4DD 3.5%' };
+    }
+    if (propType.indexOf('\uB18D\uC9C0') >= 0) {
+        return { rate: propType.indexOf('\uC790\uACBD') >= 0 ? 0.015 : 0.03, desc: '\uB18D\uC9C0' };
+    }
+    if (propType.indexOf('\uAE30\uD0C0') >= 0) return { rate: 0.04, desc: '\uAE30\uD0C0 4%' };
+
+    // 주택(매매)
+    if (hCount === '1\uC8FC\uD0DD') {
+        if (price <= 600000000) return { rate: 0.01, desc: '6\uC5B5 \uC774\uD558 1%' };
+        if (price <= 900000000) {
+            var r = (price * 2 / 300000000 - 3) / 100;
+            return { rate: r, desc: '6~9\uC5B5 \uC2AC\uB77C\uC774\uB529' };
+        }
+        return { rate: 0.03, desc: '9\uC5B5 \uCD08\uACFC 3%' };
+    }
+    if (hCount === '2\uC8FC\uD0DD') {
+        return { rate: isAdj ? 0.08 : (0.01 + (price > 600000000 ? 0.02 : 0)), desc: '2\uC8FC\uD0DD' };
+    }
+    return { rate: isAdj ? 0.12 : 0.04, desc: '3\uC8FC\uD0DD \uC774\uC0C1' };
+}
+
+/* ============================================================
+   REAL ESTATE: 보유세 CALCULATION
+   ============================================================ */
+var reHoldChart = null;
+var reHoldType = 'single';
+
+function setReHoldType(label, type) {
+    reHoldType = type;
+    label.parentElement.querySelectorAll('label').forEach(function(l) { l.classList.remove('active'); });
+    label.classList.add('active');
+    calcHoldingTax();
+}
+
+function getPropertyTax(offPrice) {
+    var taxBase = offPrice * 0.6;
+    var tax;
+    if (taxBase <= 60000000) {
+        tax = taxBase * 0.001;
+    } else if (taxBase <= 150000000) {
+        tax = 60000 + (taxBase - 60000000) * 0.0015;
+    } else if (taxBase <= 300000000) {
+        tax = 195000 + (taxBase - 150000000) * 0.0025;
+    } else {
+        tax = 570000 + (taxBase - 300000000) * 0.004;
+    }
+    return Math.round(tax);
+}
+
+function getJongbuTax(base, isMulti) {
+    var brackets = isMulti ? [
+        [300000000, 0.005, 0], [600000000, 0.007, 600000], [1200000000, 0.010, 2400000],
+        [2500000000, 0.014, 7200000], [5000000000, 0.015, 9700000], [9400000000, 0.020, 34700000],
+        [Infinity, 0.027, 100500000]
+    ] : [
+        [300000000, 0.005, 0], [600000000, 0.007, 600000], [1200000000, 0.010, 2400000],
+        [2500000000, 0.013, 6000000], [5000000000, 0.015, 11000000], [9400000000, 0.020, 36000000],
+        [Infinity, 0.027, 101800000]
+    ];
+    for (var i = 0; i < brackets.length; i++) {
+        if (base <= brackets[i][0]) {
+            return { tax: Math.max(0, base * brackets[i][1] - brackets[i][2]), rate: brackets[i][1] };
+        }
+    }
+    return { tax: 0, rate: 0 };
+}
+
+function calcHoldingTax() {
+    var offPrice = parseNumberInput(document.getElementById('re-hold-price'));
+    var age = parseInt(document.getElementById('re-hold-age').value) || 60;
+    var holdY = parseInt(document.getElementById('re-hold-period').value) || 0;
+    var isSingle = reHoldType === 'single' || reHoldType === 'joint';
+    var isMulti = reHoldType === 'multi';
+
+    // 재산세
+    var propTax = getPropertyTax(offPrice);
+
+    // 종부세
+    var exemption;
+    if (reHoldType === 'single') exemption = 1200000000;
+    else if (reHoldType === 'joint') exemption = 1800000000;
+    else exemption = 900000000;
+
+    var jongbuBase = Math.max(0, offPrice - exemption) * 0.6;
+    var jResult = getJongbuTax(jongbuBase, isMulti);
+    var jongbuTax = jResult.tax;
+
+    // 세액공제 (1주택만)
+    var dedRate = 0;
+    var dedInfo = document.getElementById('re-hold-ded-info');
+    if (isSingle && !isMulti) {
+        var ageDed = age >= 70 ? 0.4 : age >= 65 ? 0.3 : age >= 60 ? 0.2 : 0;
+        var periodDed = holdY >= 15 ? 0.5 : holdY >= 10 ? 0.4 : holdY >= 5 ? 0.2 : 0;
+        dedRate = Math.min(0.8, ageDed + periodDed);
+        if (dedRate > 0) {
+            jongbuTax = Math.round(jongbuTax * (1 - dedRate));
+            dedInfo.style.display = 'block';
+            dedInfo.innerHTML = '\u2705 \uC138\uC561\uACF5\uC81C \uC801\uC6A9: \uC5F0\uB839\uACF5\uC81C ' + (ageDed * 100) + '% + \uBCF4\uC720\uACF5\uC81C ' + (periodDed * 100) + '% = <strong>' + (dedRate * 100) + '%</strong> (\uD55C\uB3C4 80%)';
+        } else {
+            dedInfo.style.display = 'none';
+        }
+    } else {
+        dedInfo.style.display = 'none';
+    }
+
+    var totalTax = propTax + jongbuTax;
+
+    document.getElementById('re-hold-prop-tax').textContent = f_kr(propTax);
+    document.getElementById('re-hold-jongbu-tax').textContent = f_kr(jongbuTax);
+    document.getElementById('re-hold-jongbu-desc').textContent = '\uACF5\uC81C\uAE08\uC561: ' + f_kr(exemption) + ', \uACFC\uC138\uAE30\uC900: ' + f_kr(jongbuBase);
+    document.getElementById('re-hold-total').textContent = f_kr(totalTax);
+
+    // Chart
+    var ctx = document.getElementById('re-hold-chart').getContext('2d');
+    if (reHoldChart) reHoldChart.destroy();
+    reHoldChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['\uC7AC\uC0B0\uC138', '\uC885\uD569\uBD80\uB3D9\uC0B0\uC138'],
+            datasets: [{
+                label: '\uAE08\uC561',
+                data: [propTax, jongbuTax],
+                backgroundColor: ['#1e3a8a', '#3b82f6'],
+                borderRadius: 6,
+                barPercentage: 0.5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: function(ctx) { return f_w(ctx.raw) + '\uC6D0'; } } }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: function(v) { return f_w(v); } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+/* ============================================================
+   REAL ESTATE: 양도소득세 CALCULATION
+   ============================================================ */
+var reTfChart = null;
+
+function calcTransferTax() {
+    var asset = document.getElementById('re-tf-asset').value;
+    var sell = parseNumberInput(document.getElementById('re-tf-sell'));
+    var buy = parseNumberInput(document.getElementById('re-tf-buy'));
+    var expenses = parseNumberInput(document.getElementById('re-tf-expenses'));
+    var is1h = document.getElementById('re-tf-1h').checked;
+    var multiSur = document.getElementById('re-tf-multi').value;
+    var holdY = parseInt(document.getElementById('re-tf-hold').value) || 0;
+    var resY = parseInt(document.getElementById('re-tf-reside').value) || 0;
+
+    // 거주기간 표시 (주택만)
+    document.getElementById('re-tf-reside-group').style.display = asset === '\uC8FC\uD0DD' ? '' : 'none';
+
+    var gain = sell - buy - expenses;
+    var taxableGain = gain;
+
+    // 1세대 1주택 비과세
+    if (is1h && asset === '\uC8FC\uD0DD') {
+        if (sell > 1200000000) {
+            taxableGain = gain * (sell - 1200000000) / sell;
+        } else {
+            taxableGain = 0;
+        }
+    }
+
+    var info = '';
+
+    // 단기보유 중과
+    var shortRate = 0;
+    var isBunyang = asset.indexOf('\uBD84\uC591\uAD8C') >= 0;
+    var isHousingOrLand = asset === '\uC8FC\uD0DD' || asset === '\uBE44\uC0AC\uC5C5\uC6A9 \uD1A0\uC9C0';
+    if (isBunyang && holdY < 1) shortRate = 0.70;
+    else if (isBunyang && holdY < 2) shortRate = 0.60;
+    else if (isHousingOrLand && holdY < 1) shortRate = 0.70;
+    else if (isHousingOrLand && holdY < 2) shortRate = 0.60;
+
+    // 장기보유특별공제
+    var ltRate = 0;
+    if (!shortRate && taxableGain > 0) {
+        if (holdY < 3) {
+            ltRate = 0;
+        } else if (is1h && asset === '\uC8FC\uD0DD' && resY >= 2) {
+            ltRate = Math.min(0.8, holdY * 0.04 + Math.min(resY, holdY) * 0.04);
+        } else {
+            ltRate = Math.min(0.3, holdY * 0.02);
+        }
+    }
+
+    var deduction = Math.round(taxableGain * ltRate);
+    var yangBase = Math.max(0, taxableGain - deduction - 2500000);
+
+    var yangTax = 0;
+    var rateDesc = '';
+
+    if (shortRate > 0) {
+        yangTax = Math.max(0, yangBase * shortRate);
+        rateDesc = '\uB2E8\uAE30\uBCF4\uC720 \uC911\uACFC\uC138\uC728 ' + (shortRate * 100) + '%';
+        info += '\u26A0\uFE0F \uB2E8\uAE30\uBCF4\uC720 \uC911\uACFC: ' + (shortRate * 100) + '% \uC801\uC6A9<br>';
+    } else {
+        // 누진세율
+        var progResult = calcProgressiveTax(yangBase);
+        yangTax = progResult.tax;
+        rateDesc = '\uB204\uC9C4\uC138\uC728 ' + progResult.desc;
+
+        // 다주택 중과
+        var surcharge = 0;
+        if (multiSur.indexOf('2\uC8FC\uD0DD') >= 0) surcharge = 0.20;
+        else if (multiSur.indexOf('3\uC8FC\uD0DD') >= 0) surcharge = 0.30;
+        if (surcharge > 0) {
+            yangTax = yangTax + yangBase * surcharge;
+            rateDesc += ' + \uC911\uACFC ' + (surcharge * 100) + '%p';
+            info += '\u26A0\uFE0F \uB2E4\uC8FC\uD0DD \uC911\uACFC: +' + (surcharge * 100) + '%p<br>';
+        }
+    }
+
+    if (is1h && asset === '\uC8FC\uD0DD') {
+        if (sell <= 1200000000) info += '\u2705 1\uC138\uB300 1\uC8FC\uD0DD \uBE44\uACFC\uC138 (\uC591\uB3C4\uAC00\uC561 12\uC5B5 \uC774\uD558)<br>';
+        else info += '\u26A0\uFE0F 1\uC138\uB300 1\uC8FC\uD0DD \uACE0\uAC00\uC8FC\uD0DD: 12\uC5B5 \uCD08\uACFC\uBD84\uB9CC \uACFC\uC138<br>';
+    }
+    if (ltRate > 0) info += '\uD83D\uDCCB \uC7A5\uAE30\uBCF4\uC720\uD2B9\uBCC4\uACF5\uC81C: ' + (ltRate * 100).toFixed(0) + '% (' + f_kr(deduction) + ')<br>';
+    info += '\uD83D\uDCCA \uC591\uB3C4\uCC28\uC775: ' + f_kr(gain) + ' \u2192 \uACFC\uC138\uD45C\uC900: ' + f_kr(yangBase) + '<br>';
+    info += '\uD83D\uDCB0 ' + rateDesc;
+
+    var localTax = yangTax * 0.1;
+    var totalTax = yangTax + localTax;
+    var netProceeds = sell - buy - expenses - totalTax;
+
+    document.getElementById('re-tf-tax-val').textContent = f_kr(yangTax);
+    document.getElementById('re-tf-local-val').textContent = f_kr(localTax);
+    document.getElementById('re-tf-net-val').textContent = f_kr(netProceeds);
+    document.getElementById('re-tf-info').innerHTML = info;
+
+    // Waterfall chart
+    var ctx = document.getElementById('re-tf-chart').getContext('2d');
+    if (reTfChart) reTfChart.destroy();
+    reTfChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['\uC591\uB3C4\uAC00\uC561', '\uCDE8\uB4DD\uAC00\uC561', '\uD544\uC694\uACBD\uBE44', '\uC591\uB3C4\uC138+\uC9C0\uBC29\uC138', '\uC138\uD6C4 \uC2E4\uC218\uB839\uC561'],
+            datasets: [{
+                label: '\uAE08\uC561',
+                data: [sell, -buy, -expenses, -totalTax, netProceeds],
+                backgroundColor: ['#22c55e', '#ef4444', '#ef4444', '#ef4444', '#3b82f6'],
+                borderRadius: 6,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: function(ctx) { return f_w(Math.abs(ctx.raw)) + '\uC6D0'; } } }
+            },
+            scales: {
+                y: { ticks: { callback: function(v) { return f_w(v); } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+/* ============================================================
+   INHERITANCE / GIFT TAX
+   ============================================================ */
+function switchInhSubTab(which, btn) {
+    document.getElementById('inh-gift').classList.toggle('hidden', which !== 'gift');
+    document.getElementById('inh-inherit').classList.toggle('hidden', which !== 'inherit');
+    btn.parentElement.querySelectorAll('.sub-tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+}
+
+var inhDedMethod = 'lump';
+function setInhDedMethod(label, method) {
+    inhDedMethod = method;
+    label.parentElement.querySelectorAll('label').forEach(function(l) { l.classList.remove('active'); });
+    label.classList.add('active');
+    document.getElementById('inh-detail-inputs').classList.toggle('hidden', method !== 'detail');
+    calcInheritance();
+}
+
+function getTaxRate5(base) {
+    if (base <= 1e8) return {r:0.10, p:0, desc:'10%'};
+    if (base <= 5e8) return {r:0.20, p:1e7, desc:'20%'};
+    if (base <= 10e8) return {r:0.30, p:6e7, desc:'30%'};
+    if (base <= 30e8) return {r:0.40, p:1.6e8, desc:'40%'};
+    return {r:0.50, p:4.6e8, desc:'50%'};
+}
+
+var giftPieChart = null;
+function calcGift() {
+    var curr = parseNumberInput(document.getElementById('gift-amount'));
+    var prev = parseNumberInput(document.getElementById('gift-prev'));
+    var prevTaxCredit = parseNumberInput(document.getElementById('gift-prev-tax'));
+    var debt = parseNumberInput(document.getElementById('gift-debt'));
+    var rel = document.getElementById('gift-relation').value;
+    var prevUsedDed = parseNumberInput(document.getElementById('gift-used-ded'));
+    var isStartup = document.getElementById('gift-startup').checked;
+    var isOverseas = document.getElementById('gift-overseas').checked;
+    var isGenSkip = document.getElementById('gift-gen-skip').checked;
+    var isMinor = document.getElementById('gift-minor').checked;
+
+    var dedMap = {'\uBC30\uC6B0\uC790': 6e8, '\uC131\uB144': 5e7, '\uBBF8\uC131\uB144': 2e7, '\uC9C1\uACC4\uC874\uC18D': 5e7, '\uAE30\uD0C0': 1e7, '\uD615\uC81C': 1e7};
+    var dedFull = dedMap[rel] || 5e7;
+    var ded = Math.max(0, dedFull - prevUsedDed);
+    var taxBase = Math.max(0, (curr + prev - debt) - ded);
+
+    var tr = getTaxRate5(taxBase);
+    var calcTax = 0;
+    if (isStartup) {
+        if (taxBase <= 5e8) {
+            calcTax = taxBase * 0.10;
+        } else {
+            var excess = taxBase - 5e8;
+            var tr2 = getTaxRate5(excess);
+            calcTax = 5e8 * 0.10 + (excess * tr2.r - tr2.p);
+        }
+    } else {
+        calcTax = taxBase * tr.r - tr.p;
+    }
+    calcTax = Math.max(0, calcTax);
+
+    var surcharge = 0;
+    if (isGenSkip) {
+        var surchargeRate = (isMinor && taxBase > 20e8) ? 0.40 : 0.30;
+        surcharge = calcTax * surchargeRate;
+    }
+
+    var beforeCredit = calcTax + surcharge;
+    var afterCredit = Math.max(0, beforeCredit - prevTaxCredit);
+    var finalTax = Math.max(0, Math.round(afterCredit * 0.97));
+    var netGift = curr - debt - finalTax;
+
+    document.getElementById('gift-result-cards').innerHTML =
+        '<div class="result-card" style="background:linear-gradient(135deg,#78350f,#f59e0b);box-shadow:0 4px 16px rgba(245,158,11,0.25);">' +
+        '<div class="rc-label">\uC0B0\uCD9C\uC138\uC561 (\uCD5C\uC885 \uB0A9\uBD80\uC138\uC561)</div>' +
+        '<div class="rc-value">' + f_kr(finalTax) + '</div>' +
+        '<div class="rc-formula">\uACFC\uC138\uD45C\uC900 ' + f_kr(taxBase) + ' \xD7 ' + tr.desc + '</div>' +
+        '</div>' +
+        '<div class="result-card" style="background:linear-gradient(135deg,#14532d,#22c55e);box-shadow:0 4px 16px rgba(34,197,94,0.25);">' +
+        '<div class="rc-label">\uC2E4\uC9C8 \uC218\uB839\uC561</div>' +
+        '<div class="rc-value">' + f_kr(netGift) + '</div>' +
+        '<div class="rc-formula">\uC99D\uC5EC\uC561 ' + f_kr(curr) + ' - \uCC44\uBB34 ' + f_kr(debt) + ' - \uC138\uAE08 ' + f_kr(finalTax) + '</div>' +
+        '</div>';
+
+    var ctx = document.getElementById('gift-pie-chart').getContext('2d');
+    if (giftPieChart) giftPieChart.destroy();
+    giftPieChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['\uC2E4\uC9C8 \uC218\uB839\uC561', '\uC99D\uC5EC\uC138', '\uCC44\uBB34 \uACF5\uC81C'],
+            datasets: [{
+                data: [Math.max(0, netGift), finalTax, debt],
+                backgroundColor: ['#22c55e', '#ef4444', '#94a3b8'],
+                borderWidth: 2, borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: { callbacks: { label: function(ctx) { return ctx.label + ': ' + f_kr(ctx.raw); } } }
+            }
+        }
+    });
+
+    document.getElementById('gift-steps-body').innerHTML =
+        '<div class="step-box"><div class="step-num">STEP 1</div>' +
+        '<div class="step-title">\uC99D\uC5EC\uC7AC\uC0B0\uACF5\uC81C</div>' +
+        '<div class="step-content">\uC218\uC99D\uC790 \uAD00\uACC4: <strong>' + rel + '</strong> / \uACF5\uC81C \uD55C\uB3C4: ' + f_kr(dedFull) + ' / \uC774\uBBF8 \uC0AC\uC6A9: ' + f_kr(prevUsedDed) + '<br>\uC801\uC6A9 \uACF5\uC81C\uC561: <strong>' + f_kr(ded) + '</strong></div></div>' +
+        '<div class="step-box"><div class="step-num">STEP 2</div>' +
+        '<div class="step-title">\uACFC\uC138\uD45C\uC900 \uC0B0\uCD9C</div>' +
+        '<div class="step-content"><div class="step-formula">(\uC99D\uC5EC\uC561 ' + f_kr(curr) + ' + \uC0AC\uC804\uC99D\uC5EC ' + f_kr(prev) + ' - \uCC44\uBB34 ' + f_kr(debt) + ') - \uACF5\uC81C ' + f_kr(ded) + ' = ' + f_kr(taxBase) + '</div></div></div>' +
+        '<div class="step-box"><div class="step-num">STEP 3</div>' +
+        '<div class="step-title">\uC138\uC728 \uC801\uC6A9</div>' +
+        '<div class="step-content">\uC801\uC6A9 \uC138\uC728: <strong>' + tr.desc + '</strong>' + (isStartup ? ' (\uCC3D\uC5C5\uC790\uAE08 \uD2B9\uB840 5\uC5B5 \uD55C\uB3C4 10%)' : '') +
+        '<br>\uC0B0\uCD9C\uC138\uC561: ' + f_kr(Math.round(calcTax)) +
+        (surcharge > 0 ? '<br>\uC138\uB300\uC0DD\uB7B5 \uD560\uC99D: +' + f_kr(Math.round(surcharge)) : '') +
+        (prevTaxCredit > 0 ? '<br>\uAE30\uB0A9\uBD80\uC138\uC561 \uACF5\uC81C: -' + f_kr(prevTaxCredit) : '') +
+        '<br>\uC2E0\uACE0\uC138\uC561\uACF5\uC81C (3%): -' + f_kr(Math.round(afterCredit * 0.03)) +
+        '<br><strong>\uCD5C\uC885 \uB0A9\uBD80\uC138\uC561: ' + f_kr(finalTax) + '</strong></div></div>';
+
+    document.getElementById('gift-payment-text').innerHTML =
+        '\u2022 \uC99D\uC5EC\uC138 \uC2E0\uACE0\uAE30\uD55C: \uC99D\uC5EC\uBC1B\uC740 \uB2EC\uC758 \uB9D0\uC77C\uBD80\uD130 <strong>3\uAC1C\uC6D4 \uC774\uB0B4</strong><br>' +
+        '\u2022 \uC2E0\uACE0\uC138\uC561\uACF5\uC81C: \uAE30\uD55C \uB0B4 \uC2E0\uACE0 \uC2DC <strong>3%</strong> \uACF5\uC81C<br>' +
+        '\u2022 \uBD84\uB0A9/\uC5F0\uBD80: \uB0A9\uBD80\uC138\uC561\uC774 1\uCC9C\uB9CC\uC6D0 \uCD08\uACFC \uC2DC \uBD84\uB0A9 \uAC00\uB2A5, 2\uCC9C\uB9CC\uC6D0 \uCD08\uACFC \uC2DC \uC5F0\uBD80 \uAC00\uB2A5' +
+        (isOverseas ? '<br>\u2022 <span style="color:#dc2626;">\uAD6D\uC678\uC7AC\uC0B0 \uC99D\uC5EC: \uC218\uC99D\uC790\uAC00 \uBE44\uAC70\uC8FC\uC790\uC778 \uACBD\uC6B0 \uC99D\uC5EC\uC790\uAC00 \uC2E0\uACE0 \uC758\uBB34</span>' : '');
+}
+
+/* ============================================================
+   INHERITANCE TAX
+   ============================================================ */
+var inhWaterfallChart = null;
+function calcInheritance() {
+    var estate = parseNumberInput(document.getElementById('inh-estate'));
+    var nontax = parseNumberInput(document.getElementById('inh-nontax'));
+    var prevGift = parseNumberInput(document.getElementById('inh-prev-gift'));
+    var prevGiftOther = parseNumberInput(document.getElementById('inh-prev-gift-other'));
+    var prevTax = parseNumberInput(document.getElementById('inh-prev-tax'));
+    var debtVal = parseNumberInput(document.getElementById('inh-debt'));
+    var funeralInput = parseNumberInput(document.getElementById('inh-funeral'));
+    var spouseAlive = document.getElementById('inh-spouse-alive').checked;
+    var spouseDedInput = parseNumberInput(document.getElementById('inh-spouse-ded'));
+    var finance = parseNumberInput(document.getElementById('inh-finance'));
+    var housingDed = Math.min(parseNumberInput(document.getElementById('inh-housing-ded')), 6e8);
+    var businessDed = Math.min(parseNumberInput(document.getElementById('inh-business-ded')), 600e8);
+    var farmDed = Math.min(parseNumberInput(document.getElementById('inh-farm-ded')), 300e8);
+    var isGenSkip = document.getElementById('inh-gen-skip').checked;
+
+    document.getElementById('inh-spouse-ded-group').classList.toggle('hidden', !spouseAlive);
+
+    var funeral = Math.max(5e6, Math.min(funeralInput, 1.5e7));
+    var totalPrevGift = prevGift + prevGiftOther;
+    var netEstate = estate + totalPrevGift - debtVal - funeral - nontax;
+
+    var spouseDed = 0;
+    if (spouseAlive) {
+        spouseDed = Math.max(5e8, Math.min(spouseDedInput, 30e8));
+    }
+
+    var basicDed = 0;
+    if (inhDedMethod === 'lump') {
+        basicDed = 5e8;
+    } else {
+        var base = 2e8;
+        var children = parseInt(document.getElementById('inh-children').value) || 0;
+        var minorChildren = parseInt(document.getElementById('inh-minor-children').value) || 0;
+        var minorAge = parseInt(document.getElementById('inh-minor-age').value) || 10;
+        var elderly = parseInt(document.getElementById('inh-elderly').value) || 0;
+        var disabled = parseInt(document.getElementById('inh-disabled').value) || 0;
+        var disabledYrs = parseInt(document.getElementById('inh-disabled-years').value) || 30;
+        var childDed = children * 5e7;
+        var minorDed = minorChildren * (19 - minorAge) * 1e7;
+        var elderlyDed = elderly * 5e7;
+        var disabledDed = disabled * 1e7 * disabledYrs;
+        basicDed = Math.max(5e8, base + childDed + minorDed + elderlyDed + disabledDed);
+    }
+
+    var financeDed = 0;
+    if (finance > 0) {
+        if (finance <= 2e7) financeDed = finance;
+        else financeDed = Math.min(2e8, Math.max(2e7, finance * 0.20));
+    }
+
+    var totalDeductions = spouseDed + basicDed + financeDed + housingDed + businessDed + farmDed;
+    totalDeductions = Math.min(totalDeductions, Math.max(0, netEstate - totalPrevGift));
+
+    var taxBase = Math.max(0, netEstate - totalDeductions);
+    var tr = getTaxRate5(taxBase);
+    var calcTax = Math.max(0, taxBase * tr.r - tr.p);
+
+    var surcharge = 0;
+    if (isGenSkip) surcharge = calcTax * 0.30;
+
+    var beforeCredit = calcTax + surcharge;
+    var afterCredit = Math.max(0, beforeCredit - prevTax);
+    var finalTax = Math.max(0, Math.round(afterCredit * 0.97));
+
+    document.getElementById('inh-result-cards').innerHTML =
+        '<div class="result-card" style="background:linear-gradient(135deg,#78350f,#f59e0b);box-shadow:0 4px 16px rgba(245,158,11,0.25);">' +
+        '<div class="rc-label">\uC0C1\uC18D\uC138 \uCD5C\uC885 \uB0A9\uBD80\uC561</div>' +
+        '<div class="rc-value">' + f_kr(finalTax) + '</div>' +
+        '<div class="rc-formula">\uACFC\uC138\uD45C\uC900 ' + f_kr(taxBase) + ' \xD7 ' + tr.desc + '</div>' +
+        '</div>' +
+        '<div class="result-card" style="background:linear-gradient(135deg,#14532d,#22c55e);box-shadow:0 4px 16px rgba(34,197,94,0.25);">' +
+        '<div class="rc-label">\uC0C1\uC18D \uC7AC\uC0B0 (\uC138\uD6C4)</div>' +
+        '<div class="rc-value">' + f_kr(Math.max(0, estate - finalTax)) + '</div>' +
+        '<div class="rc-formula">\uC7AC\uC0B0 ' + f_kr(estate) + ' - \uC138\uAE08 ' + f_kr(finalTax) + '</div>' +
+        '</div>';
+
+    var ctx = document.getElementById('inh-waterfall-chart').getContext('2d');
+    if (inhWaterfallChart) inhWaterfallChart.destroy();
+    inhWaterfallChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['\uC0C1\uC18D\uC7AC\uC0B0', '\uCC44\uBB34/\uC7A5\uB840', '\uACF5\uC81C\uD569\uACC4', '\uACFC\uC138\uD45C\uC900', '\uC0C1\uC18D\uC138'],
+            datasets: [{
+                label: '\uAE08\uC561',
+                data: [estate, -(debtVal + funeral), -totalDeductions, taxBase, -finalTax],
+                backgroundColor: ['#22c55e', '#ef4444', '#3b82f6', '#f59e0b', '#ef4444'],
+                borderRadius: 6, barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: function(ctx) { return f_w(Math.abs(ctx.raw)) + '\uC6D0'; } } },
+                title: { display: true, text: '\uC0C1\uC18D\uC138 \uC0B0\uCD9C \uD750\uB984', font: { size: 14, weight: 'bold' }, color: '#1e3a8a' }
+            },
+            scales: {
+                y: { ticks: { callback: function(v) { return f_w(v); } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    document.getElementById('inh-steps-body').innerHTML =
+        '<div class="step-box"><div class="step-num">STEP 1</div><div class="step-title">\uC0C1\uC18D\uC7AC\uC0B0 \uD655\uC815</div>' +
+        '<div class="step-content">\uCD1D \uC0C1\uC18D\uC7AC\uC0B0: ' + f_kr(estate) + '<br>\uBE44\uACFC\uC138: -' + f_kr(nontax) + ' / \uCC44\uBB34: -' + f_kr(debtVal) + ' / \uC7A5\uB840\uBE44: -' + f_kr(funeral) + '<br>\uC0AC\uC804\uC99D\uC5EC \uD569\uC0B0: +' + f_kr(totalPrevGift) + '<br>\uC21C\uC0C1\uC18D\uC7AC\uC0B0: <strong>' + f_kr(netEstate) + '</strong></div></div>' +
+        '<div class="step-box"><div class="step-num">STEP 2</div><div class="step-title">\uACF5\uC81C \uC801\uC6A9</div>' +
+        '<div class="step-content">\uBC30\uC6B0\uC790 \uACF5\uC81C: ' + f_kr(spouseDed) + '<br>' + (inhDedMethod === 'lump' ? '\uC77C\uAD04\uACF5\uC81C' : '\uAE30\uCD08+\uC778\uC801\uACF5\uC81C') + ': ' + f_kr(basicDed) + '<br>\uAE08\uC735\uC7AC\uC0B0 \uACF5\uC81C: ' + f_kr(financeDed) + '<br>\uB3D9\uAC70\uC8FC\uD0DD: ' + f_kr(housingDed) + ' / \uAC00\uC5C5: ' + f_kr(businessDed) + ' / \uC601\uB18D: ' + f_kr(farmDed) + '<br>\uCD1D \uACF5\uC81C: <strong>' + f_kr(totalDeductions) + '</strong></div></div>' +
+        '<div class="step-box"><div class="step-num">STEP 3</div><div class="step-title">\uC138\uC561 \uC0B0\uCD9C</div>' +
+        '<div class="step-content">\uACFC\uC138\uD45C\uC900: ' + f_kr(taxBase) + '<br>\uC138\uC728: ' + tr.desc + '<br>\uC0B0\uCD9C\uC138\uC561: ' + f_kr(Math.round(calcTax)) +
+        (surcharge > 0 ? '<br>\uC138\uB300\uC0DD\uB7B5 \uD560\uC99D: +' + f_kr(Math.round(surcharge)) : '') +
+        (prevTax > 0 ? '<br>\uAE30\uB0A9\uBD80 \uACF5\uC81C: -' + f_kr(prevTax) : '') +
+        '<br>\uC2E0\uACE0\uACF5\uC81C (3%): -' + f_kr(Math.round(afterCredit * 0.03)) +
+        '<br><strong>\uCD5C\uC885 \uB0A9\uBD80\uC561: ' + f_kr(finalTax) + '</strong></div></div>';
+
+    var monthlyPremA = Math.round(finalTax / 20 / 12);
+    var monthlyPremB = Math.round(finalTax / 20 / 12 * 0.7);
+    document.getElementById('inh-insurance-strategy').innerHTML =
+        '<strong>\uC2DC\uB098\uB9AC\uC624 A: \uBD80\uBAA8 \uB0A9\uC785</strong><br>' +
+        '\uC0C1\uC18D\uC138 \uC7AC\uC6D0 ' + f_kr(finalTax) + '\uC744 \uC885\uC2E0\uBCF4\uD5D8\uC73C\uB85C \uC900\uBE44<br>' +
+        '\uC608\uC0C1 \uC6D4 \uBCF4\uD5D8\uB8CC: \uC57D ' + f_kr(monthlyPremA) + ' (20\uB144 \uB0A9\uC785 \uAE30\uC900)<br><br>' +
+        '<strong>\uC2DC\uB098\uB9AC\uC624 B: \uC790\uB140 \uB0A9\uC785</strong><br>' +
+        '\uC790\uB140\uAC00 \uACC4\uC57D\uC790\uB85C \uC885\uC2E0\uBCF4\uD5D8 \uAC00\uC785 (\uC99D\uC5EC\uC138 \uC808\uAC10 \uD6A8\uACFC)<br>' +
+        '\uC608\uC0C1 \uC6D4 \uBCF4\uD5D8\uB8CC: \uC57D ' + f_kr(monthlyPremB) + ' (20\uB144 \uB0A9\uC785 \uAE30\uC900)';
+}
+
+/* ============================================================
+   RETIREMENT FUND
+   ============================================================ */
+var retLifecycleChart = null;
+function calcRetirement() {
+    var name = document.getElementById('ret-name').value || '\uACE0\uAC1D';
+    var currentAge = parseInt(document.getElementById('ret-age').value) || 35;
+    var goalP = parseNumberInput(document.getElementById('ret-goal'));
+    var payYearsInput = parseInt(document.getElementById('ret-pay-slider').value) || 10;
+    var retireAge = parseInt(document.getElementById('ret-retire-slider').value) || 65;
+    var lifeAge = parseInt(document.getElementById('ret-life-slider').value) || 100;
+    var inf = parseFloat(document.getElementById('ret-inf-slider').value) || 3.0;
+    var yieldR = parseFloat(document.getElementById('ret-yield-slider').value) || 6.0;
+
+    if (retireAge <= currentAge) retireAge = currentAge + 1;
+    if (lifeAge <= retireAge) lifeAge = retireAge + 1;
+
+    var ys = retireAge - currentAge;
+    var payYears = payYearsInput;
+    var yDef = Math.max(0, ys - payYears);
+    var yD = lifeAge - retireAge;
+    var goalF = Math.round(goalP * Math.pow(1 + inf / 100, ys));
+    var nMonthsRetire = yD * 12;
+    var monthlyYield = Math.round((yieldR / 100 / 12) * 1e10) / 1e10;
+
+    var lumpSum = 0;
+    if (monthlyYield === 0) lumpSum = goalF * nMonthsRetire;
+    else lumpSum = Math.round(goalF * ((1 - Math.pow(1 + monthlyYield, -nMonthsRetire)) / monthlyYield));
+
+    var nMonthsPay = payYears * 12;
+    var nMonthsDefer = yDef * 12;
+    var vPayEnd = monthlyYield === 0 ? lumpSum : lumpSum / Math.pow(1 + monthlyYield, nMonthsDefer);
+
+    var monthlySave = 0;
+    if (monthlyYield === 0) monthlySave = nMonthsPay > 0 ? Math.round(vPayEnd / nMonthsPay) : 0;
+    else monthlySave = nMonthsPay > 0 ? Math.round(vPayEnd * monthlyYield / (Math.pow(1 + monthlyYield, nMonthsPay) - 1)) : 0;
+
+    document.getElementById('ret-result-cards').innerHTML =
+        '<div class="result-card" style="background:linear-gradient(135deg,#78350f,#f59e0b);box-shadow:0 4px 16px rgba(245,158,11,0.25);">' +
+        '<div class="rc-label">' + retireAge + '\uC138 \uC2DC\uC810 \uC6D4 \uC0DD\uD65C\uBE44</div>' +
+        '<div class="rc-value">' + f_kr(goalF) + '</div>' +
+        '<div class="rc-formula">\uD604\uC7AC ' + f_kr(goalP) + ' \xD7 \uBB3C\uAC00\uC0C1\uC2B9 ' + inf + '% \xD7 ' + ys + '\uB144</div>' +
+        '</div>' +
+        '<div class="result-card" style="background:linear-gradient(135deg,#0c4a6e,#0ea5e9);box-shadow:0 4px 16px rgba(14,165,233,0.25);">' +
+        '<div class="rc-label">\uD544\uC694 \uC740\uD1F4 \uC790\uAE08 (\uCD1D\uC561)</div>' +
+        '<div class="rc-value">' + f_kr(lumpSum) + '</div>' +
+        '<div class="rc-formula">\uC6D4 ' + f_kr(goalF) + ' \xD7 ' + nMonthsRetire + '\uAC1C\uC6D4 (\uC218\uC775\uB960 \uBC18\uC601)</div>' +
+        '</div>' +
+        '<div class="result-card" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);box-shadow:0 4px 16px rgba(59,130,246,0.35);">' +
+        '<div class="rc-label">\uD83D\uDCA1 \uB9E4\uC6D4 \uD544\uC694 \uC800\uCD95\uC561</div>' +
+        '<div class="rc-value">' + f_kr(monthlySave) + '</div>' +
+        '<div class="rc-formula">' + payYears + '\uB144\uAC04 \uB0A9\uC785 \xD7 \uC218\uC775\uB960 ' + yieldR + '%</div>' +
+        '</div>';
+
+    // Asset lifecycle chart
+    var chartLabels = [];
+    var chartData = [];
+    var balance = 0;
+    var mr = monthlyYield;
+    for (var age = currentAge; age <= lifeAge; age++) {
+        chartLabels.push(age + '\uC138');
+        if (age < currentAge + payYears) {
+            for (var m = 0; m < 12; m++) balance = balance * (1 + mr) + monthlySave;
+        } else if (age < retireAge) {
+            for (var m = 0; m < 12; m++) balance = balance * (1 + mr);
+        } else {
+            for (var m = 0; m < 12; m++) { balance = balance * (1 + mr) - goalF; if (balance < 0) balance = 0; }
+        }
+        chartData.push(Math.round(balance));
+    }
+
+    var ctx = document.getElementById('ret-lifecycle-chart').getContext('2d');
+    if (retLifecycleChart) retLifecycleChart.destroy();
+    retLifecycleChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: '\uC790\uC0B0 \uC794\uC561',
+                data: chartData,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59,130,246,0.15)',
+                fill: true, tension: 0.3, pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true, position: 'top' },
+                tooltip: { callbacks: { label: function(ctx) { return '\uC790\uC0B0: ' + f_kr(ctx.raw); } } },
+                title: { display: true, text: '\uC790\uC0B0 \uC0DD\uC560\uC8FC\uAE30 \uCE21\uC120', font: { size: 14, weight: 'bold' }, color: '#1e3a8a' }
+            },
+            scales: {
+                y: { ticks: { callback: function(v) { return f_w(v); } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false }, ticks: { maxTicksLimit: 10 } }
+            }
+        }
+    });
+
+    document.getElementById('ret-steps-body').innerHTML =
+        '<div class="step-box"><div class="step-num">STEP 1</div>' +
+        '<div class="step-title">\uC778\uD50C\uB808\uC774\uC158 \uD5F7\uC9C0</div>' +
+        '<div class="step-content">\uD604\uC7AC \uD76C\uB9DD \uC6D4 \uC0DD\uD65C\uBE44: ' + f_kr(goalP) + '<br>' +
+        '\uBB3C\uAC00\uC0C1\uC2B9\uB960 ' + inf + '% \xD7 ' + ys + '\uB144 \uC801\uC6A9<br>' +
+        '<div class="step-formula">' + f_kr(goalP) + ' \xD7 (1+' + inf + '%)^' + ys + ' = <strong>' + f_kr(goalF) + '</strong></div></div></div>' +
+        '<div class="step-box"><div class="step-num">STEP 2</div>' +
+        '<div class="step-title">\uD544\uC694 \uC790\uC0B0 \uADDC\uBAA8</div>' +
+        '<div class="step-content">\uC740\uD1F4 \uD6C4 \uC6D4 ' + f_kr(goalF) + ' \xD7 ' + yD + '\uB144(' + nMonthsRetire + '\uAC1C\uC6D4)<br>' +
+        '\uD22C\uC790\uC218\uC775\uB960 ' + yieldR + '% \uBC18\uC601<br>' +
+        '<strong>\uD544\uC694 \uCD1D\uC561: ' + f_kr(lumpSum) + '</strong><br><br>' +
+        '\uB0A9\uC785\uAE30\uAC04 ' + payYears + '\uB144' + (yDef > 0 ? ' + \uAC70\uCE58\uAE30\uAC04 ' + yDef + '\uB144' : '') + '<br>' +
+        '<strong>\uB9E4\uC6D4 \uD544\uC694 \uC800\uCD95\uC561: ' + f_kr(monthlySave) + '</strong></div></div>';
+}
+
+/* ============================================================
+   TARGET FUND
+   ============================================================ */
+var goalCalcType = 'target';
+function setGoalCalcType(label, type) {
+    goalCalcType = type;
+    label.parentElement.querySelectorAll('label').forEach(function(l) { l.classList.remove('active'); });
+    label.classList.add('active');
+    document.getElementById('goal-target-group').classList.toggle('hidden', type !== 'target');
+    document.getElementById('goal-save-group').classList.toggle('hidden', type !== 'save');
+    calcGoalFund();
+}
+
+var goalGrowthChart = null;
+function calcGoalFund() {
+    var period = parseInt(document.getElementById('goal-period-slider').value) || 10;
+    var savRate = parseFloat(document.getElementById('goal-sav-slider').value) || 2.5;
+    var rate = parseFloat(document.getElementById('goal-yield-slider').value) || 5.0;
+    var monthlyRate = rate / 100 / 12;
+    var months = period * 12;
+    var savR = savRate / 100;
+    var reqMonthly = 0, savReqMonthly = 0, target = 0, expectedTotal = 0, savExpected = 0;
+
+    if (goalCalcType === 'target') {
+        target = parseNumberInput(document.getElementById('goal-target'));
+        reqMonthly = monthlyRate === 0 ? Math.round(target / months) : Math.round(target * monthlyRate / (Math.pow(1 + monthlyRate, months) - 1));
+        savReqMonthly = savR === 0 ? Math.round(target / months) : Math.round(target / (months + savR * months * (months + 1) / 24));
+        expectedTotal = target;
+        savExpected = target;
+    } else {
+        reqMonthly = parseNumberInput(document.getElementById('goal-monthly-save'));
+        savReqMonthly = reqMonthly;
+        expectedTotal = monthlyRate === 0 ? reqMonthly * months : Math.round(reqMonthly * (Math.pow(1 + monthlyRate, months) - 1) / monthlyRate);
+        savExpected = savR === 0 ? savReqMonthly * months : Math.round(savReqMonthly * months + savReqMonthly * savR * months * (months + 1) / 24);
+        target = expectedTotal;
+    }
+
+    var investGain = expectedTotal - reqMonthly * months;
+    var savGain = savExpected - savReqMonthly * months;
+
+    var card1Label, card1Value, card1Sub, card2Label, card2Value, card2Sub;
+    if (goalCalcType === 'target') {
+        card1Label = '\uD22C\uC790(\uBCF5\uB9AC) \uC2DC \uB9E4\uC6D4 \uC800\uCD95\uC561';
+        card1Value = f_kr(reqMonthly);
+        card1Sub = '\uC801\uAE08 \uD544\uC694\uC561: ' + f_kr(savReqMonthly);
+    } else {
+        card1Label = '\uD22C\uC790(\uBCF5\uB9AC) \uC2DC \uC608\uC0C1 \uC790\uC0B0';
+        card1Value = f_kr(expectedTotal);
+        card1Sub = '\uC801\uAE08 \uC608\uC0C1\uC561: ' + f_kr(savExpected);
+    }
+    card2Label = '\uD22C\uC790 \uC2DC \uC608\uC0C1 \uC218\uC775 (\uC774\uC790)';
+    card2Value = f_kr(investGain);
+    card2Sub = '\uC801\uAE08 \uC774\uC790: ' + f_kr(savGain);
+
+    document.getElementById('goal-result-cards').innerHTML =
+        '<div class="result-card" style="background:linear-gradient(135deg,#14532d,#22c55e);box-shadow:0 4px 16px rgba(34,197,94,0.25);">' +
+        '<div class="rc-label">' + card1Label + '</div><div class="rc-value">' + card1Value + '</div><div class="rc-formula">' + card1Sub + '</div></div>' +
+        '<div class="result-card" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);box-shadow:0 4px 16px rgba(59,130,246,0.35);">' +
+        '<div class="rc-label">' + card2Label + '</div><div class="rc-value">' + card2Value + '</div><div class="rc-formula">' + card2Sub + '</div></div>';
+
+    // Growth chart
+    var chartLabels = [];
+    var investLine = [];
+    var savLine = [];
+    var cumInvest = 0, cumSav = 0;
+    for (var y = 0; y <= period; y++) {
+        chartLabels.push(y + '\uB144');
+        if (y === 0) { investLine.push(0); savLine.push(0); }
+        else {
+            for (var mm = 0; mm < 12; mm++) {
+                cumInvest = cumInvest * (1 + monthlyRate) + reqMonthly;
+                cumSav += savReqMonthly;
+            }
+            investLine.push(Math.round(cumInvest));
+            savLine.push(Math.round(cumSav + cumSav * savR * y / 2));
+        }
+    }
+
+    var ctx = document.getElementById('goal-growth-chart').getContext('2d');
+    if (goalGrowthChart) goalGrowthChart.destroy();
+    goalGrowthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartLabels,
+            datasets: [
+                { label: '\uD22C\uC790 (\uBCF5\uB9AC ' + rate + '%)', data: investLine, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', fill: true, tension: 0.3, pointRadius: 3 },
+                { label: '\uC801\uAE08 (\uB2E8\uB9AC ' + savRate + '%)', data: savLine, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.3, pointRadius: 3 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true, position: 'top' },
+                tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + f_kr(ctx.raw); } } },
+                title: { display: true, text: '\uD22C\uC790 vs \uC801\uAE08 \uC131\uC7A5 \uACE1\uC120', font: { size: 14, weight: 'bold' }, color: '#1e3a8a' }
+            },
+            scales: {
+                y: { ticks: { callback: function(v) { return f_w(v); } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Strategy report
+    var fundNetRate = rate * (1 - 0.154);
+    document.getElementById('goal-steps-body').innerHTML =
+        '<div class="step-box"><div class="step-num">\uC801\uAE08</div>' +
+        '<div class="step-title">\uC801\uAE08 (\uB2E8\uB9AC ' + savRate + '%)</div>' +
+        '<div class="step-content">\uB9E4\uC6D4 ' + f_kr(savReqMonthly) + ' \uC801\uB9BD \xD7 ' + period + '\uB144<br>\uC774\uC790\uC18C\uB4DD\uC138 15.4% \uC801\uC6A9<br>\uC608\uC0C1 \uC218\uB839\uC561: <strong>' + f_kr(savExpected) + '</strong></div></div>' +
+        '<div class="step-box"><div class="step-num">\uD380\uB4DC</div>' +
+        '<div class="step-title">\uD380\uB4DC/ETF (\uC6D4 \uBCF5\uB9AC)</div>' +
+        '<div class="step-content">\uB9E4\uC6D4 ' + f_kr(reqMonthly) + ' \uD22C\uC790 \xD7 ' + period + '\uB144<br>\uC138\uD6C4 \uC218\uC775\uB960: ' + fundNetRate.toFixed(2) + '% (\uBC30\uB2F9/\uC591\uB3C4\uC138 15.4%)<br>\uC608\uC0C1 \uC218\uB839\uC561: <strong>' + f_kr(expectedTotal) + '</strong></div></div>' +
+        '<div class="step-box"><div class="step-num">\uBCC0\uC561</div>' +
+        '<div class="step-title">\uBCC0\uC561\uBCF4\uD5D8 (\uC6D4 \uBCF5\uB9AC, \uBE44\uACFC\uC138)</div>' +
+        '<div class="step-content">\uB9E4\uC6D4 ' + f_kr(reqMonthly) + ' \uD22C\uC790 \xD7 ' + period + '\uB144<br>\uBE44\uACFC\uC138 \uC218\uC775\uB960: ' + rate.toFixed(2) + '%<br>10\uB144 \uC774\uC0C1 \uC720\uC9C0 \uC2DC \uBE44\uACFC\uC138 \uD61C\uD0DD</div></div>';
+}
+
+/* ============================================================
+   DOLLAR INSURANCE
+   ============================================================ */
+function getRefundCurve(ptype, period) {
+    var base;
+    if (ptype === '\uBA54\uD2B8\uB77C\uC774\uD504') {
+        if (period === 5) base = [0,35,60,78,93,102.5,106,110,114,119];
+        else if (period === 7) base = [0,25,45,62,73,82,93,104.2,110,117];
+        else if (period === 10) base = [0,18,34,48,58,66,72,77,82,84.3];
+        else base = [0,8,15,22,28,34,39,44,49,55];
+    } else {
+        if (period === 5) base = [0,30,50,68,85,95,98,101,104,107];
+        else if (period === 7) base = [0,20,38,52,63,73,85,95,100,105];
+        else if (period === 10) base = [0,15,28,40,50,58,64,70,75,78];
+        else base = [0,6,12,18,24,30,35,40,45,50];
+    }
+    var growthRate = ptype === '\uBA54\uD2B8\uB77C\uC774\uD504' ? 1.025 : 1.02;
+    for (var i = base.length; i < 20; i++) {
+        base.push(Math.round(base[i - 1] * growthRate * 100) / 100);
+    }
+    return base;
+}
+
+function calcBankEquivYield(monthlyKrw, monthsPaid, totalKrwPaid, krwRetMid) {
+    if (totalKrwPaid <= 0 || krwRetMid <= totalKrwPaid) return 0;
+    var lo = 0.0001, hi = 0.50;
+    for (var i = 0; i < 100; i++) {
+        var mid = (lo + hi) / 2;
+        var r = mid / 12;
+        var fv = monthlyKrw * (Math.pow(1 + r, monthsPaid) - 1) / r;
+        var growthM = Math.max(0, 120 - monthsPaid);
+        if (growthM > 0) fv *= Math.pow(1 + r, growthM);
+        var interest = fv - totalKrwPaid;
+        var net = fv - interest * 0.154;
+        if (net < krwRetMid) lo = mid; else hi = mid;
+    }
+    return ((lo + hi) / 2) * 100;
+}
+
+var dolRefundChart = null, dolScenarioChart = null, dolHistoryChart = null;
+function calcDollar() {
+    var ptype = document.getElementById('dol-product').value;
+    var payPeriod = parseInt(document.getElementById('dol-pay-period').value) || 10;
+    var monthly = parseFloat(document.getElementById('dol-monthly').value) || 0;
+    var hasExtra = document.getElementById('dol-extra-toggle').checked;
+    var extra = hasExtra ? (parseFloat(document.getElementById('dol-extra').value) || 0) : 0;
+    var rateNow = parseFloat(document.getElementById('dol-rate-now').value) || 1430;
+    var avgRate = parseFloat(document.getElementById('dol-rate-avg').value) || 1350;
+    var rateLow = parseFloat(document.getElementById('dol-rate-low').value) || 1100;
+    var rateMid = parseFloat(document.getElementById('dol-rate-mid').value) || 1350;
+    var rateHigh = parseFloat(document.getElementById('dol-rate-high').value) || 1550;
+
+    document.getElementById('dol-extra-group').classList.toggle('hidden', !hasExtra);
+
+    var totalPremMonthly = monthly + extra;
+    var totalUsdPaid = totalPremMonthly * payPeriod * 12;
+    var totalKrwPaid = totalUsdPaid * avgRate;
+    var curve = getRefundCurve(ptype, payPeriod);
+    var rate10 = curve[9] || 0;
+    var usdVal10 = totalUsdPaid * rate10 / 100;
+    var krwLow = Math.round(usdVal10 * rateLow);
+    var krwMid = Math.round(usdVal10 * rateMid);
+    var krwHigh = Math.round(usdVal10 * rateHigh);
+    var bepRate = usdVal10 > 0 ? Math.round(totalKrwPaid / usdVal10) : 0;
+    var monthlyKrw = totalPremMonthly * avgRate;
+    var monthsPaid = payPeriod * 12;
+    var bankYield = calcBankEquivYield(monthlyKrw, monthsPaid, totalKrwPaid, krwMid);
+
+    document.getElementById('dol-result-cards').innerHTML =
+        '<div class="result-card" style="background:linear-gradient(135deg,#0c4a6e,#0ea5e9);box-shadow:0 4px 16px rgba(14,165,233,0.25);">' +
+        '<div class="rc-label">\uCD1D \uB0A9\uC785 \uC6D0\uAE08 (KRW)</div><div class="rc-value">' + f_kr(totalKrwPaid) + '</div>' +
+        '<div class="rc-formula">$' + f_w(totalUsdPaid) + ' \xD7 ' + f_w(avgRate) + '\uC6D0</div></div>' +
+        '<div class="result-card" style="background:linear-gradient(135deg,#14532d,#22c55e);box-shadow:0 4px 16px rgba(34,197,94,0.25);">' +
+        '<div class="rc-label">10\uB144 \uC2DC\uC810 \uD658\uAE09\uB960 ($)</div><div class="rc-value">$' + f_w(Math.round(usdVal10)) + ' (' + rate10.toFixed(1) + '%)</div>' +
+        '<div class="rc-formula">\uB0A9\uC785 $' + f_w(totalUsdPaid) + ' \xD7 ' + rate10.toFixed(1) + '%</div></div>' +
+        '<div class="result-card" style="background:linear-gradient(135deg,#78350f,#f59e0b);box-shadow:0 4px 16px rgba(245,158,11,0.25);">' +
+        '<div class="rc-label">10\uB144 \uC6D0\uD654 \uAC00\uCE58 (\uBCF4\uD569)</div><div class="rc-value">' + f_kr(krwMid) + '</div>' +
+        '<div class="rc-formula">$' + f_w(Math.round(usdVal10)) + ' \xD7 ' + f_w(rateMid) + '\uC6D0</div></div>';
+
+    document.getElementById('dol-bank-yield-banner').innerHTML =
+        '<div style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);color:#fff;border-radius:14px;padding:20px 24px;text-align:center;box-shadow:0 4px 16px rgba(59,130,246,0.3);">' +
+        '<div style="font-size:0.85rem;opacity:0.85;margin-bottom:6px;">\uC801\uAE08 \uD658\uC0B0 \uC218\uC775\uB960 (\uBCF4\uD569 \uC2DC\uB098\uB9AC\uC624)</div>' +
+        '<div style="font-size:2rem;font-weight:800;">\uC5F0 ' + bankYield.toFixed(2) + '%</div>' +
+        '<div style="font-size:0.75rem;opacity:0.7;margin-top:4px;">\uC138\uD6C4 \uC801\uAE08 \uD658\uC0B0 \uAE30\uC900 (15.4% \uC774\uC790\uC18C\uB4DD\uC138 \uBC18\uC601)</div></div>';
+
+    var profitLow = krwLow - totalKrwPaid;
+    var profitMid = krwMid - totalKrwPaid;
+    var profitHigh = krwHigh - totalKrwPaid;
+    document.getElementById('dol-scenario-cards').innerHTML =
+        '<div class="result-card" style="background:linear-gradient(135deg,#991b1b,#ef4444);box-shadow:0 4px 16px rgba(239,68,68,0.25);">' +
+        '<div class="rc-label">\uD558\uB77D (\uBE44\uAD00) ' + f_w(rateLow) + '\uC6D0</div><div class="rc-value">' + f_kr(krwLow) + '</div>' +
+        '<div class="rc-delta">' + (profitLow >= 0 ? '+' : '') + f_kr(profitLow) + '</div></div>' +
+        '<div class="result-card" style="background:linear-gradient(135deg,#78350f,#f59e0b);box-shadow:0 4px 16px rgba(245,158,11,0.25);">' +
+        '<div class="rc-label">\uBCF4\uD569 (\uC911\uB9BD) ' + f_w(rateMid) + '\uC6D0</div><div class="rc-value">' + f_kr(krwMid) + '</div>' +
+        '<div class="rc-delta">' + (profitMid >= 0 ? '+' : '') + f_kr(profitMid) + '</div></div>' +
+        '<div class="result-card" style="background:linear-gradient(135deg,#14532d,#22c55e);box-shadow:0 4px 16px rgba(34,197,94,0.25);">' +
+        '<div class="rc-label">\uC0C1\uC2B9 (\uB099\uAD00) ' + f_w(rateHigh) + '\uC6D0</div><div class="rc-value">' + f_kr(krwHigh) + '</div>' +
+        '<div class="rc-delta">' + (profitHigh >= 0 ? '+' : '') + f_kr(profitHigh) + '</div></div>';
+
+    // Refund rate chart
+    var curveLabels = [];
+    var selectedData = [];
+    var otherPtype = ptype === '\uBA54\uD2B8\uB77C\uC774\uD504' ? '\uD0C0\uC0AC' : '\uBA54\uD2B8\uB77C\uC774\uD504';
+    var otherCurve = getRefundCurve(otherPtype, payPeriod);
+    var otherData = [];
+    for (var i = 0; i < 20; i++) {
+        curveLabels.push((i + 1) + '\uB144');
+        selectedData.push(curve[i]);
+        otherData.push(otherCurve[i]);
+    }
+    var ctx1 = document.getElementById('dol-refund-chart').getContext('2d');
+    if (dolRefundChart) dolRefundChart.destroy();
+    dolRefundChart = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: curveLabels,
+            datasets: [
+                { label: ptype, data: selectedData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.3, pointRadius: 3 },
+                { label: otherPtype, data: otherData, borderColor: '#94a3b8', borderDash: [5,3], fill: false, tension: 0.3, pointRadius: 2 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true, position: 'top' },
+                tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + ctx.raw.toFixed(1) + '%'; } } },
+                title: { display: true, text: '\uD658\uAE09\uB960 \uCD94\uC774 (20\uB144)', font: { size: 14, weight: 'bold' }, color: '#1e3a8a' }
+            },
+            scales: {
+                y: { ticks: { callback: function(v) { return v + '%'; } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Scenario bar chart
+    var ctx2 = document.getElementById('dol-scenario-chart').getContext('2d');
+    if (dolScenarioChart) dolScenarioChart.destroy();
+    dolScenarioChart = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: ['\uD558\uB77D (' + f_w(rateLow) + ')', '\uBCF4\uD569 (' + f_w(rateMid) + ')', '\uC0C1\uC2B9 (' + f_w(rateHigh) + ')'],
+            datasets: [{ label: '10\uB144 \uC6D0\uD654 \uAC00\uCE58', data: [krwLow, krwMid, krwHigh], backgroundColor: ['#ef4444', '#f59e0b', '#22c55e'], borderRadius: 6, barPercentage: 0.5 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: function(ctx) { return f_kr(ctx.raw); } } },
+                title: { display: true, text: '\uD658\uC728 \uC2DC\uB098\uB9AC\uC624\uBCC4 10\uB144 \uAC00\uCE58', font: { size: 14, weight: 'bold' }, color: '#1e3a8a' }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: function(v) { return f_w(v); } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Exchange rate history
+    var histYears = [2026,2025,2024,2023,2022,2021,2020,2019,2018,2017,2016];
+    var histRates = [rateNow,1390,1364,1306,1292,1144,1180,1166,1100,1131,1161];
+    var histLabels = histYears.map(function(y) { return y + '\uB144'; });
+    var histMin = Math.min.apply(null, histRates);
+    var histMax = Math.max.apply(null, histRates);
+    var histAvg = Math.round(histRates.reduce(function(a, b) { return a + b; }, 0) / histRates.length);
+
+    var ctx3 = document.getElementById('dol-history-chart').getContext('2d');
+    if (dolHistoryChart) dolHistoryChart.destroy();
+    dolHistoryChart = new Chart(ctx3, {
+        type: 'line',
+        data: {
+            labels: histLabels,
+            datasets: [{
+                label: '\uD658\uC728 (\uC6D0/$)',
+                data: histRates,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59,130,246,0.1)',
+                fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#3b82f6'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true, position: 'top' },
+                tooltip: { callbacks: { label: function(ctx) { return ctx.raw + '\uC6D0/$'; } } },
+                title: { display: true, text: '10\uB144 \uD658\uC728 \uCD94\uC774', font: { size: 14, weight: 'bold' }, color: '#1e3a8a' }
+            },
+            scales: {
+                y: { ticks: { callback: function(v) { return f_w(v) + '\uC6D0'; } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    document.getElementById('dol-history-cards').innerHTML =
+        '<div class="metric-card"><div class="mc-label">\uCD5C\uC800</div><div class="mc-value">' + f_w(histMin) + '\uC6D0</div></div>' +
+        '<div class="metric-card"><div class="mc-label">\uCD5C\uACE0</div><div class="mc-value">' + f_w(histMax) + '\uC6D0</div></div>' +
+        '<div class="metric-card"><div class="mc-label">10\uB144 \uD3C9\uADE0</div><div class="mc-value">' + f_w(histAvg) + '\uC6D0</div></div>' +
+        '<div class="metric-card"><div class="mc-label">\uD604\uC7AC</div><div class="mc-value">' + f_w(rateNow) + '\uC6D0</div></div>';
+
+    document.getElementById('dol-bep-body').innerHTML =
+        '<div class="step-box"><div class="step-num">BEP</div>' +
+        '<div class="step-title">\uC190\uC775\uBD84\uAE30 \uD658\uC728</div>' +
+        '<div class="step-content">\uCD1D \uB0A9\uC785 \uC6D0\uAE08 (KRW): ' + f_kr(totalKrwPaid) + '<br>' +
+        '10\uB144 \uC2DC\uC810 \uD658\uAE09\uC561 ($): $' + f_w(Math.round(usdVal10)) + '<br>' +
+        '<div class="step-formula">\uC190\uC775\uBD84\uAE30 \uD658\uC728 = \uCD1D\uB0A9\uC785(KRW) \xF7 \uD658\uAE09\uC561($) = <strong>' + f_w(bepRate) + '\uC6D0/$</strong></div>' +
+        '<br>\uD604\uC7AC \uD658\uC728 ' + f_w(rateNow) + '\uC6D0 \uAE30\uC900, ' +
+        (rateNow > bepRate ? '\uD658\uC728\uC774 BEP\uBCF4\uB2E4 <strong style="color:#22c55e;">\uB192\uC544</strong> \uC218\uC775 \uAD6C\uAC04\uC785\uB2C8\uB2E4.' : '\uD658\uC728\uC774 BEP\uBCF4\uB2E4 <strong style="color:#ef4444;">\uB0AE\uC544</strong> \uC190\uC2E4 \uAD6C\uAC04\uC785\uB2C8\uB2E4.') +
+        '</div></div>';
+}
+
+/* ============================================================
    INITIAL CALCULATIONS
    ============================================================ */
 document.addEventListener('DOMContentLoaded', function() {
@@ -1864,6 +3949,15 @@ document.addEventListener('DOMContentLoaded', function() {
     calcInstallment();
     calcLoan();
     calcJeonwolse();
+    calcIncomeTaxTab();
+    calcAcquisitionTax();
+    calcHoldingTax();
+    calcTransferTax();
+    calcGift();
+    calcInheritance();
+    calcRetirement();
+    calcGoalFund();
+    calcDollar();
 });
 </script>
 
