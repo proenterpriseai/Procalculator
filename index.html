@@ -817,17 +817,28 @@ body.presentation-mode h1.page-title {
 body.presentation-mode .result-card .rc-value {
     font-size: 2rem;
 }
-body.presentation-mode .two-col > div:first-child,
-body.presentation-mode .two-col.left-wide > div:first-child,
 body.presentation-mode .input-card {
     display: none !important;
 }
-body.presentation-mode .two-col {
-    grid-template-columns: 1fr !important;
+body.presentation-mode .two-col > div:first-child {
+    display: none !important;
 }
-body.presentation-mode .two-col > div:last-child {
+body.presentation-mode .two-col.left-wide > div:first-child {
+    display: none !important;
+}
+body.presentation-mode .two-col,
+body.presentation-mode .two-col.left-wide {
+    display: block !important;
+}
+body.presentation-mode .two-col > div:last-child,
+body.presentation-mode .two-col.left-wide > div:last-child {
     width: 100% !important;
     max-width: 100% !important;
+}
+body.presentation-mode .form-group,
+body.presentation-mode .slider-group,
+body.presentation-mode .radio-group {
+    display: none !important;
 }
 
 /* hidden helper */
@@ -4486,6 +4497,19 @@ document.addEventListener('DOMContentLoaded', function() {
     calcRetirement();
     calcGoalFund();
     calcDollar();
+
+    // 사이드바 스크롤 격리: 사이드바 위에서 스크롤하면 메인 콘텐츠 안 움직이게
+    var sidebar = document.querySelector('.sidebar');
+    if (sidebar) {
+        sidebar.addEventListener('wheel', function(e) {
+            var maxScroll = sidebar.scrollHeight - sidebar.clientHeight;
+            if (maxScroll <= 0) { e.preventDefault(); return; }
+            var newTop = sidebar.scrollTop + e.deltaY;
+            if (newTop < 0) { sidebar.scrollTop = 0; e.preventDefault(); }
+            else if (newTop > maxScroll) { sidebar.scrollTop = maxScroll; e.preventDefault(); }
+            else { sidebar.scrollTop = newTop; e.preventDefault(); }
+        }, { passive: false });
+    }
 });
 </script>
 
