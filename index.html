@@ -4035,9 +4035,21 @@ function calcGoalFund() {
     var netFundR = rate * (1 - 0.154 - 0.012) / 100 / 12;
     var fundResult = netFundR > 0 ? Math.round(reqMonthly * (Math.pow(1 + netFundR, totalMonths) - 1) / netFundR) : Math.round(reqMonthly * totalMonths);
 
-    // 변액: 비과세 월복리 (사업비 0.755% 차감)
-    var netEtfR = (rate - 0.755) / 100 / 12;
-    var etfResult = netEtfR > 0 ? Math.round(reqMonthly * (Math.pow(1 + netEtfR, totalMonths) - 1) / netEtfR) : Math.round(reqMonthly * totalMonths);
+    // 변액: 비과세 월복리 (납입사업비 + 운용관리비 월별 루프)
+    var etfResult = 0;
+    if (rate > 0) {
+        var _etfBal = 0;
+        var _etfMonthlyR = rate / 100 / 12;
+        var _etfMgmtMonthly = 0.00755 / 12; // 운용관리비 연 0.755% → 월
+        for (var _em = 0; _em < totalMonths; _em++) {
+            var _feeRate = (_em < 120) ? 0.075 : 0.0264; // 납입사업비: 10년 미만 7.5%, 10년 이상 2.64%
+            var _netPrem = reqMonthly * (1 - _feeRate); // 사업비 차감 후 실납입
+            _etfBal = _etfBal * (1 + _etfMonthlyR) * (1 - _etfMgmtMonthly) + _netPrem;
+        }
+        etfResult = Math.round(_etfBal);
+    } else {
+        etfResult = Math.round(reqMonthly * totalMonths);
+    }
 
     var savNetRate = (savRate * (1 - 0.154)).toFixed(2);
     var fundNetRate2 = (rate * (1 - 0.154)).toFixed(2);
@@ -4134,9 +4146,18 @@ function calcGoalComparison() {
         var netFundR = fundRate * (1 - 0.154 - 0.012) / 100 / 12;
         var fundResult = netFundR > 0 ? Math.round(totalMonthly * (Math.pow(1 + netFundR, months) - 1) / netFundR) : principal;
 
-        // 변액: 월복리 (비과세, 사업비 0.755%)
-        var netEtfR = (etfRate - 0.755) / 100 / 12;
-        var etfResult = netEtfR > 0 ? Math.round(totalMonthly * (Math.pow(1 + netEtfR, months) - 1) / netEtfR) : principal;
+        // 변액: 비과세 월별 루프 (납입사업비 + 운용관리비)
+        var etfResult = principal;
+        if (etfRate > 0) {
+            var _eBal = 0;
+            var _eMr = etfRate / 100 / 12;
+            var _eMgmt = 0.00755 / 12;
+            for (var _ei = 0; _ei < months; _ei++) {
+                var _eFee = (_ei < 120) ? 0.075 : 0.0264;
+                _eBal = _eBal * (1 + _eMr) * (1 - _eMgmt) + totalMonthly * (1 - _eFee);
+            }
+            etfResult = Math.round(_eBal);
+        }
 
         savResults.push(savResult);
         fundResults.push(fundResult);
