@@ -1272,7 +1272,7 @@ body.presentation-mode .radio-group {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>전용면적 (㎡)</label>
+                        <label>전용면적 (㎡) <span class="help-tooltip" title="실제 거주 공간(방, 거실, 주방 등)의 면적입니다. 복도, 계단 등 공용면적은 제외됩니다. 85㎡ 초과 시 농어촌특별세가 추가됩니다.">&#x2753;</span></label>
                         <input type="number" id="re-acq-area" value="84.0" min="0" step="0.1" onchange="calcAcquisitionTax();" oninput="calcAcquisitionTax();">
                     </div>
                     <div class="form-group">
@@ -1283,7 +1283,7 @@ body.presentation-mode .radio-group {
                 <div class="input-card">
                     <h3>&#x1F4B0; 세율 조건</h3>
                     <div class="form-group">
-                        <label>주택수</label>
+                        <label>주택수 (취득시점 기준) <span class="help-tooltip" title="세대(가족) 전체가 보유한 총 주택 수입니다. 주택이 많을수록 취득세 세율이 높아집니다.">&#x2753;</span></label>
                         <select id="re-acq-hcount" style="width:100%;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.95rem;font-family:inherit;color:#1e293b;background:#fff;" onchange="calcAcquisitionTax();">
                             <option value="1주택">1주택</option>
                             <option value="2주택">2주택</option>
@@ -1293,11 +1293,11 @@ body.presentation-mode .radio-group {
                     </div>
                     <div class="form-group" style="display:flex;align-items:center;gap:10px;">
                         <input type="checkbox" id="re-acq-adj" style="width:18px;height:18px;accent-color:#3b82f6;" onchange="calcAcquisitionTax();">
-                        <label for="re-acq-adj" style="margin-bottom:0;">조정대상지역 여부</label>
+                        <label for="re-acq-adj" style="margin-bottom:0;">조정대상지역 여부 <span class="help-tooltip" title="정부가 주택가격 상승을 억제하기 위해 지정한 지역입니다. 이곳에서 주택 취득 시 취득세 세율이 올라갑니다.">&#x2753;</span></label>
                     </div>
                     <div class="form-group" style="display:flex;align-items:center;gap:10px;">
                         <input type="checkbox" id="re-acq-first" style="width:18px;height:18px;accent-color:#3b82f6;" onchange="calcAcquisitionTax();">
-                        <label for="re-acq-first" style="margin-bottom:0;">생애최초 주택 취득 감면 (한도 200만원)</label>
+                        <label for="re-acq-first" style="margin-bottom:0;">생애최초 주택 취득 감면 (한도 200만원) <span class="help-tooltip" title="지금까지 주택을 소유한 적이 없는 사람이 처음 구매할 때 받는 세금 감면입니다. 최대 200만원까지 감면됩니다.">&#x2753;</span></label>
                     </div>
                 </div>
             </div>
@@ -1342,11 +1342,11 @@ body.presentation-mode .radio-group {
                 <div class="input-card">
                     <h3>&#x1F3E0; 보유세 기본정보</h3>
                     <div class="form-group">
-                        <label>주택 공시가격 (총합/원)</label>
+                        <label>주택 공시가격 (총합/원) <span class="help-tooltip" title="정부가 매년 발표하는 부동산의 표준 가격입니다. 실거래가보다 낮으며, 보유세 계산의 기준이 됩니다.">&#x2753;</span></label>
                         <input type="text" id="re-hold-price" value="0" oninput="formatNumberInput(this); calcHoldingTax();">
                     </div>
                     <div class="form-group">
-                        <label>보유 형태</label>
+                        <label>보유 형태 <span class="help-tooltip" title="단독은 1인 소유, 공동명의는 배우자 등과 함께 소유하는 것입니다. 다주택은 2채 이상 보유를 뜻합니다.">&#x2753;</span></label>
                         <div class="radio-group" id="re-hold-type-group">
                             <input type="radio" name="re-hold-type" id="re-hold-single" value="single" checked>
                             <label for="re-hold-single" class="active" onclick="setReHoldType(this,'single')">1주택(단독)</label>
@@ -1425,15 +1425,15 @@ body.presentation-mode .radio-group {
                         <input type="text" id="re-tf-buy" value="0" oninput="formatNumberInput(this); calcTransferTax();">
                     </div>
                     <div class="form-group">
-                        <label>필요경비 (원)</label>
+                        <label>필요경비 (원) <span class="help-tooltip" title="부동산 매매 시 발생한 중개수수료, 인테리어비, 법무사비 등의 비용입니다. 양도차익 계산 시 공제됩니다.">&#x2753;</span></label>
                         <input type="text" id="re-tf-expenses" value="0" oninput="formatNumberInput(this); calcTransferTax();">
                     </div>
                     <div class="form-group" style="display:flex;align-items:center;gap:10px;">
                         <input type="checkbox" id="re-tf-1h" style="width:18px;height:18px;accent-color:#3b82f6;" onchange="calcTransferTax();">
-                        <label for="re-tf-1h" style="margin-bottom:0;">1세대 1주택 비과세</label>
+                        <label for="re-tf-1h" style="margin-bottom:0;">1세대 1주택 비과세 <span class="help-tooltip" title="주택 1채만 소유하고 2년 이상 거주한 경우, 양도차익에 대해 세금을 면제받는 제도입니다. 양도가 12억원 이하면 전액 비과세됩니다.">&#x2753;</span></label>
                     </div>
                     <div class="form-group">
-                        <label>다주택 중과</label>
+                        <label>다주택 중과 <span class="help-tooltip" title="주택 2채 이상 보유자가 매도할 때 기본 세율에 20~30%p를 추가로 적용하는 것입니다.">&#x2753;</span></label>
                         <select id="re-tf-multi" style="width:100%;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.95rem;font-family:inherit;color:#1e293b;background:#fff;" onchange="calcTransferTax();">
                             <option value="없음">없음</option>
                             <option value="2주택 (+20%p)">2주택 (+20%p)</option>
@@ -1441,7 +1441,7 @@ body.presentation-mode .radio-group {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>보유기간(년): <strong id="re-tf-hold-label">5</strong>년</label>
+                        <label>보유기간(년): <strong id="re-tf-hold-label">5</strong>년 <span class="help-tooltip" title="부동산을 오래 보유할수록 양도차익에서 더 많이 공제받는 제도입니다. 일반 최대 30%, 1세대1주택 거주자 최대 80%까지 공제됩니다.">&#x2753;</span></label>
                         <div class="slider-row">
                             <input type="range" id="re-tf-hold" min="0" max="30" value="5" oninput="document.getElementById('re-tf-hold-label').textContent=this.value; calcTransferTax();">
                         </div>
@@ -1504,15 +1504,15 @@ body.presentation-mode .radio-group {
                         <input type="text" id="gift-amount" value="500,000,000" oninput="formatNumberInput(this); calcGift();">
                     </div>
                     <div class="form-group">
-                        <label>10년 내 사전증여액 (원)</label>
+                        <label>10년 내 사전증여액 (원) <span class="help-tooltip" title="과거 10년 이내에 같은 사람에게 이미 증여한 재산의 합계입니다. 현재 증여액에 합산하여 누진세율을 적용합니다.">&#x2753;</span></label>
                         <input type="text" id="gift-prev" value="0" oninput="formatNumberInput(this); calcGift();">
                     </div>
                     <div class="form-group">
-                        <label>기납부 증여세액 (원)</label>
+                        <label>기납부 증여세액 (원) <span class="help-tooltip" title="이전 증여 시 이미 납부한 세금입니다. 이중과세를 방지하기 위해 현재 세금에서 차감됩니다.">&#x2753;</span></label>
                         <input type="text" id="gift-prev-tax" value="0" oninput="formatNumberInput(this); calcGift();">
                     </div>
                     <div class="form-group">
-                        <label>부담부 채무액 (원)</label>
+                        <label>부담부 채무액 (원) <span class="help-tooltip" title="증여 재산에 딸린 전세보증금이나 담보대출 등 받는 사람이 대신 갚기로 한 금액입니다.">&#x2753;</span></label>
                         <input type="text" id="gift-debt" value="0" oninput="formatNumberInput(this); calcGift();">
                     </div>
                 </div>
@@ -1536,7 +1536,7 @@ body.presentation-mode .radio-group {
                     <div class="form-group" style="display:flex;flex-direction:column;gap:10px;">
                         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
                             <input type="checkbox" id="gift-startup" onchange="calcGift();" style="width:18px;height:18px;accent-color:#3b82f6;">
-                            창업자금 증여 과세특례
+                            창업자금 증여 과세특례 <span class="help-tooltip" title="60세 이상 부모가 자녀에게 창업 목적으로 증여할 때 5억원 한도에서 10% 단일세율을 적용하는 혜택입니다.">&#x2753;</span>
                         </label>
                         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
                             <input type="checkbox" id="gift-overseas" onchange="calcGift();" style="width:18px;height:18px;accent-color:#3b82f6;">
@@ -1544,11 +1544,11 @@ body.presentation-mode .radio-group {
                         </label>
                         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
                             <input type="checkbox" id="gift-gen-skip" onchange="calcGift();" style="width:18px;height:18px;accent-color:#3b82f6;">
-                            세대생략 증여
+                            세대생략 증여 <span class="help-tooltip" title="할아버지가 손자에게 직접 증여하는 것처럼 세대를 건너뛰는 경우입니다. 증여세에 30%가 할증됩니다.">&#x2753;</span>
                         </label>
                         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
                             <input type="checkbox" id="gift-minor" onchange="calcGift();" style="width:18px;height:18px;accent-color:#3b82f6;">
-                            수증자 미성년
+                            수증자 미성년 <span class="help-tooltip" title="증여받는 사람이 19세 미만일 때입니다. 세대생략이면서 과세표준 20억 초과 시 할증률이 40%로 올라갑니다.">&#x2753;</span>
                         </label>
                     </div>
                 </div>
@@ -1581,15 +1581,15 @@ body.presentation-mode .radio-group {
                         <input type="text" id="inh-estate" value="2,000,000,000" oninput="formatNumberInput(this); calcInheritance();">
                     </div>
                     <div class="form-group">
-                        <label>비과세 재산 (원)</label>
+                        <label>비과세 재산 (원) <span class="help-tooltip" title="국가·지자체에 기증하는 재산 등 상속세가 면제되는 재산입니다.">&#x2753;</span></label>
                         <input type="text" id="inh-nontax" value="0" oninput="formatNumberInput(this); calcInheritance();">
                     </div>
                     <div class="form-group">
-                        <label>상속인 10년내 사전증여 (원)</label>
+                        <label>상속인 10년내 사전증여 (원) <span class="help-tooltip" title="사망 전 10년 이내에 상속인(배우자·자녀)에게 미리 증여한 재산입니다. 상속재산에 합산됩니다.">&#x2753;</span></label>
                         <input type="text" id="inh-prev-gift" value="0" oninput="formatNumberInput(this); calcInheritance();">
                     </div>
                     <div class="form-group">
-                        <label>상속인 외 5년내 사전증여 (원)</label>
+                        <label>상속인 외 5년내 사전증여 (원) <span class="help-tooltip" title="사망 전 5년 이내에 상속인이 아닌 사람(손자·며느리 등)에게 증여한 재산입니다.">&#x2753;</span></label>
                         <input type="text" id="inh-prev-gift-other" value="0" oninput="formatNumberInput(this); calcInheritance();">
                     </div>
                     <div class="form-group">
@@ -1614,14 +1614,14 @@ body.presentation-mode .radio-group {
                         </label>
                     </div>
                     <div class="form-group" id="inh-spouse-ded-group">
-                        <label>배우자 상속공제액 (원) <span style="font-size:0.75rem;color:#64748b;">(max 30억, 법정상속분 한도)</span></label>
+                        <label>배우자 상속공제액 (원) <span class="help-tooltip" title="배우자가 상속받을 때 적용되는 공제입니다. 최소 5억원, 최대 30억원(법정상속분 한도)입니다.">&#x2753;</span> <span style="font-size:0.75rem;color:#64748b;">(max 30억, 법정상속분 한도)</span></label>
                         <input type="text" id="inh-spouse-ded" value="500,000,000" oninput="formatNumberInput(this); calcInheritance();">
                     </div>
                     <div class="form-group">
                         <label>공제 방식</label>
                         <div class="radio-group" id="inh-ded-method-group">
                             <input type="radio" name="inh-ded-method" id="inh-ded-lump" value="lump" checked>
-                            <label for="inh-ded-lump" class="active" onclick="setInhDedMethod(this,'lump')">일괄공제 (5억)</label>
+                            <label for="inh-ded-lump" class="active" onclick="setInhDedMethod(this,'lump')">일괄공제 (5억) <span class="help-tooltip" title="복잡한 인적공제 계산 대신 한 번에 5억원을 공제하는 간편한 방식입니다.">&#x2753;</span></label>
                             <input type="radio" name="inh-ded-method" id="inh-ded-detail" value="detail">
                             <label for="inh-ded-detail" onclick="setInhDedMethod(this,'detail')">기초+인적공제</label>
                         </div>
@@ -1653,25 +1653,25 @@ body.presentation-mode .radio-group {
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>순금융재산가액 (원)</label>
+                        <label>순금융재산가액 (원) <span class="help-tooltip" title="예금·주식·펀드 등 금융자산에서 금융부채를 뺀 금액입니다. 이 금액의 20%(최대 2억원)를 추가 공제받습니다.">&#x2753;</span></label>
                         <input type="text" id="inh-finance" value="0" oninput="formatNumberInput(this); calcInheritance();">
                     </div>
                     <div class="form-group">
-                        <label>동거주택 상속공제 (원) <span style="font-size:0.75rem;color:#64748b;">(한도 6억)</span></label>
+                        <label>동거주택 상속공제 (원) <span class="help-tooltip" title="피상속인과 10년 이상 함께 살던 1세대1주택을 상속받을 때 최대 6억원까지 공제됩니다.">&#x2753;</span> <span style="font-size:0.75rem;color:#64748b;">(한도 6억)</span></label>
                         <input type="text" id="inh-housing-ded" value="0" oninput="formatNumberInput(this); calcInheritance();">
                     </div>
                     <div class="form-group">
-                        <label>가업상속공제 (원) <span style="font-size:0.75rem;color:#64748b;">(한도 600억)</span></label>
+                        <label>가업상속공제 (원) <span class="help-tooltip" title="부모가 10년 이상 경영한 중소·중견기업을 자녀가 이어받을 때 최대 600억원까지 공제됩니다.">&#x2753;</span> <span style="font-size:0.75rem;color:#64748b;">(한도 600억)</span></label>
                         <input type="text" id="inh-business-ded" value="0" oninput="formatNumberInput(this); calcInheritance();">
                     </div>
                     <div class="form-group">
-                        <label>영농상속공제 (원) <span style="font-size:0.75rem;color:#64748b;">(한도 300억)</span></label>
+                        <label>영농상속공제 (원) <span class="help-tooltip" title="부모가 영농에 종사했을 때 농지·축사 등을 상속받으면 최대 30억원까지 공제됩니다.">&#x2753;</span> <span style="font-size:0.75rem;color:#64748b;">(한도 300억)</span></label>
                         <input type="text" id="inh-farm-ded" value="0" oninput="formatNumberInput(this); calcInheritance();">
                     </div>
                     <div class="form-group">
                         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
                             <input type="checkbox" id="inh-gen-skip" onchange="calcInheritance();" style="width:18px;height:18px;accent-color:#3b82f6;">
-                            세대생략 상속
+                            세대생략 상속 <span class="help-tooltip" title="손자가 할아버지의 재산을 직접 상속받는 경우입니다. 상속세에 30%가 할증됩니다.">&#x2753;</span>
                         </label>
                     </div>
                 </div>
@@ -4292,6 +4292,16 @@ async function fetchExchangeRate() {
         var data = await res.json();
         if (data.rate) {
             document.getElementById('dol-rate-now').value = data.rate.toFixed(1);
+            // 시나리오 자동 연동 (Streamlit 원본과 동일)
+            var _fetchRate = data.rate;
+            // 보합 = 현재 환율
+            document.getElementById('dol-rate-mid').value = _fetchRate.toFixed(1);
+            // 하락 = 10년 평균
+            var _histAll = [Math.round(_fetchRate), 1390, 1364, 1306, 1292, 1144, 1180, 1166, 1100, 1131, 1161];
+            var _avg10 = Math.round(_histAll.reduce(function(a,b){return a+b;}, 0) / _histAll.length);
+            document.getElementById('dol-rate-low').value = _avg10;
+            // 상승 = 현재 × 1.1
+            document.getElementById('dol-rate-high').value = (Math.round(_fetchRate * 1.1 / 10) * 10).toFixed(1);
             var now = new Date();
             var ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
             var tsEl = document.getElementById('dol-rate-timestamp');
