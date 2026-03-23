@@ -1261,6 +1261,10 @@ body.presentation .result-card .rc-value {
                 <div class="chart-container">
                     <canvas id="re-acq-chart"></canvas>
                 </div>
+                <details class="expander">
+                    <summary>&#x1F50D; 취득세 상세 분석 보고서</summary>
+                    <div class="expander-body" id="re-acq-detail-body"></div>
+                </details>
             </div>
         </div>
     </div>
@@ -1322,6 +1326,10 @@ body.presentation .result-card .rc-value {
                 <div class="chart-container">
                     <canvas id="re-hold-chart"></canvas>
                 </div>
+                <details class="expander">
+                    <summary>&#x1F50D; 보유세 상세 분석 보고서</summary>
+                    <div class="expander-body" id="re-hold-detail-body"></div>
+                </details>
             </div>
         </div>
     </div>
@@ -1399,6 +1407,10 @@ body.presentation .result-card .rc-value {
                 <div class="chart-container">
                     <canvas id="re-tf-chart"></canvas>
                 </div>
+                <details class="expander">
+                    <summary>&#x1F50D; 양도세 상세 분석 보고서</summary>
+                    <div class="expander-body" id="re-tf-detail-body"></div>
+                </details>
             </div>
         </div>
     </div>
@@ -1764,6 +1776,58 @@ body.presentation .result-card .rc-value {
                 <summary>&#x1F4DD; 전략 리포트</summary>
                 <div class="expander-body" id="goal-steps-body"></div>
             </details>
+        </div>
+    </div>
+
+    <!-- 3종 비교 분석 Section -->
+    <div style="margin-top:32px;">
+        <h2 style="font-size:1.3rem;font-weight:800;color:#1e3a8a;margin-bottom:16px;">&#x1F3B2; 적금 vs 펀드 vs 변액 비교 분석</h2>
+        <div style="background:#fff;border-radius:12px;padding:20px;border:1px solid #e2e8f0;margin-bottom:20px;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+                <label style="font-weight:600;font-size:0.92rem;color:#1e293b;display:flex;align-items:center;gap:8px;cursor:pointer;">
+                    <div class="toggle-switch" style="display:inline-block;">
+                        <input type="checkbox" id="goal-comp-toggle" onchange="toggleGoalComparison();">
+                        <span class="slider"></span>
+                    </div>
+                    3종 상품 비교 시뮬레이션 실행
+                </label>
+            </div>
+            <div id="goal-comp-inputs" class="hidden">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>&#x1F3E6; 적금 금리 (%)</label>
+                        <input type="number" id="goal-comp-sav" value="3.0" min="0" max="20" step="0.1" oninput="calcGoalComparison();">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>&#x1F4CA; 펀드 기대수익률 (%)</label>
+                        <input type="number" id="goal-comp-fund" value="6.0" min="0" max="30" step="0.1" oninput="calcGoalComparison();">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>&#x1F680; 변액 기대수익률 (%)</label>
+                        <input type="number" id="goal-comp-etf" value="7.0" min="0" max="30" step="0.1" oninput="calcGoalComparison();">
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+                    <label style="font-weight:600;font-size:0.88rem;color:#1e293b;display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <div class="toggle-switch" style="display:inline-block;">
+                            <input type="checkbox" id="goal-comp-extra-toggle" onchange="toggleGoalCompExtra();">
+                            <span class="slider"></span>
+                        </div>
+                        &#x1F4B8; 추가납입
+                    </label>
+                    <div id="goal-comp-extra-group" class="hidden" style="display:none;">
+                        <input type="text" id="goal-comp-extra-amt" value="0" style="width:160px;padding:8px 12px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.9rem;" oninput="formatNumberInput(this); calcGoalComparison();" placeholder="추가납입 금액(원)">
+                    </div>
+                </div>
+
+                <div class="chart-container" style="margin-bottom:24px;">
+                    <canvas id="goal-comp-chart"></canvas>
+                </div>
+
+                <div id="goal-comp-period-cards"></div>
+
+                <div style="margin-top:24px;" id="goal-comp-table-wrap"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -2933,6 +2997,44 @@ function calcAcquisitionTax() {
     document.getElementById('re-acq-edu-val').textContent = f_kr(eduTax);
     document.getElementById('re-acq-rural-val').textContent = f_kr(ruralTax);
 
+    // 상세 분석 보고서
+    var acqMethod = propType.indexOf('상속') >= 0 ? '상속' : propType.indexOf('증여') >= 0 ? '증여' : '매매';
+    var detailHtml =
+        '<div class="step-box"><div class="step-num">STEP 1</div>' +
+        '<div class="step-title">취득 유형 및 과세표준 확정</div>' +
+        '<div class="step-content">' +
+        '<table style="width:100%;font-size:0.85rem;border-collapse:collapse;">' +
+        '<tr><td style="padding:6px 0;color:#64748b;">부동산 종류</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + propType + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">취득 방법</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + acqMethod + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">전용면적</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + area + '㎡</td></tr>' +
+        '<tr style="border-top:1px solid #e2e8f0;"><td style="padding:8px 0;color:#1e3a8a;font-weight:700;">과세표준 (취득가액)</td><td style="padding:8px 0;font-weight:800;text-align:right;color:#1e3a8a;">' + f_kr(price) + '</td></tr>' +
+        '</table></div></div>' +
+        '<div class="step-box"><div class="step-num">STEP 2</div>' +
+        '<div class="step-title">적용 세율 판정</div>' +
+        '<div class="step-content">' +
+        '<table style="width:100%;font-size:0.85rem;border-collapse:collapse;">' +
+        '<tr><td style="padding:6px 0;color:#64748b;">주택수</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + hCount + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">취득가액</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(price) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">부동산 유형</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + propType + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">조정대상지역</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + (isAdj ? '해당' : '비해당') + '</td></tr>' +
+        '<tr style="border-top:1px solid #e2e8f0;"><td style="padding:8px 0;color:#1e3a8a;font-weight:700;">적용 세율</td><td style="padding:8px 0;font-weight:800;text-align:right;color:#1e3a8a;">' + (rate * 100).toFixed(2) + '% (' + desc + ')</td></tr>' +
+        '</table></div></div>' +
+        '<div class="step-box"><div class="step-num">STEP 3</div>' +
+        '<div class="step-title">세액 산출 및 부가세 계산</div>' +
+        '<div class="step-content">' +
+        '<table style="width:100%;font-size:0.85rem;border-collapse:collapse;">' +
+        '<tr><td style="padding:6px 0;color:#64748b;">취득세 (본세)</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(tax) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">&nbsp;&nbsp;산식</td><td style="padding:6px 0;text-align:right;font-size:0.82rem;color:#64748b;">' + f_kr(price) + ' × ' + (rate * 100).toFixed(2) + '%</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">지방교육세</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(eduTax) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">농어촌특별세</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(ruralTax) + (area <= 85 ? ' (85㎡ 이하 면제)' : '') + '</td></tr>' +
+        (reduction > 0 ? '<tr><td style="padding:6px 0;color:#16a34a;">생애최초 감면</td><td style="padding:6px 0;font-weight:700;text-align:right;color:#16a34a;">-' + f_kr(reduction) + '</td></tr>' : '') +
+        '</table></div></div>' +
+        '<div class="step-box" style="border-left-color:#1e3a8a;background:#eff6ff;"><div class="step-num" style="background:#1e3a8a;">FINAL</div>' +
+        '<div class="step-title" style="font-size:1rem;">합계 납부액</div>' +
+        '<div class="step-content" style="font-size:1.15rem;font-weight:800;color:#1e3a8a;">' + f_kr(totalTax) +
+        '</div></div>';
+    document.getElementById('re-acq-detail-body').innerHTML = detailHtml;
+
     // Bar chart
     var ctx = document.getElementById('re-acq-chart').getContext('2d');
     if (reAcqChart) reAcqChart.destroy();
@@ -3077,12 +3179,58 @@ function calcHoldingTax() {
         dedInfo.style.display = 'none';
     }
 
-    var totalTax = propTax + jongbuTax;
+    // 종부세 농어촌특별세
+    var jongbuRuralTax = Math.round(jongbuTax * 0.2);
+    var totalTax = propTax + jongbuTax + jongbuRuralTax;
 
     document.getElementById('re-hold-prop-tax').textContent = f_kr(propTax);
     document.getElementById('re-hold-jongbu-tax').textContent = f_kr(jongbuTax);
     document.getElementById('re-hold-jongbu-desc').textContent = '\uACF5\uC81C\uAE08\uC561: ' + f_kr(exemption) + ', \uACFC\uC138\uAE30\uC900: ' + f_kr(jongbuBase);
     document.getElementById('re-hold-total').textContent = f_kr(totalTax);
+
+    // 상세 분석 보고서
+    var afterExemption = Math.max(0, offPrice - exemption);
+    var fairRatio = 0.6;
+    var holdTypeLabel = reHoldType === 'single' ? '1주택(단독)' : reHoldType === 'joint' ? '1주택(공동명의)' : '다주택';
+    var exemptionLabel = reHoldType === 'single' ? '12억 (1세대 1주택)' : reHoldType === 'joint' ? '18억 (공동명의)' : '9억 (다주택)';
+    var holdDetailHtml =
+        '<div class="step-box"><div class="step-num">STEP 1</div>' +
+        '<div class="step-title">공시가격 합계 및 기본공제</div>' +
+        '<div class="step-content">' +
+        '<table style="width:100%;font-size:0.85rem;border-collapse:collapse;">' +
+        '<tr><td style="padding:6px 0;color:#64748b;">보유 형태</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + holdTypeLabel + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">공시가격 합계</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(offPrice) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">기본공제</td><td style="padding:6px 0;font-weight:700;text-align:right;">-' + f_kr(exemption) + ' (' + exemptionLabel + ')</td></tr>' +
+        '<tr style="border-top:1px solid #e2e8f0;"><td style="padding:8px 0;color:#1e3a8a;font-weight:700;">공제 후 금액</td><td style="padding:8px 0;font-weight:800;text-align:right;color:#1e3a8a;">' + f_kr(afterExemption) + '</td></tr>' +
+        '</table></div></div>' +
+        '<div class="step-box"><div class="step-num">STEP 2</div>' +
+        '<div class="step-title">과세표준 산정</div>' +
+        '<div class="step-content">' +
+        '<div class="step-formula">' + f_kr(afterExemption) + ' × 공정시장가액비율 ' + (fairRatio * 100) + '% = ' + f_kr(jongbuBase) + '</div>' +
+        '<table style="width:100%;font-size:0.85rem;border-collapse:collapse;margin-top:10px;">' +
+        '<tr><td style="padding:6px 0;color:#64748b;">공정시장가액비율</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + (fairRatio * 100) + '%</td></tr>' +
+        '<tr style="border-top:1px solid #e2e8f0;"><td style="padding:8px 0;color:#1e3a8a;font-weight:700;">종부세 과세표준</td><td style="padding:8px 0;font-weight:800;text-align:right;color:#1e3a8a;">' + f_kr(jongbuBase) + '</td></tr>' +
+        '</table></div></div>' +
+        '<div class="step-box"><div class="step-num">STEP 3</div>' +
+        '<div class="step-title">산출세액 및 세액공제</div>' +
+        '<div class="step-content">' +
+        '<table style="width:100%;font-size:0.85rem;border-collapse:collapse;">' +
+        '<tr><td style="padding:6px 0;color:#64748b;">재산세 (추정)</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(propTax) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">종부세 산출</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(jResult.tax) + '</td></tr>' +
+        (dedRate > 0 ? '<tr><td style="padding:6px 0;color:#16a34a;">세액공제 (' + Math.round(dedRate * 100) + '%)</td><td style="padding:6px 0;font-weight:700;text-align:right;color:#16a34a;">-' + f_kr(Math.round(jResult.tax * dedRate)) + '</td></tr>' : '') +
+        '<tr><td style="padding:6px 0;color:#64748b;">공제 후 종부세</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(jongbuTax) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">종부세 농어촌특별세 (20%)</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(jongbuRuralTax) + '</td></tr>' +
+        '</table></div></div>' +
+        '<div class="step-box" style="border-left-color:#1e3a8a;background:#eff6ff;"><div class="step-num" style="background:#1e3a8a;">FINAL</div>' +
+        '<div class="step-title" style="font-size:1rem;">최종 보유세액 합계</div>' +
+        '<div class="step-content">' +
+        '<table style="width:100%;font-size:0.92rem;border-collapse:collapse;">' +
+        '<tr><td style="padding:6px 0;">재산세</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(propTax) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;">종합부동산세</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(jongbuTax) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;">농어촌특별세</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(jongbuRuralTax) + '</td></tr>' +
+        '<tr style="border-top:2px solid #1e3a8a;"><td style="padding:8px 0;font-weight:800;color:#1e3a8a;font-size:1.05rem;">합계</td><td style="padding:8px 0;font-weight:800;text-align:right;color:#1e3a8a;font-size:1.15rem;">' + f_kr(totalTax) + '</td></tr>' +
+        '</table></div></div>';
+    document.getElementById('re-hold-detail-body').innerHTML = holdDetailHtml;
 
     // Chart
     var ctx = document.getElementById('re-hold-chart').getContext('2d');
@@ -3090,11 +3238,11 @@ function calcHoldingTax() {
     reHoldChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['\uC7AC\uC0B0\uC138', '\uC885\uD569\uBD80\uB3D9\uC0B0\uC138'],
+            labels: ['\uC7AC\uC0B0\uC138', '\uC885\uD569\uBD80\uB3D9\uC0B0\uC138', '\uB18D\uC5B4\uCD0C\uD2B9\uBCC4\uC138'],
             datasets: [{
                 label: '\uAE08\uC561',
-                data: [propTax, jongbuTax],
-                backgroundColor: ['#1e3a8a', '#3b82f6'],
+                data: [propTax, jongbuTax, jongbuRuralTax],
+                backgroundColor: ['#1e3a8a', '#3b82f6', '#f59e0b'],
                 borderRadius: 6,
                 barPercentage: 0.5
             }]
@@ -3210,6 +3358,50 @@ function calcTransferTax() {
     document.getElementById('re-tf-local-val').textContent = f_kr(localTax);
     document.getElementById('re-tf-net-val').textContent = f_kr(netProceeds);
     document.getElementById('re-tf-info').innerHTML = info;
+
+    // 상세 분석 보고서
+    var exemptLabel = (is1h && asset === '주택') ? (sell <= 1200000000 ? '✅ 비과세 (양도가 12억 이하)' : '⚠️ 고가주택: 12억 초과분만 과세') : '해당없음';
+    var tfDetailHtml =
+        '<div class="step-box"><div class="step-num">STEP 1</div>' +
+        '<div class="step-title">양도차익 계산</div>' +
+        '<div class="step-content">' +
+        '<table style="width:100%;font-size:0.85rem;border-collapse:collapse;">' +
+        '<tr><td style="padding:6px 0;color:#64748b;">자산 유형</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + asset + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">보유기간</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + holdY + '년</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">양도가액</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(sell) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">(-) 취득가액</td><td style="padding:6px 0;font-weight:700;text-align:right;">-' + f_kr(buy) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">(-) 필요경비</td><td style="padding:6px 0;font-weight:700;text-align:right;">-' + f_kr(expenses) + '</td></tr>' +
+        '<tr style="border-top:1px solid #e2e8f0;"><td style="padding:8px 0;color:#1e3a8a;font-weight:700;">양도차익</td><td style="padding:8px 0;font-weight:800;text-align:right;color:#1e3a8a;">' + f_kr(gain) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">1세대 1주택 비과세</td><td style="padding:6px 0;font-weight:600;text-align:right;font-size:0.82rem;">' + exemptLabel + '</td></tr>' +
+        (taxableGain !== gain ? '<tr><td style="padding:6px 0;color:#64748b;">과세대상 양도차익</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(taxableGain) + '</td></tr>' : '') +
+        '</table></div></div>' +
+        '<div class="step-box"><div class="step-num">STEP 2</div>' +
+        '<div class="step-title">장기보유특별공제 및 기본공제</div>' +
+        '<div class="step-content">' +
+        '<table style="width:100%;font-size:0.85rem;border-collapse:collapse;">' +
+        '<tr><td style="padding:6px 0;color:#64748b;">과세대상 양도차익</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(taxableGain) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">장기보유특별공제율</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + (ltRate * 100).toFixed(0) + '%</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">장기보유특별공제액</td><td style="padding:6px 0;font-weight:700;text-align:right;">-' + f_kr(deduction) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">양도소득 기본공제</td><td style="padding:6px 0;font-weight:700;text-align:right;">-250만원</td></tr>' +
+        '<tr style="border-top:1px solid #e2e8f0;"><td style="padding:8px 0;color:#1e3a8a;font-weight:700;">양도소득 과세표준</td><td style="padding:8px 0;font-weight:800;text-align:right;color:#1e3a8a;">' + f_kr(yangBase) + '</td></tr>' +
+        '</table></div></div>' +
+        '<div class="step-box"><div class="step-num">STEP 3</div>' +
+        '<div class="step-title">과세표준 및 세율 적용</div>' +
+        '<div class="step-content">' +
+        '<table style="width:100%;font-size:0.85rem;border-collapse:collapse;">' +
+        '<tr><td style="padding:6px 0;color:#64748b;">양도소득 과세표준</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(yangBase) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;color:#64748b;">적용 세율</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + rateDesc + '</td></tr>' +
+        '<tr style="border-top:1px solid #e2e8f0;"><td style="padding:8px 0;color:#1e3a8a;font-weight:700;">산출세액</td><td style="padding:8px 0;font-weight:800;text-align:right;color:#1e3a8a;">' + f_kr(yangTax) + '</td></tr>' +
+        '</table></div></div>' +
+        '<div class="step-box" style="border-left-color:#dc2626;background:#fef2f2;"><div class="step-num" style="background:#dc2626;">FINAL</div>' +
+        '<div class="step-title" style="font-size:1rem;">예상 양도소득세</div>' +
+        '<div class="step-content">' +
+        '<table style="width:100%;font-size:0.92rem;border-collapse:collapse;">' +
+        '<tr><td style="padding:6px 0;">양도소득세</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(yangTax) + '</td></tr>' +
+        '<tr><td style="padding:6px 0;">지방소득세 (10%)</td><td style="padding:6px 0;font-weight:700;text-align:right;">' + f_kr(localTax) + '</td></tr>' +
+        '<tr style="border-top:2px solid #dc2626;"><td style="padding:8px 0;font-weight:800;color:#dc2626;font-size:1.05rem;">총 납부액</td><td style="padding:8px 0;font-weight:800;text-align:right;color:#dc2626;font-size:1.15rem;">' + f_kr(totalTax) + '</td></tr>' +
+        '</table></div></div>';
+    document.getElementById('re-tf-detail-body').innerHTML = tfDetailHtml;
 
     // Waterfall chart
     var ctx = document.getElementById('re-tf-chart').getContext('2d');
@@ -3728,6 +3920,161 @@ function calcGoalFund() {
         '<div class="step-box"><div class="step-num">\uBCC0\uC561</div>' +
         '<div class="step-title">\uBCC0\uC561\uBCF4\uD5D8 (\uC6D4 \uBCF5\uB9AC, \uBE44\uACFC\uC138)</div>' +
         '<div class="step-content">\uB9E4\uC6D4 ' + f_kr(reqMonthly) + ' \uD22C\uC790 \xD7 ' + period + '\uB144<br>\uBE44\uACFC\uC138 \uC218\uC775\uB960: ' + rate.toFixed(2) + '%<br>10\uB144 \uC774\uC0C1 \uC720\uC9C0 \uC2DC \uBE44\uACFC\uC138 \uD61C\uD0DD</div></div>';
+}
+
+/* ============================================================
+   목적자금: 3종 비교 분석
+   ============================================================ */
+var goalCompChart = null;
+
+function toggleGoalComparison() {
+    var on = document.getElementById('goal-comp-toggle').checked;
+    var el = document.getElementById('goal-comp-inputs');
+    if (on) { el.classList.remove('hidden'); calcGoalComparison(); }
+    else { el.classList.add('hidden'); }
+}
+
+function toggleGoalCompExtra() {
+    var on = document.getElementById('goal-comp-extra-toggle').checked;
+    var el = document.getElementById('goal-comp-extra-group');
+    el.style.display = on ? 'inline-block' : 'none';
+    if (!on) document.getElementById('goal-comp-extra-amt').value = '0';
+    calcGoalComparison();
+}
+
+function calcGoalComparison() {
+    // Get monthly amount from the main goal fund inputs
+    var monthlyAmt;
+    if (goalCalcType === 'target') {
+        // Use the investment reqMonthly
+        var period0 = parseInt(document.getElementById('goal-period-slider').value) || 10;
+        var rate0 = parseFloat(document.getElementById('goal-yield-slider').value) || 5.0;
+        var mr0 = rate0 / 100 / 12;
+        var m0 = period0 * 12;
+        var target0 = parseNumberInput(document.getElementById('goal-target'));
+        monthlyAmt = mr0 === 0 ? Math.round(target0 / m0) : Math.round(target0 * mr0 / (Math.pow(1 + mr0, m0) - 1));
+    } else {
+        monthlyAmt = parseNumberInput(document.getElementById('goal-monthly-save'));
+    }
+
+    var savRate = parseFloat(document.getElementById('goal-comp-sav').value) || 3.0;
+    var fundRate = parseFloat(document.getElementById('goal-comp-fund').value) || 6.0;
+    var etfRate = parseFloat(document.getElementById('goal-comp-etf').value) || 7.0;
+
+    var extraAmt = 0;
+    if (document.getElementById('goal-comp-extra-toggle').checked) {
+        extraAmt = parseNumberInput(document.getElementById('goal-comp-extra-amt'));
+    }
+    var totalMonthly = monthlyAmt + extraAmt;
+
+    var periods = [3, 5, 10, 15];
+    var savResults = [], fundResults = [], etfResults = [];
+
+    for (var pi = 0; pi < periods.length; pi++) {
+        var yr = periods[pi];
+        var months = yr * 12;
+        var principal = totalMonthly * months;
+
+        // 적금: 단리 + 15.4% tax
+        var preTaxInt = totalMonthly * (savRate / 100) * months * (months + 1) / 24;
+        var savResult = principal + Math.round(preTaxInt * (1 - 0.154));
+
+        // 펀드: 월복리 (세후 rate * (1-0.154))
+        var netFundR = fundRate * (1 - 0.154) / 100 / 12;
+        var fundResult = netFundR > 0 ? Math.round(totalMonthly * (Math.pow(1 + netFundR, months) - 1) / netFundR) : principal;
+
+        // 변액: 월복리 (비과세)
+        var netEtfR = etfRate / 100 / 12;
+        var etfResult = netEtfR > 0 ? Math.round(totalMonthly * (Math.pow(1 + netEtfR, months) - 1) / netEtfR) : principal;
+
+        savResults.push(savResult);
+        fundResults.push(fundResult);
+        etfResults.push(etfResult);
+    }
+
+    // Format for data labels
+    function toMan(v) { return Math.round(v / 10000).toLocaleString('ko-KR') + '만'; }
+
+    // Bar chart
+    var ctx = document.getElementById('goal-comp-chart').getContext('2d');
+    if (goalCompChart) goalCompChart.destroy();
+    goalCompChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['3년', '5년', '10년', '15년'],
+            datasets: [
+                { label: '🏦 적금', data: savResults, backgroundColor: '#cbd5e1', borderRadius: 6 },
+                { label: '📊 펀드', data: fundResults, backgroundColor: '#fbbf24', borderRadius: 6 },
+                { label: '🚀 변액', data: etfResults, backgroundColor: '#2563eb', borderRadius: 6 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true, position: 'top' },
+                tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + toMan(ctx.raw); } } },
+                title: { display: true, text: '3종 상품 기간별 예상 수령액', font: { size: 14, weight: 'bold' }, color: '#1e3a8a' }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: function(v) { return f_w(v); } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Period cards
+    var cardsHtml = '<div style="margin-bottom:16px;font-weight:700;font-size:1rem;color:#1e3a8a;">&#x26A1; 기간별 적금 vs 펀드 vs 변액 차이</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px;">';
+    for (var ci = 0; ci < periods.length; ci++) {
+        var gapEtfSav = etfResults[ci] - savResults[ci];
+        var gapEtfFund = etfResults[ci] - fundResults[ci];
+        cardsHtml += '<div style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);border-radius:12px;padding:16px;color:#fff;">' +
+            '<div style="font-weight:800;font-size:1.05rem;margin-bottom:10px;">' + periods[ci] + '년 유지</div>' +
+            '<div style="font-size:0.85rem;line-height:1.7;">' +
+            '&#x1F3E6; 적금: <strong>' + toMan(savResults[ci]) + '</strong><br>' +
+            '&#x1F4CA; 펀드: <strong>' + toMan(fundResults[ci]) + '</strong><br>' +
+            '&#x1F680; 변액: <strong>' + toMan(etfResults[ci]) + '</strong>' +
+            '</div>' +
+            '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.25);font-size:0.82rem;">' +
+            '변액-적금 격차: <strong style="color:#fbbf24;">+' + toMan(gapEtfSav) + '</strong><br>' +
+            '변액-펀드 격차: <strong style="color:#93c5fd;">+' + toMan(gapEtfFund) + '</strong>' +
+            '</div></div>';
+    }
+    cardsHtml += '</div>' +
+        '<div style="background:#eff6ff;border-radius:10px;padding:14px;font-size:0.85rem;color:#1e3a8a;line-height:1.6;">' +
+        '&#x1F4A1; 기간이 길어질수록 비과세 복리의 격차는 <strong>기하급수적</strong>으로 벌어집니다.' +
+        '</div>';
+    document.getElementById('goal-comp-period-cards').innerHTML = cardsHtml;
+
+    // Product comparison table
+    var tableHtml = '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;">' +
+        '<thead><tr style="background:#1e3a8a;color:#fff;">' +
+        '<th style="padding:10px 12px;text-align:left;font-weight:700;">항목</th>' +
+        '<th style="padding:10px 12px;text-align:center;font-weight:700;">&#x1F3E6; 은행(적금)</th>' +
+        '<th style="padding:10px 12px;text-align:center;font-weight:700;">&#x1F4CA; 증권사(펀드)</th>' +
+        '<th style="padding:10px 12px;text-align:center;font-weight:700;">&#x1F680; 보험사(변액)</th>' +
+        '</tr></thead><tbody>';
+    var rows = [
+        ['대표상품', '정기적금', '주식형/혼합형 펀드', '변액유니버셜보험'],
+        ['수익률', savRate + '% (단리)', fundRate + '% (복리)', etfRate + '% (복리)'],
+        ['과세', '이자소득세 15.4%', '배당/양도세 15.4%', '비과세 (10년 이상)'],
+        ['변동성관리', '없음 (확정금리)', '제한적', 'GMP, 자동재배분'],
+        ['사망보장', '없음', '없음', '기본사망보장 포함'],
+        ['최저보증', '예금자보호 5천만', '없음', '최저보증옵션(GMAB)'],
+        ['ETF투자', '불가', '가능', '가능 (변액 내 펀드)'],
+        ['장기복리', '단리구조', '복리 가능', '비과세 복리'],
+        ['중도인출', '해약 시 이자 손실', '자유로움', '부분인출 가능']
+    ];
+    for (var ri = 0; ri < rows.length; ri++) {
+        var bg = ri % 2 === 0 ? '#f8fafc' : '#fff';
+        tableHtml += '<tr style="background:' + bg + ';">' +
+            '<td style="padding:10px 12px;font-weight:700;border-bottom:1px solid #f1f5f9;">' + rows[ri][0] + '</td>' +
+            '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid #f1f5f9;">' + rows[ri][1] + '</td>' +
+            '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid #f1f5f9;">' + rows[ri][2] + '</td>' +
+            '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid #f1f5f9;color:#2563eb;font-weight:600;">' + rows[ri][3] + '</td></tr>';
+    }
+    tableHtml += '</tbody></table>';
+    document.getElementById('goal-comp-table-wrap').innerHTML = tableHtml;
 }
 
 /* ============================================================
