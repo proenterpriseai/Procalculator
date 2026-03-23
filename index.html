@@ -4031,12 +4031,12 @@ function calcGoalFund() {
     var savResult = Math.round(principal + preTaxInt * (1 - 0.154));
     var savInterest = savResult - principal;
 
-    // 펀드: 세후 월복리
-    var netFundR = rate * (1 - 0.154) / 100 / 12;
+    // 펀드: 세후 월복리 (배당소득세 15.4% + 수수료 1.2%)
+    var netFundR = rate * (1 - 0.154 - 0.012) / 100 / 12;
     var fundResult = netFundR > 0 ? Math.round(reqMonthly * (Math.pow(1 + netFundR, totalMonths) - 1) / netFundR) : Math.round(reqMonthly * totalMonths);
 
-    // 변액: 비과세 월복리
-    var netEtfR = rate / 100 / 12;
+    // 변액: 비과세 월복리 (사업비 0.755% 차감)
+    var netEtfR = (rate - 0.755) / 100 / 12;
     var etfResult = netEtfR > 0 ? Math.round(reqMonthly * (Math.pow(1 + netEtfR, totalMonths) - 1) / netEtfR) : Math.round(reqMonthly * totalMonths);
 
     var savNetRate = (savRate * (1 - 0.154)).toFixed(2);
@@ -4130,12 +4130,12 @@ function calcGoalComparison() {
         var preTaxInt = totalMonthly * (savRate / 100) * months * (months + 1) / 24;
         var savResult = principal + Math.round(preTaxInt * (1 - 0.154));
 
-        // 펀드: 월복리 (세후 rate * (1-0.154))
-        var netFundR = fundRate * (1 - 0.154) / 100 / 12;
+        // 펀드: 월복리 (배당소득세 15.4% + 수수료 1.2%)
+        var netFundR = fundRate * (1 - 0.154 - 0.012) / 100 / 12;
         var fundResult = netFundR > 0 ? Math.round(totalMonthly * (Math.pow(1 + netFundR, months) - 1) / netFundR) : principal;
 
-        // 변액: 월복리 (비과세)
-        var netEtfR = etfRate / 100 / 12;
+        // 변액: 월복리 (비과세, 사업비 0.755%)
+        var netEtfR = (etfRate - 0.755) / 100 / 12;
         var etfResult = netEtfR > 0 ? Math.round(totalMonthly * (Math.pow(1 + netEtfR, months) - 1) / netEtfR) : principal;
 
         savResults.push(savResult);
