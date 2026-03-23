@@ -477,6 +477,37 @@ h1.page-title {
     color: #334155;
     margin-top: 6px;
 }
+.help-tooltip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #64748b;
+    font-size: 11px;
+    cursor: help;
+    margin-left: 4px;
+    position: relative;
+}
+.help-tooltip:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    white-space: normal;
+    width: 250px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    line-height: 1.5;
+}
 
 /* ============================================================
    SUB-TABS
@@ -1924,7 +1955,7 @@ body.presentation-mode .two-col > div:last-child {
                     <div id="dol-rate-timestamp" style="font-size:0.75rem;color:#64748b;margin-top:4px;display:none;"></div>
                 </div>
                 <div class="form-group">
-                    <label>AI 예측 평균 환율 (원/$)</label>
+                    <label>AI 예측 평균 환율 (원/$) <span class="help-tooltip" title="납입 기간 동안의 예상 평균 환율입니다. 현재 환율과 10년 평균 환율을 가중 평균하여 산출합니다. 납입 기간이 길수록 장기 평균에 가까워집니다.">&#x2753;</span></label>
                     <input type="number" id="dol-rate-avg" value="1350.0" min="500" max="3000" step="0.1" oninput="calcDollar();">
                 </div>
                 <div class="form-group">
@@ -4385,8 +4416,8 @@ function calcDollar() {
     });
 
     // Exchange rate history
-    var histYears = [2026,2025,2024,2023,2022,2021,2020,2019,2018,2017,2016];
-    var histRates = [rateNow,1390,1364,1306,1292,1144,1180,1166,1100,1131,1161];
+    var histYears = [2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026];
+    var histRates = [1161,1131,1100,1166,1180,1144,1292,1306,1364,1390,rateNow];
     var histLabels = histYears.map(function(y) { return y + '\uB144'; });
     var histMin = Math.min.apply(null, histRates);
     var histMax = Math.max.apply(null, histRates);
@@ -4427,13 +4458,14 @@ function calcDollar() {
         '<div class="metric-card"><div class="mc-label">\uD604\uC7AC</div><div class="mc-value">' + f_w(rateNow) + '\uC6D0</div></div>';
 
     document.getElementById('dol-bep-body').innerHTML =
-        '<div class="step-box"><div class="step-num">BEP</div>' +
-        '<div class="step-title">\uC190\uC775\uBD84\uAE30 \uD658\uC728</div>' +
-        '<div class="step-content">\uCD1D \uB0A9\uC785 \uC6D0\uAE08 (KRW): ' + f_kr(totalKrwPaid) + '<br>' +
+        '<div class="step-box"><div class="step-num">\uC190\uC775\uBD84\uAE30\uC810(BEP)</div>' +
+        '<div class="step-title">\uC190\uC775\uBD84\uAE30 \uD658\uC728\uC774\uB780?</div>' +
+        '<div class="step-content">\uB0A9\uC785\uD55C \uC6D0\uD654 \uCD1D\uC561\uACFC \uB2EC\uB7EC \uD658\uAE09\uAE08\uC758 \uC6D0\uD654 \uD658\uC0B0\uC561\uC774 \uAC19\uC544\uC9C0\uB294 \uD658\uC728\uC785\uB2C8\uB2E4. \uC774 \uD658\uC728\uBCF4\uB2E4 \uC2E4\uC81C \uD658\uC728\uC774 \uB192\uC73C\uBA74 \uC218\uC775, \uB0AE\uC73C\uBA74 \uC190\uC2E4\uC785\uB2C8\uB2E4.<br><br>' +
+        '\uCD1D \uB0A9\uC785 \uC6D0\uAE08 (KRW): ' + f_kr(totalKrwPaid) + '<br>' +
         '10\uB144 \uC2DC\uC810 \uD658\uAE09\uC561 ($): $' + f_w(Math.round(usdVal10)) + '<br>' +
         '<div class="step-formula">\uC190\uC775\uBD84\uAE30 \uD658\uC728 = \uCD1D\uB0A9\uC785(KRW) \xF7 \uD658\uAE09\uC561($) = <strong>' + f_w(bepRate) + '\uC6D0/$</strong></div>' +
         '<br>\uD604\uC7AC \uD658\uC728 ' + f_w(rateNow) + '\uC6D0 \uAE30\uC900, ' +
-        (rateNow > bepRate ? '\uD658\uC728\uC774 BEP\uBCF4\uB2E4 <strong style="color:#22c55e;">\uB192\uC544</strong> \uC218\uC775 \uAD6C\uAC04\uC785\uB2C8\uB2E4.' : '\uD658\uC728\uC774 BEP\uBCF4\uB2E4 <strong style="color:#ef4444;">\uB0AE\uC544</strong> \uC190\uC2E4 \uAD6C\uAC04\uC785\uB2C8\uB2E4.') +
+        (rateNow > bepRate ? '\uD658\uC728\uC774 \uC190\uC775\uBD84\uAE30\uC810\uBCF4\uB2E4 <strong style="color:#22c55e;">\uB192\uC544</strong> \uC218\uC775 \uAD6C\uAC04\uC785\uB2C8\uB2E4.' : '\uD658\uC728\uC774 \uC190\uC775\uBD84\uAE30\uC810\uBCF4\uB2E4 <strong style="color:#ef4444;">\uB0AE\uC544</strong> \uC190\uC2E4 \uAD6C\uAC04\uC785\uB2C8\uB2E4.') +
         '</div></div>';
 }
 
