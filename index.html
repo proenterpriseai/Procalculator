@@ -4239,33 +4239,21 @@ async function fetchExchangeRate() {
     var btn = document.querySelector('[onclick="fetchExchangeRate();"]');
     if (btn) btn.textContent = '수신 중...';
     try {
-        // 1차: 한국수출입은행 OPEN API (가장 정확)
-        var rate = null;
-        try {
-            var res1 = await fetch('https://m.exchange.co.kr/last/exchange_data.php');
-            var txt = await res1.text();
-            var m = txt.match(/USD[\s\S]*?(\d{1,2},?\d{3}\.?\d*)/);
-            if (m) rate = parseFloat(m[1].replace(',', ''));
-        } catch(e1) {}
-        // 2차: exchangerate-api fallback
-        if (!rate) {
-            var res2 = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-            var data2 = await res2.json();
-            rate = data2.rates.KRW;
-        }
-        if (rate) {
-            document.getElementById('dol-rate-now').value = rate.toFixed(1);
+        var res = await fetch('/api/rate');
+        var data = await res.json();
+        if (data.rate) {
+            document.getElementById('dol-rate-now').value = data.rate.toFixed(1);
             var now = new Date();
             var ts = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
             var tsEl = document.getElementById('dol-rate-timestamp');
-            tsEl.textContent = '\uC218\uC2E0: ' + ts;
+            tsEl.textContent = '\uC218\uC2E0: ' + ts + ' (' + (data.source === 'naver' ? '\uB124\uC774\uBC84 \uB9E4\uB9E4\uAE30\uC900\uC728' : data.source) + ')';
             tsEl.style.display = 'block';
             calcDollar();
         }
     } catch(e) {
         alert('\uD658\uC728 \uC218\uC2E0 \uC2E4\uD328. \uC218\uB3D9\uC73C\uB85C \uC785\uB825\uD574\uC8FC\uC138\uC694.');
     }
-    if (btn) btn.textContent = '🔄 실시간 수신';
+    if (btn) btn.textContent = '\uD83D\uDD04 \uC2E4\uC2DC\uAC04 \uC218\uC2E0';
 }
 
 var dolRefundChart = null, dolScenarioChart = null, dolHistoryChart = null;
