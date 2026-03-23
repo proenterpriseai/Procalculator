@@ -1,0 +1,1871 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRO Calculator - AI 실시간 시뮬레이션</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NV114K1SQY"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-NV114K1SQY');
+</script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+    min-height: 100vh;
+    display: flex;
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+    width: 280px;
+    min-height: 100vh;
+    background: #27398c;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+}
+.sidebar-header {
+    padding: 24px 20px 16px;
+    text-align: center;
+}
+.sidebar-header h2 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+.sidebar-header .sub1 {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 2px;
+}
+.sidebar-header .sub2 {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.55);
+}
+.sidebar-category-banner {
+    margin: 8px 16px 12px;
+    padding: 8px 14px;
+    background: linear-gradient(135deg, #b8860b, #daa520);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: center;
+    color: #fff;
+}
+.sidebar-menu {
+    list-style: none;
+    padding: 0 8px;
+    flex: 1;
+}
+.sidebar-menu li {
+    margin-bottom: 2px;
+}
+.sidebar-menu li a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    color: rgba(255,255,255,0.82);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all 0.15s ease;
+}
+.sidebar-menu li a:hover {
+    background: rgba(255,255,255,0.12);
+    border-left-color: #60a5fa;
+    color: #fff;
+}
+.sidebar-menu li a.active {
+    background: rgba(96,165,250,0.2);
+    border-left-color: #3b82f6;
+    color: #fff;
+    font-weight: 700;
+}
+.sidebar-menu li a .menu-icon {
+    font-size: 1.05rem;
+    width: 24px;
+    text-align: center;
+}
+.sidebar-bottom {
+    padding: 16px;
+}
+.sidebar-tip {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+}
+.sidebar-tip .tip-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #93c5fd;
+    margin-bottom: 6px;
+}
+.sidebar-tip .tip-text {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.5;
+}
+.presentation-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+.presentation-toggle label {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.75);
+}
+.toggle-switch {
+    position: relative;
+    width: 40px;
+    height: 22px;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-switch .slider {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.2);
+    border-radius: 11px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.toggle-switch .slider::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    left: 3px;
+    bottom: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+.toggle-switch input:checked + .slider {
+    background: #3b82f6;
+}
+.toggle-switch input:checked + .slider::before {
+    transform: translateX(18px);
+}
+.sidebar-disclaimer {
+    font-size: 0.62rem;
+    color: rgba(255,255,255,0.35);
+    line-height: 1.5;
+    text-align: center;
+    padding: 0 8px;
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.main-content {
+    margin-left: 280px;
+    flex: 1;
+    min-height: 100vh;
+    padding: 32px 40px;
+}
+
+/* Mobile hamburger */
+.mobile-header {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: #27398c;
+    z-index: 101;
+    align-items: center;
+    padding: 0 16px;
+}
+.hamburger {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 8px;
+}
+.mobile-header .mobile-title {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-left: 12px;
+}
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 99;
+}
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+h1.page-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #1e3a8a;
+    border-bottom: 3px solid #1e3a8a;
+    padding-bottom: 12px;
+    margin-bottom: 8px;
+}
+.page-desc {
+    font-size: 0.95rem;
+    color: #64748b;
+    margin-bottom: 28px;
+    line-height: 1.6;
+}
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+.input-card {
+    background: #fff;
+    border-left: 4px solid #3b82f6;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.input-card h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin-bottom: 18px;
+}
+
+/* ============================================================
+   FORM ELEMENTS
+   ============================================================ */
+.form-group {
+    margin-bottom: 16px;
+}
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 6px;
+}
+.form-group input[type="text"],
+.form-group input[type="number"] {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: #1e293b;
+    background: #fff;
+    transition: border-color 0.2s;
+}
+.form-group input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+.form-group .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.form-group .slider-row input[type="range"] {
+    flex: 1;
+    accent-color: #3b82f6;
+    height: 6px;
+}
+.form-group .slider-row input[type="number"] {
+    width: 80px;
+    text-align: center;
+}
+.radio-group {
+    display: flex;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1.5px solid #cbd5e1;
+}
+.radio-group label {
+    flex: 1;
+    padding: 10px 14px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    border-right: 1px solid #cbd5e1;
+    background: #fff;
+    transition: all 0.15s;
+    margin-bottom: 0;
+}
+.radio-group label:last-child {
+    border-right: none;
+}
+.radio-group input {
+    display: none;
+}
+.radio-group input:checked + label,
+.radio-group label.active {
+    background: #3b82f6;
+    color: #fff;
+    font-weight: 700;
+}
+
+/* ============================================================
+   RESULT / METRIC CARDS
+   ============================================================ */
+.result-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.result-card {
+    padding: 22px 20px;
+    border-radius: 14px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.result-card .rc-label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    opacity: 0.85;
+    margin-bottom: 8px;
+}
+.result-card .rc-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 6px;
+}
+.result-card .rc-formula {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    line-height: 1.4;
+}
+.result-card .rc-delta {
+    font-size: 0.78rem;
+    opacity: 0.8;
+    margin-top: 4px;
+}
+
+.metric-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: transform 0.2s;
+    text-align: center;
+}
+.metric-card:hover {
+    transform: translateY(-2px);
+}
+.metric-card .mc-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+.metric-card .mc-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #1e3a8a;
+}
+.metric-card .mc-delta {
+    font-size: 0.78rem;
+    color: #ef4444;
+    margin-top: 4px;
+}
+
+/* ============================================================
+   EXPERT / VERDICT CARD
+   ============================================================ */
+.expert-card {
+    background: linear-gradient(to bottom, #fff, #f8fafc);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 24px;
+}
+.expert-card h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin-bottom: 14px;
+}
+
+/* ============================================================
+   STEP BOX
+   ============================================================ */
+.step-box {
+    background: #fff;
+    border-radius: 10px;
+    border-left: 5px solid #3b82f6;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+}
+.step-box .step-num {
+    display: inline-block;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+.step-box .step-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: #1e3a8a;
+    margin-bottom: 6px;
+}
+.step-box .step-content {
+    font-size: 0.85rem;
+    color: #475569;
+    line-height: 1.6;
+}
+.step-box .step-formula {
+    display: inline-block;
+    background: #f1f5f9;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.82rem;
+    color: #334155;
+    margin-top: 6px;
+}
+
+/* ============================================================
+   SUB-TABS
+   ============================================================ */
+.sub-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 24px;
+    border-bottom: 2px solid #e2e8f0;
+}
+.sub-tab-btn {
+    padding: 12px 24px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #64748b;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+.sub-tab-btn:hover {
+    color: #3b82f6;
+}
+.sub-tab-btn.active {
+    color: #1e3a8a;
+    border-bottom-color: #3b82f6;
+    font-weight: 700;
+}
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.data-table-wrap {
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 20px;
+}
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+.data-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.data-table thead th {
+    background: #1e3a8a;
+    color: #fff;
+    font-weight: 600;
+    padding: 10px 12px;
+    text-align: right;
+    white-space: nowrap;
+}
+.data-table thead th:first-child {
+    text-align: center;
+}
+.data-table tbody td {
+    padding: 8px 12px;
+    text-align: right;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+}
+.data-table tbody td:first-child {
+    text-align: center;
+    font-weight: 600;
+    color: #1e3a8a;
+}
+.data-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+/* ============================================================
+   CHART CONTAINER
+   ============================================================ */
+.chart-container {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.chart-container canvas {
+    max-height: 380px;
+}
+
+/* ============================================================
+   EXPANDER (details/summary)
+   ============================================================ */
+details.expander {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+details.expander summary {
+    padding: 14px 20px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: #1e3a8a;
+    cursor: pointer;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    list-style: none;
+}
+details.expander summary::before {
+    content: '▶ ';
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+    display: inline-block;
+    margin-right: 6px;
+}
+details.expander[open] summary::before {
+    content: '▼ ';
+}
+details.expander .expander-body {
+    padding: 20px;
+}
+
+/* ============================================================
+   TAX CARD (for 과세 구분 안내)
+   ============================================================ */
+.tax-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+.tax-card {
+    padding: 16px;
+    border-radius: 10px;
+    text-align: center;
+}
+.tax-card.red { background: #fef2f2; border: 1px solid #fecaca; }
+.tax-card.amber { background: #fffbeb; border: 1px solid #fde68a; }
+.tax-card.green { background: #f0fdf4; border: 1px solid #bbf7d0; }
+.tax-card .tc-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+.tax-card.red .tc-title { color: #dc2626; }
+.tax-card.amber .tc-title { color: #d97706; }
+.tax-card.green .tc-title { color: #16a34a; }
+.tax-card .tc-rate {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+.tax-card.red .tc-rate { color: #ef4444; }
+.tax-card.amber .tc-rate { color: #f59e0b; }
+.tax-card.green .tc-rate { color: #22c55e; }
+.tax-card .tc-desc {
+    font-size: 0.72rem;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+/* ============================================================
+   VERDICT CARD
+   ============================================================ */
+.verdict-card {
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    border-radius: 16px;
+    padding: 28px;
+    text-align: center;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.verdict-card .verdict-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+.verdict-card .verdict-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1e3a8a;
+    margin-bottom: 8px;
+}
+.verdict-card .verdict-text {
+    font-size: 0.9rem;
+    color: #475569;
+    line-height: 1.6;
+}
+
+/* ============================================================
+   LEGAL WARNING
+   ============================================================ */
+.legal-warning {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.78rem;
+    color: #dc2626;
+    margin-top: 8px;
+    display: none;
+}
+
+/* ============================================================
+   PLACEHOLDER
+   ============================================================ */
+.placeholder-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: #94a3b8;
+}
+.placeholder-content .ph-icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+}
+.placeholder-content .ph-text {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+.placeholder-content .ph-sub {
+    font-size: 0.9rem;
+    margin-top: 6px;
+}
+
+/* ============================================================
+   LAYOUT: 2 COLUMNS
+   ============================================================ */
+.two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+.two-col.left-wide {
+    grid-template-columns: 1.2fr 0.8fr;
+}
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+@media print {
+    .sidebar, .mobile-header, .sidebar-overlay { display: none !important; }
+    .main-content { margin-left: 0 !important; padding: 20px !important; }
+    .result-card { box-shadow: none; border: 1px solid #ccc; }
+    .input-card { box-shadow: none; border: 1px solid #ccc; }
+}
+
+/* ============================================================
+   MOBILE RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .sidebar-overlay.open {
+        display: block;
+    }
+    .mobile-header {
+        display: flex;
+    }
+    .main-content {
+        margin-left: 0;
+        padding: 72px 16px 24px;
+    }
+    h1.page-title {
+        font-size: 1.3rem;
+    }
+    .result-cards {
+        grid-template-columns: 1fr;
+    }
+    .two-col {
+        grid-template-columns: 1fr;
+    }
+    .tax-cards {
+        grid-template-columns: 1fr;
+    }
+    .radio-group {
+        flex-direction: column;
+    }
+    .radio-group label {
+        border-right: none;
+        border-bottom: 1px solid #cbd5e1;
+    }
+    .radio-group label:last-child {
+        border-bottom: none;
+    }
+    .sub-tabs {
+        overflow-x: auto;
+    }
+}
+
+/* Presentation mode */
+body.presentation .main-content {
+    font-size: 1.15rem;
+}
+body.presentation h1.page-title {
+    font-size: 2.2rem;
+}
+body.presentation .result-card .rc-value {
+    font-size: 2rem;
+}
+
+/* hidden helper */
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     MOBILE HEADER
+     ============================================================ -->
+<div class="mobile-header">
+    <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <span class="mobile-title">PRO Calculator</span>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- ============================================================
+     SIDEBAR
+     ============================================================ -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h2>&#x1F9EE; PRO Calculator</h2>
+        <div class="sub1">AI 실시간 시뮬레이션</div>
+        <div class="sub2">프리미엄 자산관리 솔루션</div>
+    </div>
+    <div class="sidebar-category-banner">&#x26A1; 금융 솔루션 카테고리</div>
+    <ul class="sidebar-menu" id="sidebarMenu">
+        <li><a data-tab="tab-realestate" onclick="switchTab('tab-realestate',this)"><span class="menu-icon">&#x1F3E0;</span>부동산 통합</a></li>
+        <li><a data-tab="tab-inheritance" onclick="switchTab('tab-inheritance',this)"><span class="menu-icon">&#x1F381;</span>상속 및 증여세</a></li>
+        <li><a data-tab="tab-savings" onclick="switchTab('tab-savings',this)" class="active"><span class="menu-icon">&#x1F4B0;</span>예적금 계산기</a></li>
+        <li><a data-tab="tab-retirement" onclick="switchTab('tab-retirement',this)"><span class="menu-icon">&#x1F3D6;&#xFE0F;</span>은퇴자금 설계</a></li>
+        <li><a data-tab="tab-goalfund" onclick="switchTab('tab-goalfund',this)"><span class="menu-icon">&#x1F3AF;</span>목적자금 설계</a></li>
+        <li><a data-tab="tab-dollar" onclick="switchTab('tab-dollar',this)"><span class="menu-icon">&#x1F4B5;</span>달러 설계</a></li>
+        <li><a data-tab="tab-jeonwolse" onclick="switchTab('tab-jeonwolse',this)"><span class="menu-icon">&#x1F3D8;&#xFE0F;</span>전월세 전환 설계</a></li>
+        <li><a data-tab="tab-loan" onclick="switchTab('tab-loan',this)"><span class="menu-icon">&#x1F3E6;</span>대출 상환 설계</a></li>
+        <li><a data-tab="tab-incometax" onclick="switchTab('tab-incometax',this)"><span class="menu-icon">&#x1F4CA;</span>종합소득세 계산</a></li>
+    </ul>
+    <div class="sidebar-bottom">
+        <div class="sidebar-tip">
+            <div class="tip-title">&#x1F4A1; 활용 팁</div>
+            <div class="tip-text">각 항목의 숫자를 변경하면 실시간으로 결과가 업데이트됩니다. 프레젠테이션 모드를 활성화하면 큰 화면에 최적화됩니다.</div>
+        </div>
+        <div class="presentation-toggle">
+            <label>&#x1F4FA; 프레젠테이션 모드</label>
+            <div class="toggle-switch">
+                <input type="checkbox" id="presentationToggle" onchange="togglePresentation(this.checked)">
+                <span class="slider"></span>
+            </div>
+        </div>
+        <div class="sidebar-disclaimer">
+            본 계산기는 참고용이며, 실제 세금 및 금융 상품의 조건은 관련 법규 및 금융기관의 약관에 따라 달라질 수 있습니다. 정확한 정보는 전문가와 상담하시기 바랍니다.
+        </div>
+    </div>
+</nav>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<div class="main-content">
+
+<!-- ============================================================
+     TAB: 예적금 계산기
+     ============================================================ -->
+<div class="tab-content" id="tab-savings">
+    <h1 class="page-title">&#x1F4B0; 예적금 계산기</h1>
+    <p class="page-desc">예금과 적금의 이자를 <strong>실시간</strong>으로 계산하고 비교합니다.</p>
+
+    <div class="sub-tabs">
+        <button class="sub-tab-btn active" onclick="switchSavingsSubTab('deposit',this)">&#x1F3E6; 예금 계산기</button>
+        <button class="sub-tab-btn" onclick="switchSavingsSubTab('installment',this)">&#x1F4B0; 적금 계산기</button>
+    </div>
+
+    <!-- ====== 예금 SUB-TAB ====== -->
+    <div id="savings-deposit">
+        <div class="input-card">
+            <h3>&#x1F4B5; 예금 정보</h3>
+            <div class="form-group">
+                <label>예치 금액 (원)</label>
+                <input type="text" id="dep-amount" value="10,000,000" oninput="formatNumberInput(this); calcDeposit();">
+            </div>
+            <div class="form-group">
+                <label>연 이율 (%)</label>
+                <input type="number" id="dep-rate" value="3.5" min="0.01" max="100" step="0.01" oninput="calcDeposit();">
+            </div>
+            <div class="form-group">
+                <label>예치 기간 (년)</label>
+                <div class="slider-row">
+                    <input type="range" id="dep-years-slider" min="1" max="10" value="1" oninput="document.getElementById('dep-years').value=this.value; calcDeposit();">
+                    <input type="number" id="dep-years" value="1" min="1" max="10" oninput="document.getElementById('dep-years-slider').value=this.value; calcDeposit();">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>과세 구분</label>
+                <div class="radio-group" id="dep-tax-group">
+                    <input type="radio" name="dep-tax" id="dep-tax-normal" value="0.154" checked>
+                    <label for="dep-tax-normal" class="active" onclick="setDepTax(this,0.154)">일반과세</label>
+                    <input type="radio" name="dep-tax" id="dep-tax-reduced" value="0.095">
+                    <label for="dep-tax-reduced" onclick="setDepTax(this,0.095)">세금우대</label>
+                    <input type="radio" name="dep-tax" id="dep-tax-free" value="0">
+                    <label for="dep-tax-free" onclick="setDepTax(this,0)">비과세</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="result-cards" id="dep-results">
+            <div class="result-card" style="background:linear-gradient(135deg,#0c4a6e,#0ea5e9);box-shadow:0 4px 16px rgba(14,165,233,0.25);">
+                <div class="rc-label">세전 이자</div>
+                <div class="rc-value" id="dep-pre-tax">0원</div>
+                <div class="rc-formula" id="dep-pre-formula"></div>
+            </div>
+            <div class="result-card" style="background:linear-gradient(135deg,#14532d,#22c55e);box-shadow:0 4px 16px rgba(34,197,94,0.25);">
+                <div class="rc-label">세후 이자</div>
+                <div class="rc-value" id="dep-post-tax">0원</div>
+                <div class="rc-formula" id="dep-post-formula"></div>
+            </div>
+            <div class="result-card" style="background:linear-gradient(135deg,#78350f,#f59e0b);box-shadow:0 4px 16px rgba(245,158,11,0.25);">
+                <div class="rc-label">만기 수령액</div>
+                <div class="rc-value" id="dep-maturity">0원</div>
+                <div class="rc-formula" id="dep-mat-formula"></div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="dep-chart"></canvas>
+        </div>
+
+        <details class="expander">
+            <summary>&#x1F4CB; 예금 계산 방법 안내</summary>
+            <div class="expander-body">
+                <div class="step-box">
+                    <div class="step-num">STEP 1</div>
+                    <div class="step-title">&#x1F4D0; 정기예금 단리 계산 공식</div>
+                    <div class="step-content">
+                        정기예금은 <strong>단리</strong>로 계산됩니다. 예치 금액에 이자율과 기간을 곱하여 이자를 산출합니다.
+                        <div class="step-formula">이자 = 원금 &times; 연이율 &times; 기간(년)</div>
+                    </div>
+                </div>
+                <div class="step-box">
+                    <div class="step-num">STEP 2</div>
+                    <div class="step-title">&#x1F4CA; 상세 내역</div>
+                    <div class="step-content">
+                        <table class="data-table" style="margin-top:10px;">
+                            <thead><tr><th>항목</th><th>금액</th></tr></thead>
+                            <tbody id="dep-detail-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="step-box">
+                    <div class="step-num">STEP 3</div>
+                    <div class="step-title">&#x1F4A1; 과세 구분 안내</div>
+                    <div class="step-content">
+                        <div class="tax-cards" style="margin-top:12px;">
+                            <div class="tax-card red">
+                                <div class="tc-title">일반과세</div>
+                                <div class="tc-rate">15.4%</div>
+                                <div class="tc-desc">이자소득세 14% + 지방소득세 1.4%</div>
+                            </div>
+                            <div class="tax-card amber">
+                                <div class="tc-title">세금우대</div>
+                                <div class="tc-rate">9.5%</div>
+                                <div class="tc-desc">농어촌특별세 포함<br>조합 출자금 등 우대 적용</div>
+                            </div>
+                            <div class="tax-card green">
+                                <div class="tc-title">비과세</div>
+                                <div class="tc-rate">0%</div>
+                                <div class="tc-desc">세금 면제 (한도 내)<br>ISA, 청년우대 등</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <!-- ====== 적금 SUB-TAB ====== -->
+    <div id="savings-installment" class="hidden">
+        <div class="input-card">
+            <h3>&#x1F4B5; 적금 정보</h3>
+            <div class="form-group">
+                <label>월 납입액 (원)</label>
+                <input type="text" id="inst-amount" value="300,000" oninput="formatNumberInput(this); calcInstallment();">
+            </div>
+            <div class="form-group">
+                <label>연 이율 (%)</label>
+                <input type="number" id="inst-rate" value="3.5" min="0.01" max="100" step="0.01" oninput="calcInstallment();">
+            </div>
+            <div class="form-group">
+                <label>납입 기간 (년)</label>
+                <div class="slider-row">
+                    <input type="range" id="inst-years-slider" min="1" max="10" value="1" oninput="document.getElementById('inst-years').value=this.value; calcInstallment();">
+                    <input type="number" id="inst-years" value="1" min="1" max="10" oninput="document.getElementById('inst-years-slider').value=this.value; calcInstallment();">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>과세 구분</label>
+                <div class="radio-group" id="inst-tax-group">
+                    <input type="radio" name="inst-tax" id="inst-tax-normal" value="0.154" checked>
+                    <label for="inst-tax-normal" class="active" onclick="setInstTax(this,0.154)">일반과세</label>
+                    <input type="radio" name="inst-tax" id="inst-tax-reduced" value="0.095">
+                    <label for="inst-tax-reduced" onclick="setInstTax(this,0.095)">세금우대</label>
+                    <input type="radio" name="inst-tax" id="inst-tax-free" value="0">
+                    <label for="inst-tax-free" onclick="setInstTax(this,0)">비과세</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="result-cards" id="inst-results">
+            <div class="result-card" style="background:linear-gradient(135deg,#1e3a5f,#3b82f6);box-shadow:0 4px 16px rgba(59,130,246,0.25);">
+                <div class="rc-label">총 납입액</div>
+                <div class="rc-value" id="inst-total-paid">0원</div>
+                <div class="rc-formula" id="inst-paid-formula"></div>
+            </div>
+            <div class="result-card" style="background:linear-gradient(135deg,#0c4a6e,#0ea5e9);box-shadow:0 4px 16px rgba(14,165,233,0.25);">
+                <div class="rc-label">세전 이자</div>
+                <div class="rc-value" id="inst-pre-tax">0원</div>
+                <div class="rc-formula" id="inst-pre-formula"></div>
+            </div>
+            <div class="result-card" style="background:linear-gradient(135deg,#14532d,#22c55e);box-shadow:0 4px 16px rgba(34,197,94,0.25);">
+                <div class="rc-label">세후 이자</div>
+                <div class="rc-value" id="inst-post-tax">0원</div>
+                <div class="rc-formula" id="inst-post-formula"></div>
+            </div>
+            <div class="result-card" style="background:linear-gradient(135deg,#78350f,#f59e0b);box-shadow:0 4px 16px rgba(245,158,11,0.25);">
+                <div class="rc-label">만기 수령액</div>
+                <div class="rc-value" id="inst-maturity">0원</div>
+                <div class="rc-formula" id="inst-mat-formula"></div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="inst-chart"></canvas>
+        </div>
+
+        <details class="expander" open>
+            <summary>&#x1F4CB; 월별 적립 내역</summary>
+            <div class="expander-body">
+                <div class="data-table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>월</th>
+                                <th>월 저축액</th>
+                                <th>누적 저축액</th>
+                                <th>월 이자</th>
+                                <th>누적 이자</th>
+                                <th>예상 수령액</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inst-monthly-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </details>
+    </div>
+</div>
+
+<!-- ============================================================
+     TAB: 대출 상환 설계
+     ============================================================ -->
+<div class="tab-content hidden" id="tab-loan">
+    <h1 class="page-title">&#x1F3E6; 대출 상환 설계</h1>
+    <p class="page-desc">원리금균등, 원금균등, 만기일시상환 3가지 상환 방식을 <strong>한눈에 비교</strong>합니다.</p>
+
+    <div class="two-col">
+        <div>
+            <div class="input-card">
+                <h3>&#x1F4B0; 대출 조건</h3>
+                <div class="form-group">
+                    <label>대출 원금 (원)</label>
+                    <input type="text" id="loan-amount" value="0" oninput="formatNumberInput(this); calcLoan();">
+                </div>
+                <div class="form-group">
+                    <label>연 이자율 (%): <strong id="loan-rate-label">4.0</strong>%</label>
+                    <div class="slider-row">
+                        <input type="range" id="loan-rate-slider" min="1.0" max="100.0" step="0.1" value="4.0" oninput="document.getElementById('loan-rate-label').textContent=parseFloat(this.value).toFixed(1); calcLoan();">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>대출 기간 (년): <strong id="loan-years-label">30</strong>년</label>
+                    <div class="slider-row">
+                        <input type="range" id="loan-years-slider" min="1" max="40" value="30" oninput="document.getElementById('loan-years-label').textContent=this.value; calcLoan();">
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="loan-amort-chart"></canvas>
+            </div>
+        </div>
+        <div>
+            <div class="result-cards" style="grid-template-columns:1fr;">
+                <div class="result-card" style="background:linear-gradient(135deg,#0f172a,#1e3a8a);box-shadow:0 4px 16px rgba(30,58,138,0.25);">
+                    <div class="rc-label">원리금균등 월 납입</div>
+                    <div class="rc-value" id="loan-equal-pmt">0원</div>
+                    <div class="rc-delta" id="loan-equal-total-int"></div>
+                </div>
+                <div class="result-card" style="background:linear-gradient(135deg,#172554,#3b82f6);box-shadow:0 4px 16px rgba(59,130,246,0.25);">
+                    <div class="rc-label">원금균등 초회 납입</div>
+                    <div class="rc-value" id="loan-principal-first">0원</div>
+                    <div class="rc-delta" id="loan-principal-total-int"></div>
+                </div>
+                <div class="result-card" style="background:linear-gradient(135deg,#312e81,#6366f1);box-shadow:0 4px 16px rgba(99,102,241,0.25);">
+                    <div class="rc-label">만기일시상환 월 이자</div>
+                    <div class="rc-value" id="loan-bullet-monthly">0원</div>
+                    <div class="rc-delta" id="loan-bullet-total-int"></div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="loan-compare-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <details class="expander">
+        <summary>&#x1F4DD; 상세 분석 리포트</summary>
+        <div class="expander-body" id="loan-report-body">
+        </div>
+    </details>
+</div>
+
+<!-- ============================================================
+     TAB: 전월세 전환 설계
+     ============================================================ -->
+<div class="tab-content hidden" id="tab-jeonwolse">
+    <h1 class="page-title">&#x1F3E0; 전월세 전환율 계산기</h1>
+    <p class="page-desc">전세와 월세를 <strong>전환율 기반</strong>으로 상호 변환하고, 유불리를 분석합니다.</p>
+
+    <div class="two-col">
+        <div>
+            <div class="input-card">
+                <h3>&#x1F504; 변환 방향</h3>
+                <div class="form-group">
+                    <div class="radio-group" id="jw-direction-group">
+                        <input type="radio" name="jw-dir" id="jw-dir-j2w" value="j2w" checked>
+                        <label for="jw-dir-j2w" class="active" onclick="setJwDir(this,'j2w')">전세 &rarr; 월세</label>
+                        <input type="radio" name="jw-dir" id="jw-dir-w2j" value="w2j">
+                        <label for="jw-dir-w2j" onclick="setJwDir(this,'w2j')">월세 &rarr; 전세</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-card" id="jw-input-j2w">
+                <h3>&#x1F3E0; 보증금/월세 정보</h3>
+                <div class="form-group">
+                    <label>전세 보증금 (원)</label>
+                    <input type="text" id="jw-jeonse" value="300,000,000" oninput="formatNumberInput(this); calcJeonwolse();">
+                </div>
+                <div class="form-group">
+                    <label>월세 전환 시 보증금 (원)</label>
+                    <input type="text" id="jw-wolse-deposit" value="50,000,000" oninput="formatNumberInput(this); calcJeonwolse();">
+                </div>
+            </div>
+
+            <div class="input-card hidden" id="jw-input-w2j">
+                <h3>&#x1F3E0; 보증금/월세 정보</h3>
+                <div class="form-group">
+                    <label>월세 보증금 (원)</label>
+                    <input type="text" id="jw-w-deposit" value="50,000,000" oninput="formatNumberInput(this); calcJeonwolse();">
+                </div>
+                <div class="form-group">
+                    <label>월세 (원/월)</label>
+                    <input type="text" id="jw-w-monthly" value="1,000,000" oninput="formatNumberInput(this); calcJeonwolse();">
+                </div>
+            </div>
+
+            <div class="input-card">
+                <h3>&#x1F4CA; 전환율·투자수익률</h3>
+                <div class="form-group">
+                    <label>전월세 전환율 (%): <strong id="jw-rate-label">5.0</strong>%</label>
+                    <div class="slider-row">
+                        <input type="range" id="jw-rate-slider" min="2.0" max="12.0" step="0.5" value="5.0" oninput="document.getElementById('jw-rate-label').textContent=parseFloat(this.value).toFixed(1); calcJeonwolse();">
+                    </div>
+                    <div class="legal-warning" id="jw-legal-warning">
+                        &#x26A0;&#xFE0F; 현재 한국은행 기준금리 기준 법정 전환율 상한(연 4.5%)을 초과합니다. 임대인과의 합의가 필요할 수 있습니다.
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>투자 기대수익률 (%)</label>
+                    <input type="number" id="jw-invest-rate" value="3.5" min="0" max="100" step="0.1" oninput="calcJeonwolse();">
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="result-cards" style="grid-template-columns:1fr;" id="jw-result-cards">
+            </div>
+
+            <div class="chart-container">
+                <canvas id="jw-bar-chart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="jw-sensitivity-chart"></canvas>
+            </div>
+
+            <div class="verdict-card" id="jw-verdict">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     PLACEHOLDER TABS
+     ============================================================ -->
+<div class="tab-content hidden" id="tab-realestate">
+    <div class="placeholder-content">
+        <div class="ph-icon">&#x1F6A7;</div>
+        <div class="ph-text">준비 중입니다</div>
+        <div class="ph-sub">&#x1F3E0; 부동산 통합</div>
+    </div>
+</div>
+<div class="tab-content hidden" id="tab-inheritance">
+    <div class="placeholder-content">
+        <div class="ph-icon">&#x1F6A7;</div>
+        <div class="ph-text">준비 중입니다</div>
+        <div class="ph-sub">&#x1F381; 상속 및 증여세</div>
+    </div>
+</div>
+<div class="tab-content hidden" id="tab-retirement">
+    <div class="placeholder-content">
+        <div class="ph-icon">&#x1F6A7;</div>
+        <div class="ph-text">준비 중입니다</div>
+        <div class="ph-sub">&#x1F3D6;&#xFE0F; 은퇴자금 설계</div>
+    </div>
+</div>
+<div class="tab-content hidden" id="tab-goalfund">
+    <div class="placeholder-content">
+        <div class="ph-icon">&#x1F6A7;</div>
+        <div class="ph-text">준비 중입니다</div>
+        <div class="ph-sub">&#x1F3AF; 목적자금 설계</div>
+    </div>
+</div>
+<div class="tab-content hidden" id="tab-dollar">
+    <div class="placeholder-content">
+        <div class="ph-icon">&#x1F6A7;</div>
+        <div class="ph-text">준비 중입니다</div>
+        <div class="ph-sub">&#x1F4B5; 달러 설계</div>
+    </div>
+</div>
+<div class="tab-content hidden" id="tab-incometax">
+    <div class="placeholder-content">
+        <div class="ph-icon">&#x1F6A7;</div>
+        <div class="ph-text">준비 중입니다</div>
+        <div class="ph-sub">&#x1F4CA; 종합소득세 계산</div>
+    </div>
+</div>
+
+</div><!-- end main-content -->
+
+<script>
+/* ============================================================
+   UTILITY FUNCTIONS
+   ============================================================ */
+function f_w(val) {
+    return val != null ? Math.round(val).toLocaleString('ko-KR') : '0';
+}
+
+function f_kr(val) {
+    val = Math.round(val);
+    var eok = Math.floor(val / 100000000);
+    var man = Math.floor((val % 100000000) / 10000);
+    var won = val % 10000;
+    var res = '';
+    if (eok > 0) res += eok + '\uC5B5 ';
+    if (man > 0) res += man.toLocaleString('ko-KR') + '\uB9CC';
+    if (eok === 0 && man === 0) return val.toLocaleString('ko-KR') + '\uC6D0';
+    if (man > 0 && won > 0) res += ' ' + won.toLocaleString('ko-KR') + '\uC6D0';
+    else res += '\uC6D0';
+    return res;
+}
+
+function parseNumberInput(el) {
+    return parseInt(String(el.value).replace(/[^0-9]/g, ''), 10) || 0;
+}
+
+function formatNumberInput(el) {
+    var raw = String(el.value).replace(/[^0-9]/g, '');
+    if (raw === '') { el.value = ''; return; }
+    var num = parseInt(raw, 10);
+    var pos = el.selectionStart;
+    var oldLen = el.value.length;
+    el.value = num.toLocaleString('ko-KR');
+    var diff = el.value.length - oldLen;
+    el.setSelectionRange(pos + diff, pos + diff);
+}
+
+/* ============================================================
+   TAB SWITCHING
+   ============================================================ */
+function switchTab(tabId, el) {
+    document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.add('hidden'); });
+    document.getElementById(tabId).classList.remove('hidden');
+    document.querySelectorAll('#sidebarMenu a').forEach(function(a) { a.classList.remove('active'); });
+    if (el) el.classList.add('active');
+    // close mobile sidebar
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+
+function togglePresentation(on) {
+    document.body.classList.toggle('presentation', on);
+}
+
+/* ============================================================
+   SAVINGS SUB-TAB
+   ============================================================ */
+function switchSavingsSubTab(which, btn) {
+    document.getElementById('savings-deposit').classList.toggle('hidden', which !== 'deposit');
+    document.getElementById('savings-installment').classList.toggle('hidden', which !== 'installment');
+    btn.parentElement.querySelectorAll('.sub-tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+}
+
+/* ============================================================
+   TAX RADIO HELPERS
+   ============================================================ */
+var depTaxRate = 0.154;
+var instTaxRate = 0.154;
+
+function setDepTax(label, rate) {
+    depTaxRate = rate;
+    label.parentElement.querySelectorAll('label').forEach(function(l) { l.classList.remove('active'); });
+    label.classList.add('active');
+    calcDeposit();
+}
+function setInstTax(label, rate) {
+    instTaxRate = rate;
+    label.parentElement.querySelectorAll('label').forEach(function(l) { l.classList.remove('active'); });
+    label.classList.add('active');
+    calcInstallment();
+}
+
+/* ============================================================
+   DEPOSIT CALCULATION
+   ============================================================ */
+var depChart = null;
+
+function calcDeposit() {
+    var amount = parseNumberInput(document.getElementById('dep-amount'));
+    var rate = parseFloat(document.getElementById('dep-rate').value) || 0;
+    var years = parseInt(document.getElementById('dep-years').value) || 1;
+    var taxRate = depTaxRate;
+
+    var preTaxInterest = amount * (rate / 100) * years;
+    var taxAmount = preTaxInterest * taxRate;
+    var postTaxInterest = preTaxInterest - taxAmount;
+    var maturity = amount + postTaxInterest;
+
+    document.getElementById('dep-pre-tax').textContent = f_kr(preTaxInterest);
+    document.getElementById('dep-pre-formula').textContent = f_w(amount) + ' x ' + rate + '% x ' + years + '\uB144';
+    document.getElementById('dep-post-tax').textContent = f_kr(postTaxInterest);
+    document.getElementById('dep-post-formula').textContent = f_w(Math.round(preTaxInterest)) + ' - \uC138\uAE08 ' + f_w(Math.round(taxAmount)) + ' (' + (taxRate * 100).toFixed(1) + '%)';
+    document.getElementById('dep-maturity').textContent = f_kr(maturity);
+    document.getElementById('dep-mat-formula').textContent = '\uC6D0\uAE08 ' + f_w(amount) + ' + \uC138\uD6C4\uC774\uC790 ' + f_w(Math.round(postTaxInterest));
+
+    // detail table
+    var tbody = document.getElementById('dep-detail-table');
+    tbody.innerHTML =
+        '<tr><td>\uC608\uCE58 \uAE08\uC561</td><td>' + f_w(amount) + '\uC6D0</td></tr>' +
+        '<tr><td>\uC138\uC804 \uC774\uC790</td><td>' + f_w(Math.round(preTaxInterest)) + '\uC6D0</td></tr>' +
+        '<tr><td>\uC138\uAE08 (' + (taxRate * 100).toFixed(1) + '%)</td><td>' + f_w(Math.round(taxAmount)) + '\uC6D0</td></tr>' +
+        '<tr><td>\uC138\uD6C4 \uC774\uC790</td><td>' + f_w(Math.round(postTaxInterest)) + '\uC6D0</td></tr>' +
+        '<tr style="font-weight:700;background:#f8fafc;"><td>\uB9CC\uAE30 \uC218\uB839\uC561</td><td>' + f_w(Math.round(maturity)) + '\uC6D0</td></tr>';
+
+    // Chart
+    var ctx = document.getElementById('dep-chart').getContext('2d');
+    if (depChart) depChart.destroy();
+
+    depChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['\uC6D0\uAE08', '\uC138\uC804 \uC774\uC790', '\uC138\uAE08', '\uB9CC\uAE30 \uC218\uB839\uC561'],
+            datasets: [{
+                label: '\uAE08\uC561',
+                data: [amount, preTaxInterest, -taxAmount, maturity],
+                backgroundColor: ['#22c55e', '#22c55e', '#ef4444', '#f59e0b'],
+                borderRadius: 6,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) { return f_w(Math.abs(ctx.raw)) + '\uC6D0'; }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(v) { return f_w(v); }
+                    },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
+
+/* ============================================================
+   INSTALLMENT CALCULATION
+   ============================================================ */
+var instChart = null;
+
+function calcInstallment() {
+    var amount = parseNumberInput(document.getElementById('inst-amount'));
+    var rate = parseFloat(document.getElementById('inst-rate').value) || 0;
+    var years = parseInt(document.getElementById('inst-years').value) || 1;
+    var taxRate = instTaxRate;
+
+    var n = years * 12;
+    var monthlyRate = rate / 100 / 12;
+    var preTaxInterest = amount * monthlyRate * n * (n + 1) / 2;
+    var taxAmount = preTaxInterest * taxRate;
+    var postTaxInterest = preTaxInterest - taxAmount;
+    var totalPaid = amount * n;
+    var maturity = totalPaid + postTaxInterest;
+
+    document.getElementById('inst-total-paid').textContent = f_kr(totalPaid);
+    document.getElementById('inst-paid-formula').textContent = f_w(amount) + ' x ' + n + '\uAC1C\uC6D4';
+    document.getElementById('inst-pre-tax').textContent = f_kr(preTaxInterest);
+    document.getElementById('inst-pre-formula').textContent = '\uC801\uAE08 \uB2E8\uB9AC \uACC4\uC0B0';
+    document.getElementById('inst-post-tax').textContent = f_kr(postTaxInterest);
+    document.getElementById('inst-post-formula').textContent = f_w(Math.round(preTaxInterest)) + ' - \uC138\uAE08 ' + f_w(Math.round(taxAmount));
+    document.getElementById('inst-maturity').textContent = f_kr(maturity);
+    document.getElementById('inst-mat-formula').textContent = '\uB0A9\uC785 ' + f_w(totalPaid) + ' + \uC774\uC790 ' + f_w(Math.round(postTaxInterest));
+
+    // monthly table
+    var tbody = document.getElementById('inst-monthly-table');
+    var rows = '';
+    var cumSav = 0;
+    var cumInt = 0;
+    for (var m = 1; m <= n; m++) {
+        cumSav += amount;
+        var mInt = amount * monthlyRate * (n - m + 1);
+        cumInt += mInt;
+        var expected = cumSav + cumInt * (1 - taxRate);
+        rows += '<tr>' +
+            '<td>' + m + '</td>' +
+            '<td>' + f_w(amount) + '</td>' +
+            '<td>' + f_w(cumSav) + '</td>' +
+            '<td>' + f_w(Math.round(mInt)) + '</td>' +
+            '<td>' + f_w(Math.round(cumInt)) + '</td>' +
+            '<td>' + f_w(Math.round(expected)) + '</td>' +
+            '</tr>';
+    }
+    tbody.innerHTML = rows;
+
+    // Chart
+    var ctx = document.getElementById('inst-chart').getContext('2d');
+    if (instChart) instChart.destroy();
+
+    instChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['\uCD1D \uB0A9\uC785\uC561', '\uC138\uC804 \uC774\uC790', '\uC138\uAE08', '\uB9CC\uAE30 \uC218\uB839\uC561'],
+            datasets: [{
+                label: '\uAE08\uC561',
+                data: [totalPaid, preTaxInterest, -taxAmount, maturity],
+                backgroundColor: ['#3b82f6', '#22c55e', '#ef4444', '#f59e0b'],
+                borderRadius: 6,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) { return f_w(Math.abs(ctx.raw)) + '\uC6D0'; }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: function(v) { return f_w(v); } },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+/* ============================================================
+   LOAN CALCULATION
+   ============================================================ */
+var loanAmortChart = null;
+var loanCompareChart = null;
+
+function calcLoan() {
+    var amt = parseNumberInput(document.getElementById('loan-amount'));
+    var rate = parseFloat(document.getElementById('loan-rate-slider').value) || 0;
+    var years = parseInt(document.getElementById('loan-years-slider').value) || 1;
+
+    var mr = rate / 100 / 12;
+    var tm = years * 12;
+
+    // 원리금균등
+    var pmt = 0;
+    var totalIntEqual = 0;
+    if (mr > 0 && amt > 0) {
+        pmt = amt * mr * Math.pow(1 + mr, tm) / (Math.pow(1 + mr, tm) - 1);
+        totalIntEqual = pmt * tm - amt;
+    } else if (amt > 0) {
+        pmt = amt / tm;
+        totalIntEqual = 0;
+    }
+
+    // 원금균등
+    var mp = amt > 0 ? amt / tm : 0;
+    var totalIntPrincipal = 0;
+    var firstPmt = 0;
+    if (amt > 0) {
+        for (var m = 0; m < tm; m++) {
+            totalIntPrincipal += (amt - mp * m) * mr;
+        }
+        firstPmt = mp + amt * mr;
+    }
+
+    // 만기일시상환
+    var bulletMonthly = amt * mr;
+    var totalIntBullet = bulletMonthly * tm;
+
+    // KPI cards
+    document.getElementById('loan-equal-pmt').textContent = f_kr(pmt);
+    document.getElementById('loan-equal-total-int').textContent = '\uCD1D \uC774\uC790: ' + f_kr(totalIntEqual);
+    document.getElementById('loan-principal-first').textContent = f_kr(firstPmt);
+    document.getElementById('loan-principal-total-int').textContent = '\uCD1D \uC774\uC790: ' + f_kr(totalIntPrincipal);
+    document.getElementById('loan-bullet-monthly').textContent = f_kr(bulletMonthly);
+    document.getElementById('loan-bullet-total-int').textContent = '\uCD1D \uC774\uC790: ' + f_kr(totalIntBullet);
+
+    // Amortization chart data (원리금균등)
+    var labels = [];
+    var remaining = [];
+    var cumInterest = [];
+    var bal = amt;
+    var ci = 0;
+    for (var m = 1; m <= tm; m++) {
+        var intPart = bal * mr;
+        var prinPart = pmt - intPart;
+        bal = Math.max(0, bal - prinPart);
+        ci += intPart;
+        if (m % 12 === 0 || m === 1 || m === tm) {
+            labels.push(m + '\uAC1C\uC6D4');
+            remaining.push(Math.round(bal));
+            cumInterest.push(Math.round(ci));
+        }
+    }
+
+    var ctx1 = document.getElementById('loan-amort-chart').getContext('2d');
+    if (loanAmortChart) loanAmortChart.destroy();
+    loanAmortChart = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '\uC794\uC5EC \uC6D0\uAE08',
+                    data: remaining,
+                    borderColor: '#1e3a8a',
+                    backgroundColor: 'rgba(30,58,138,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 2
+                },
+                {
+                    label: '\uB204\uC801 \uC774\uC790',
+                    data: cumInterest,
+                    borderColor: '#ef4444',
+                    borderDash: [6, 3],
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) { return ctx.dataset.label + ': ' + f_w(ctx.raw) + '\uC6D0'; }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: { callback: function(v) { return f_w(v); } },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Compare bar chart
+    var ctx2 = document.getElementById('loan-compare-chart').getContext('2d');
+    if (loanCompareChart) loanCompareChart.destroy();
+    loanCompareChart = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: ['\uC6D0\uB9AC\uAE08\uADE0\uB4F1', '\uC6D0\uAE08\uADE0\uB4F1', '\uB9CC\uAE30\uC77C\uC2DC\uC0C1\uD658'],
+            datasets: [{
+                label: '\uCD1D \uC774\uC790',
+                data: [Math.round(totalIntEqual), Math.round(totalIntPrincipal), Math.round(totalIntBullet)],
+                backgroundColor: ['#1e3a8a', '#3b82f6', '#ef4444'],
+                borderRadius: 6,
+                barPercentage: 0.5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) { return '\uCD1D \uC774\uC790: ' + f_w(ctx.raw) + '\uC6D0'; }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: function(v) { return f_w(v); } },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Report
+    var reportBody = document.getElementById('loan-report-body');
+    var savings = totalIntBullet - totalIntPrincipal;
+    reportBody.innerHTML =
+        '<div class="step-box">' +
+        '<div class="step-num">\uBD84\uC11D \uACB0\uACFC</div>' +
+        '<div class="step-title">&#x1F4CA; \uC6D0\uAE08\uADE0\uB4F1 \uC0C1\uD658\uC774 \uCD1D \uC774\uC790\uAC00 \uAC00\uC7A5 \uC801\uC2B5\uB2C8\uB2E4</div>' +
+        '<div class="step-content">' +
+        '<p>\uC6D0\uAE08\uADE0\uB4F1 \uCD1D \uC774\uC790: <strong>' + f_kr(totalIntPrincipal) + '</strong></p>' +
+        '<p>\uC6D0\uB9AC\uAE08\uADE0\uB4F1 \uCD1D \uC774\uC790: <strong>' + f_kr(totalIntEqual) + '</strong></p>' +
+        '<p>\uB9CC\uAE30\uC77C\uC2DC\uC0C1\uD658 \uCD1D \uC774\uC790: <strong>' + f_kr(totalIntBullet) + '</strong></p>' +
+        '</div></div>' +
+        '<div class="step-box">' +
+        '<div class="step-num">\uC808\uAC10 \uD6A8\uACFC</div>' +
+        '<div class="step-title">&#x1F4B0; \uB9CC\uAE30\uC77C\uC2DC\uC0C1\uD658 \uB300\uBE44 \uC808\uAC10\uC561</div>' +
+        '<div class="step-content">' +
+        '<p>\uC6D0\uAE08\uADE0\uB4F1 \uC120\uD0DD \uC2DC \uB9CC\uAE30\uC77C\uC2DC\uC0C1\uD658 \uB300\uBE44 <strong>' + f_kr(savings) + '</strong> \uC808\uAC10 \uAC00\uB2A5</p>' +
+        '</div></div>';
+}
+
+/* ============================================================
+   JEONWOLSE CALCULATION
+   ============================================================ */
+var jwBarChart = null;
+var jwSensChart = null;
+var jwDirection = 'j2w';
+
+function setJwDir(label, dir) {
+    jwDirection = dir;
+    label.parentElement.querySelectorAll('label').forEach(function(l) { l.classList.remove('active'); });
+    label.classList.add('active');
+    document.getElementById('jw-input-j2w').classList.toggle('hidden', dir !== 'j2w');
+    document.getElementById('jw-input-w2j').classList.toggle('hidden', dir !== 'w2j');
+    calcJeonwolse();
+}
+
+function calcJeonwolse() {
+    var convRate = parseFloat(document.getElementById('jw-rate-slider').value) || 5.0;
+    var investRate = parseFloat(document.getElementById('jw-invest-rate').value) || 0;
+
+    // Legal warning
+    document.getElementById('jw-legal-warning').style.display = convRate > 4.5 ? 'block' : 'none';
+
+    var cardsHtml = '';
+    var barLabels = [];
+    var barData = [];
+    var barColors = [];
+    var verdictIcon = '';
+    var verdictTitle = '';
+    var verdictText = '';
+
+    if (jwDirection === 'j2w') {
+        var jeonse = parseNumberInput(document.getElementById('jw-jeonse'));
+        var deposit = parseNumberInput(document.getElementById('jw-wolse-deposit'));
+        var diff = Math.max(0, jeonse - deposit);
+        var monthly = diff * (convRate / 100) / 12;
+        var annual = monthly * 12;
+        var freedReturn = diff * investRate / 100;
+
+        cardsHtml =
+            '<div class="result-card" style="background:linear-gradient(135deg,#0c4a6e,#0ea5e9);box-shadow:0 4px 16px rgba(14,165,233,0.25);">' +
+            '<div class="rc-label">\uC0B0\uCD9C \uC6D4\uC138</div>' +
+            '<div class="rc-value">' + f_kr(monthly) + '</div>' +
+            '<div class="rc-formula">\uBCF4\uC99D\uAE08 \uCC28\uC561 ' + f_kr(diff) + ' x ' + convRate + '% / 12</div>' +
+            '</div>' +
+            '<div class="result-card" style="background:linear-gradient(135deg,#78350f,#f59e0b);box-shadow:0 4px 16px rgba(245,158,11,0.25);">' +
+            '<div class="rc-label">\uC5F0\uAC04 \uC6D4\uC138 \uD569\uACC4</div>' +
+            '<div class="rc-value">' + f_kr(annual) + '</div>' +
+            '<div class="rc-formula">\uC6D4\uC138 ' + f_kr(monthly) + ' x 12\uAC1C\uC6D4</div>' +
+            '</div>';
+
+        barLabels = ['\uD22C\uC790\uC218\uC775 (\uCC28\uC561 \uD65C\uC6A9)', '\uC6D4\uC138 \uBE44\uC6A9'];
+        barData = [Math.round(freedReturn), Math.round(annual)];
+        barColors = ['#22c55e', '#ef4444'];
+
+        if (freedReturn > annual) {
+            verdictIcon = '\u2705';
+            verdictTitle = '\uC6D4\uC138 \uC804\uD658\uC774 \uC720\uB9AC\uD569\uB2C8\uB2E4';
+            verdictText = '\uBCF4\uC99D\uAE08 \uCC28\uC561\uC744 \uD22C\uC790\uD558\uBA74 \uC5F0 ' + f_kr(freedReturn) + '\uC758 \uC218\uC775\uC744 \uAE30\uB300\uD560 \uC218 \uC788\uC73C\uBA70, \uC6D4\uC138 ' + f_kr(annual) + '\uBCF4\uB2E4 \uD07D\uB2C8\uB2E4.';
+        } else if (freedReturn < annual) {
+            verdictIcon = '\uD83C\uDFE0';
+            verdictTitle = '\uC804\uC138 \uC720\uC9C0\uAC00 \uC720\uB9AC\uD569\uB2C8\uB2E4';
+            verdictText = '\uC6D4\uC138 \uBE44\uC6A9(\uC5F0 ' + f_kr(annual) + ')\uC774 \uD22C\uC790 \uC218\uC775(\uC5F0 ' + f_kr(freedReturn) + ')\uBCF4\uB2E4 \uB192\uC544 \uC804\uC138\uB97C \uC720\uC9C0\uD558\uB294 \uAC83\uC774 \uACBD\uC81C\uC801\uC785\uB2C8\uB2E4.';
+        } else {
+            verdictIcon = '\u2696\uFE0F';
+            verdictTitle = '\uC190\uC775\uBD84\uAE30\uC810\uC785\uB2C8\uB2E4';
+            verdictText = '\uD22C\uC790 \uC218\uC775\uACFC \uC6D4\uC138 \uBE44\uC6A9\uC774 \uB3D9\uC77C\uD569\uB2C8\uB2E4. \uAC1C\uC778 \uC0C1\uD669\uC5D0 \uB530\uB77C \uC120\uD0DD\uD558\uC2ED\uC2DC\uC624.';
+        }
+    } else {
+        // 월세 → 전세
+        var wDeposit = parseNumberInput(document.getElementById('jw-w-deposit'));
+        var wMonthly = parseNumberInput(document.getElementById('jw-w-monthly'));
+        var jeonseCalc = convRate > 0 ? wDeposit + wMonthly * 12 / (convRate / 100) : wDeposit;
+        var annualPay = wMonthly * 12;
+        var extraCapital = jeonseCalc - wDeposit;
+        var investLoss = extraCapital * investRate / 100;
+
+        cardsHtml =
+            '<div class="result-card" style="background:linear-gradient(135deg,#0c4a6e,#0ea5e9);box-shadow:0 4px 16px rgba(14,165,233,0.25);">' +
+            '<div class="rc-label">\uD658\uC0B0 \uC804\uC138\uAE08</div>' +
+            '<div class="rc-value">' + f_kr(jeonseCalc) + '</div>' +
+            '<div class="rc-formula">\uBCF4\uC99D\uAE08 + \uC6D4\uC138 x 12 / \uC804\uD658\uC728</div>' +
+            '</div>' +
+            '<div class="result-card" style="background:linear-gradient(135deg,#78350f,#f59e0b);box-shadow:0 4px 16px rgba(245,158,11,0.25);">' +
+            '<div class="rc-label">\uC5F0\uAC04 \uC6D4\uC138 \uD569\uACC4</div>' +
+            '<div class="rc-value">' + f_kr(annualPay) + '</div>' +
+            '<div class="rc-formula">' + f_kr(wMonthly) + ' x 12\uAC1C\uC6D4</div>' +
+            '</div>';
+
+        barLabels = ['\uC6D4\uC138 \uBE44\uC6A9 (\uC5F0)', '\uAE30\uD68C\uBE44\uC6A9 (\uC804\uC138 \uC804\uD658 \uC2DC)'];
+        barData = [Math.round(annualPay), Math.round(investLoss)];
+        barColors = ['#ef4444', '#f59e0b'];
+
+        if (annualPay > investLoss) {
+            verdictIcon = '\uD83C\uDFE0';
+            verdictTitle = '\uC804\uC138 \uC804\uD658\uC774 \uC720\uB9AC\uD569\uB2C8\uB2E4';
+            verdictText = '\uC5F0\uAC04 \uC6D4\uC138 ' + f_kr(annualPay) + '\uAC00 \uC804\uC138 \uC804\uD658 \uC2DC \uAE30\uD68C\uBE44\uC6A9 ' + f_kr(investLoss) + '\uBCF4\uB2E4 \uB192\uC544 \uC804\uC138\uAC00 \uACBD\uC81C\uC801\uC785\uB2C8\uB2E4.';
+        } else if (annualPay < investLoss) {
+            verdictIcon = '\u2705';
+            verdictTitle = '\uC6D4\uC138 \uC720\uC9C0\uAC00 \uC720\uB9AC\uD569\uB2C8\uB2E4';
+            verdictText = '\uC804\uC138 \uC804\uD658 \uC2DC \uAE30\uD68C\uBE44\uC6A9(\uC5F0 ' + f_kr(investLoss) + ')\uC774 \uC6D4\uC138(\uC5F0 ' + f_kr(annualPay) + ')\uBCF4\uB2E4 \uB192\uC544 \uC6D4\uC138\uB97C \uC720\uC9C0\uD558\uB294 \uAC83\uC774 \uB098\uC2B5\uB2C8\uB2E4.';
+        } else {
+            verdictIcon = '\u2696\uFE0F';
+            verdictTitle = '\uC190\uC775\uBD84\uAE30\uC810\uC785\uB2C8\uB2E4';
+            verdictText = '\uC6D4\uC138 \uBE44\uC6A9\uACFC \uAE30\uD68C\uBE44\uC6A9\uC774 \uB3D9\uC77C\uD569\uB2C8\uB2E4.';
+        }
+    }
+
+    document.getElementById('jw-result-cards').innerHTML = cardsHtml;
+
+    // bar chart
+    var ctx1 = document.getElementById('jw-bar-chart').getContext('2d');
+    if (jwBarChart) jwBarChart.destroy();
+    jwBarChart = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: barLabels,
+            datasets: [{
+                label: '\uAE08\uC561',
+                data: barData,
+                backgroundColor: barColors,
+                borderRadius: 6,
+                barPercentage: 0.5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: { label: function(ctx) { return f_w(ctx.raw) + '\uC6D0'; } }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: { callback: function(v) { return f_w(v); } },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+
+    // sensitivity chart
+    var sensLabels = [];
+    var sensData = [];
+    for (var r = 2.0; r <= 12.0; r += 0.5) {
+        sensLabels.push(r.toFixed(1) + '%');
+        if (jwDirection === 'j2w') {
+            var jeonseVal = parseNumberInput(document.getElementById('jw-jeonse'));
+            var depositVal = parseNumberInput(document.getElementById('jw-wolse-deposit'));
+            var d = Math.max(0, jeonseVal - depositVal);
+            sensData.push(Math.round(d * (r / 100) / 12));
+        } else {
+            var wDep = parseNumberInput(document.getElementById('jw-w-deposit'));
+            var wMon = parseNumberInput(document.getElementById('jw-w-monthly'));
+            var jCalc = r > 0 ? wDep + wMon * 12 / (r / 100) : wDep;
+            sensData.push(Math.round(jCalc));
+        }
+    }
+
+    var ctx2 = document.getElementById('jw-sensitivity-chart').getContext('2d');
+    if (jwSensChart) jwSensChart.destroy();
+    jwSensChart = new Chart(ctx2, {
+        type: 'line',
+        data: {
+            labels: sensLabels,
+            datasets: [{
+                label: jwDirection === 'j2w' ? '\uC0B0\uCD9C \uC6D4\uC138' : '\uD658\uC0B0 \uC804\uC138\uAE08',
+                data: sensData,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59,130,246,0.1)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 3,
+                pointBackgroundColor: '#3b82f6'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true, position: 'top' },
+                tooltip: {
+                    callbacks: { label: function(ctx) { return f_w(ctx.raw) + '\uC6D0'; } }
+                },
+                title: {
+                    display: true,
+                    text: '\uC804\uD658\uC728\uBCC4 ' + (jwDirection === 'j2w' ? '\uC6D4\uC138' : '\uC804\uC138\uAE08') + ' \uBCC0\uD654',
+                    font: { size: 14, weight: 'bold' },
+                    color: '#1e3a8a'
+                }
+            },
+            scales: {
+                y: {
+                    ticks: { callback: function(v) { return f_w(v); } },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Verdict
+    document.getElementById('jw-verdict').innerHTML =
+        '<div class="verdict-icon">' + verdictIcon + '</div>' +
+        '<div class="verdict-title">' + verdictTitle + '</div>' +
+        '<div class="verdict-text">' + verdictText + '</div>';
+}
+
+/* ============================================================
+   INITIAL CALCULATIONS
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', function() {
+    calcDeposit();
+    calcInstallment();
+    calcLoan();
+    calcJeonwolse();
+});
+</script>
+
+</body>
+</html>
