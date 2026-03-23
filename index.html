@@ -153,7 +153,7 @@ body {
 .toggle-switch .slider {
     position: absolute;
     inset: 0;
-    background: rgba(255,255,255,0.2);
+    background: #cbd5e1;
     border-radius: 11px;
     cursor: pointer;
     transition: 0.3s;
@@ -167,6 +167,7 @@ body {
     bottom: 3px;
     background: #fff;
     border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     transition: 0.3s;
 }
 .toggle-switch input:checked + .slider {
@@ -1831,8 +1832,9 @@ body.presentation-mode .two-col > div:last-child {
                         </div>
                         &#x1F4B8; 추가납입
                     </label>
-                    <div id="goal-comp-extra-group" class="hidden" style="display:none;">
-                        <input type="text" id="goal-comp-extra-amt" value="0" style="width:160px;padding:8px 12px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:0.9rem;" oninput="formatNumberInput(this); calcGoalComparison();" placeholder="추가납입 금액(원)">
+                    <div id="goal-comp-extra-group" style="display:none;">
+                        <label style="font-size:0.85rem;color:#334155;font-weight:600;">추가납입 금액 (원/월)</label>
+                        <input type="text" id="goal-comp-extra-amt" value="0" style="width:200px;padding:8px 12px;border:1.5px solid #cbd5e1;border-radius:8px;" oninput="formatNumberInput(this); calcGoalComparison();">
                     </div>
                 </div>
 
@@ -1843,6 +1845,14 @@ body.presentation-mode .two-col > div:last-child {
                 <div id="goal-comp-period-cards"></div>
 
                 <div style="margin-top:24px;" id="goal-comp-table-wrap"></div>
+
+                <!-- 금융기관별 상품 비교 -->
+                <details class="expander" style="margin-top:16px;">
+                    <summary>&#x1F3E6; 금융기관별 상품 비교</summary>
+                    <div class="expander-body" id="goal-product-compare-body">
+                        <p style="font-size:0.88rem;color:#64748b;">위 입력값을 설정하면 자동으로 생성됩니다.</p>
+                    </div>
+                </details>
             </div>
         </div>
     </div>
@@ -1855,13 +1865,6 @@ body.presentation-mode .two-col > div:last-child {
         </div>
     </details>
 
-    <!-- 금융기관별 상품 비교 -->
-    <details class="expander" style="margin-top:16px;">
-        <summary>&#x1F3E6; 금융기관별 상품 비교</summary>
-        <div class="expander-body" id="goal-product-compare-body">
-            <p style="font-size:0.88rem;color:#64748b;">위 입력값을 설정하면 자동으로 생성됩니다.</p>
-        </div>
-    </details>
 </div>
 
 <!-- ============================================================
@@ -2304,7 +2307,7 @@ function calcInstallment() {
     document.getElementById('inst-pre-tax').textContent = f_kr(preTaxInterest);
     document.getElementById('inst-pre-formula').textContent = '\uC801\uAE08 \uB2E8\uB9AC \uACC4\uC0B0';
     document.getElementById('inst-post-tax').textContent = f_kr(postTaxInterest);
-    document.getElementById('inst-post-formula').textContent = f_w(Math.round(preTaxInterest)) + ' - \uC138\uAE08 ' + f_w(Math.round(taxAmount));
+    document.getElementById('inst-post-formula').textContent = f_w(Math.round(preTaxInterest)) + ' - \uC138\uAE08 ' + f_w(Math.round(taxAmount)) + ' (' + (taxRate * 100).toFixed(1) + '%)';
     document.getElementById('inst-maturity').textContent = f_kr(maturity);
     document.getElementById('inst-mat-formula').textContent = '\uB0A9\uC785 ' + f_w(totalPaid) + ' + \uC774\uC790 ' + f_w(Math.round(postTaxInterest));
 
@@ -3833,9 +3836,12 @@ function calcRetirement() {
     document.getElementById('ret-steps-body').innerHTML =
         '<div class="step-box"><div class="step-num">STEP 1</div>' +
         '<div class="step-title">\uC778\uD50C\uB808\uC774\uC158 \uD5F7\uC9C0</div>' +
-        '<div class="step-content">\uD604\uC7AC \uD76C\uB9DD \uC6D4 \uC0DD\uD65C\uBE44: ' + f_kr(goalP) + '<br>' +
+        '<div class="step-content">' +
+        '<div class="step-formula" style="text-align:left;font-size:0.92rem;line-height:1.8;">' +
+        '\uD604\uC7AC \uD76C\uB9DD \uC6D4 \uC0DD\uD65C\uBE44: <strong>' + f_kr(goalP) + '</strong><br>' +
         '\uBB3C\uAC00\uC0C1\uC2B9\uB960 ' + inf + '% \xD7 ' + ys + '\uB144 \uC801\uC6A9<br>' +
-        '<div class="step-formula">' + f_kr(goalP) + ' \xD7 (1+' + inf + '%)^' + ys + ' = <strong>' + f_kr(goalF) + '</strong></div></div></div>' +
+        '\u2192 \uC740\uD1F4 \uC2DC\uC810 \uC608\uC0C1 \uC6D4 \uC0DD\uD65C\uBE44: <strong>' + f_kr(goalF) + '</strong>' +
+        '</div></div></div>' +
         '<div class="step-box"><div class="step-num">STEP 2</div>' +
         '<div class="step-title">\uD544\uC694 \uC790\uC0B0 \uADDC\uBAA8</div>' +
         '<div class="step-content">\uC740\uD1F4 \uD6C4 \uC6D4 ' + f_kr(goalF) + ' \xD7 ' + yD + '\uB144(' + nMonthsRetire + '\uAC1C\uC6D4)<br>' +
