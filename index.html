@@ -3178,7 +3178,13 @@ function getAcquisitionTaxRate(price, propType, hCount, isAdj) {
         return { rate: 0.03, desc: '9\uC5B5 \uCD08\uACFC 3%' };
     }
     if (hCount === '2\uC8FC\uD0DD') {
-        return { rate: isAdj ? 0.08 : (0.01 + (price > 600000000 ? 0.02 : 0)), desc: '2\uC8FC\uD0DD' };
+        if (isAdj) return { rate: 0.08, desc: '2\uC8FC\uD0DD \uC870\uC815 8%' };
+        if (price <= 600000000) return { rate: 0.01, desc: '2\uC8FC\uD0DD \uBE44\uC870\uC815 6\uC5B5\uC774\uD558 1%' };
+        if (price <= 900000000) {
+            var r2 = (price * 2 / 300000000 - 3) / 100;
+            return { rate: r2, desc: '2\uC8FC\uD0DD \uBE44\uC870\uC815 6~9\uC5B5 \uC2AC\uB77C\uC774\uB529' };
+        }
+        return { rate: 0.03, desc: '2\uC8FC\uD0DD \uBE44\uC870\uC815 9\uC5B5\uCD08\uACFC 3%' };
     }
     return { rate: isAdj ? 0.12 : 0.04, desc: '3\uC8FC\uD0DD \uC774\uC0C1' };
 }
@@ -4340,11 +4346,17 @@ function calcBankEquivYield(monthlyKrw, monthsPaid, totalKrwPaid, krwRetMid) {
     return ((lo + hi) / 2) * 100;
 }
 
+var _fetchRateBusy = false;
 async function fetchExchangeRate() {
+    if (_fetchRateBusy) return;
+    _fetchRateBusy = true;
     var btn = document.querySelector('[onclick="fetchExchangeRate();"]');
-    if (btn) btn.textContent = '수신 중...';
+    if (btn) { btn.textContent = '수신 중...'; btn.disabled = true; }
     try {
-        var res = await fetch('/api/rate');
+        var controller = new AbortController();
+        var timeoutId = setTimeout(function() { controller.abort(); }, 15000);
+        var res = await fetch('/api/rate', { signal: controller.signal });
+        clearTimeout(timeoutId);
         var data = await res.json();
         if (data.rate) {
             document.getElementById('dol-rate-now').value = data.rate.toFixed(1);
@@ -4368,7 +4380,8 @@ async function fetchExchangeRate() {
     } catch(e) {
         alert('\uD658\uC728 \uC218\uC2E0 \uC2E4\uD328. \uC218\uB3D9\uC73C\uB85C \uC785\uB825\uD574\uC8FC\uC138\uC694.');
     }
-    if (btn) btn.textContent = '\uD83D\uDD04 \uC2E4\uC2DC\uAC04 \uC218\uC2E0';
+    if (btn) { btn.textContent = '\uD83D\uDD04 \uC2E4\uC2DC\uAC04 \uC218\uC2E0'; btn.disabled = false; }
+    _fetchRateBusy = false;
 }
 
 var dolRefundChart = null, dolScenarioChart = null, dolHistoryChart = null;
