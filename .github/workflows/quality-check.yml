@@ -1,0 +1,61 @@
+name: Quality Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  code-consistency:
+    name: 코드 일관성 검사
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: fetchExchangeRate AbortController 타임아웃 확인
+        run: |
+          if grep -q "AbortController" index.html && grep -q "15000" index.html; then
+            echo "✅ AbortController 15초 타임아웃 존재"
+          else
+            echo "❌ AbortController 또는 15000ms 타임아웃 미존재"
+            exit 1
+          fi
+
+      - name: _fetchRateBusy 연타방지 플래그 확인
+        run: |
+          if grep -q "_fetchRateBusy" index.html; then
+            echo "✅ _fetchRateBusy 플래그 존재"
+          else
+            echo "❌ _fetchRateBusy 플래그 미존재 — 연타방지 로직 삭제됨"
+            exit 1
+          fi
+
+      - name: fetchExchangeRate 함수 존재 확인
+        run: |
+          if grep -q "async function fetchExchangeRate" index.html; then
+            echo "✅ fetchExchangeRate 함수 존재"
+          else
+            echo "❌ fetchExchangeRate 함수 미존재"
+            exit 1
+          fi
+
+      - name: 환율 API fallback 3단계 확인
+        run: |
+          if grep -q "/api/rate" index.html; then
+            echo "✅ 환율 API 엔드포인트 존재"
+          else
+            echo "❌ /api/rate 엔드포인트 미존재"
+            exit 1
+          fi
+
+  site-health:
+    name: 사이트 접속 확인
+    runs-on: ubuntu-latest
+    steps:
+      - name: pro-financecalculator.vercel.app 접속
+        run: |
+          curl -f --max-time 15 --retry 3 --retry-delay 5 \
+            -o /dev/null -s -w "HTTP %{http_code}\n" \
+            https://pro-financecalculator.vercel.app
+          echo "✅ pro-financecalculator.vercel.app 정상"
