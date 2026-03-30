@@ -2470,7 +2470,7 @@ function calcLoan() {
     var cumInterest = [];
     var bal = amt;
     var ci = 0;
-    for (var m = 1; m <= tm; m++) {
+    for (let m = 1; m <= tm; m++) {
         var intPart = bal * mr;
         var prinPart = pmt - intPart;
         bal = Math.max(0, bal - prinPart);
@@ -3850,11 +3850,11 @@ function calcRetirement() {
     for (var age = currentAge; age <= lifeAge; age++) {
         chartLabels.push(age + '\uC138');
         if (age < currentAge + payYears) {
-            for (var m = 0; m < 12; m++) balance = balance * (1 + mr) + monthlySave;
+            for (let m = 0; m < 12; m++) balance = balance * (1 + mr) + monthlySave;
         } else if (age < retireAge) {
-            for (var m = 0; m < 12; m++) balance = balance * (1 + mr);
+            for (let m = 0; m < 12; m++) balance = balance * (1 + mr);
         } else {
-            for (var m = 0; m < 12; m++) { balance = balance * (1 + mr) - goalF; if (balance < 0) balance = 0; }
+            for (let m = 0; m < 12; m++) { balance = balance * (1 + mr) - goalF; if (balance < 0) balance = 0; }
         }
         chartData.push(Math.round(balance));
     }
