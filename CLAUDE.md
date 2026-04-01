@@ -28,6 +28,12 @@
 - Vercel: `<h1 class="page-title">` + `<p class="page-desc">`
 - Streamlit: `render_title_with_reset()` + `st.markdown()`
 
+## ⚠️ 환율 API 안전 규칙 (v=20260325)
+- `fetchExchangeRate()`: `AbortController` 15초 타임아웃 적용 (무한 대기 방지)
+- `_fetchRateBusy` 플래그 + 버튼 disabled로 연타 방지
+- 3단계 fallback: 네이버 → 두나무/하나은행 → ExchangeRate-API
+- **fetch 타임아웃/debounce 제거 금지** — 사용자 경험과 서버 보호에 필수
+
 ## 코드 수정 안전 규칙
 - **index.html 단일 파일**: 전체 UI가 하나의 HTML에 포함
 - **탭 구조**: `tab-content` 클래스 div로 분리 (tab-realestate, tab-dollar 등)
