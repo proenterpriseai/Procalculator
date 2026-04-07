@@ -468,13 +468,8 @@ h1.page-title {
     line-height: 1.6;
 }
 .step-box .step-formula {
-    display: inline-block;
-    background: #f1f5f9;
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-family: 'Courier New', monospace;
-    font-size: 0.82rem;
-    color: #334155;
+    display: block;
+    font-weight: 600;
     margin-top: 6px;
 }
 .help-tooltip {
@@ -3891,11 +3886,10 @@ function calcRetirement() {
         '<div class="step-box"><div class="step-num">STEP 1</div>' +
         '<div class="step-title">\uC778\uD50C\uB808\uC774\uC158 \uD5F7\uC9C0</div>' +
         '<div class="step-content">' +
-        '<div class="step-formula" style="text-align:left;font-size:0.92rem;line-height:1.8;">' +
         '\uD604\uC7AC \uD76C\uB9DD \uC6D4 \uC0DD\uD65C\uBE44: <strong>' + f_kr(goalP) + '</strong><br>' +
         '\uBB3C\uAC00\uC0C1\uC2B9\uB960 ' + inf + '% \xD7 ' + ys + '\uB144 \uC801\uC6A9<br>' +
         '\u2192 \uC740\uD1F4 \uC2DC\uC810 \uC608\uC0C1 \uC6D4 \uC0DD\uD65C\uBE44: <strong>' + f_kr(goalF) + '</strong>' +
-        '</div></div></div>' +
+        '</div></div>' +
         '<div class="step-box"><div class="step-num">STEP 2</div>' +
         '<div class="step-title">\uD544\uC694 \uC790\uC0B0 \uADDC\uBAA8</div>' +
         '<div class="step-content">\uC740\uD1F4 \uD6C4 \uC6D4 ' + f_kr(goalF) + ' \xD7 ' + yD + '\uB144(' + nMonthsRetire + '\uAC1C\uC6D4)<br>' +
