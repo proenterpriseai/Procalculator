@@ -11,7 +11,7 @@ jobs:
     name: 코드 일관성 검사
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: fetchExchangeRate AbortController 타임아웃 확인
         run: |
