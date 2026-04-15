@@ -2158,7 +2158,7 @@ body.presentation-mode .radio-group {
                 <div style="display:flex;gap:12px;">
                     <div class="form-group" style="flex:1;">
                         <label>현재 나이 (세)</label>
-                        <input type="number" id="rn-age" value="35" min="1" max="80" step="1" oninput="calcRenewal();">
+                        <input type="number" id="rn-age" value="35" min="1" max="80" step="1" oninput="updateRnDefaultRate(); calcRenewal();">
                     </div>
                     <div class="form-group" style="flex:1;">
                         <label>비갱신형 납입기간</label>
@@ -4873,20 +4873,34 @@ function toggleRnDetailMode() {
     }
 }
 
+/* ── 나이 변경 시 평균 갱신 상승률 자동 설정 ── */
+function updateRnDefaultRate() {
+    var age = parseInt(document.getElementById('rn-age').value) || 35;
+    var rate;
+    if (age < 30) rate = 5;
+    else if (age < 40) rate = 10;
+    else if (age < 50) rate = 15;
+    else if (age < 60) rate = 20;
+    else rate = 30;
+    document.getElementById('rn-rate').value = rate;
+}
+
 /* ── 연령대별 갱신률 조회 헬퍼 ── */
 function getRnRate(currentAge, multiplier) {
     var detailMode = document.getElementById('rn-detail-mode') && document.getElementById('rn-detail-mode').checked;
     if (!detailMode) {
-        var base = (parseFloat(document.getElementById('rn-rate').value) || 15) / 100;
+        var v = parseFloat(document.getElementById('rn-rate').value);
+        var base = (isNaN(v) ? 15 : v) / 100;
         return base * multiplier;
     }
     var r;
-    if (currentAge < 30) r = parseFloat(document.getElementById('rn-rate-20').value) || 5;
-    else if (currentAge < 40) r = parseFloat(document.getElementById('rn-rate-30').value) || 10;
-    else if (currentAge < 50) r = parseFloat(document.getElementById('rn-rate-40').value) || 15;
-    else if (currentAge < 60) r = parseFloat(document.getElementById('rn-rate-50').value) || 20;
-    else if (currentAge < 70) r = parseFloat(document.getElementById('rn-rate-60').value) || 30;
-    else r = parseFloat(document.getElementById('rn-rate-70').value) || 30;
+    var _p = function(id, def) { var v = parseFloat(document.getElementById(id).value); return isNaN(v) ? def : v; };
+    if (currentAge < 30) r = _p('rn-rate-20', 5);
+    else if (currentAge < 40) r = _p('rn-rate-30', 10);
+    else if (currentAge < 50) r = _p('rn-rate-40', 15);
+    else if (currentAge < 60) r = _p('rn-rate-50', 20);
+    else if (currentAge < 70) r = _p('rn-rate-60', 30);
+    else r = _p('rn-rate-70', 30);
     return (r / 100) * multiplier;
 }
 
@@ -5298,7 +5312,8 @@ function calcRenewal() {
     var lastRow = years[years.length - 1];
     var totalDiff = lastRow.cumRenew - lastRow.cumFixed;
     var bepYear = base.bepYear;
-    var rate = (parseFloat(document.getElementById('rn-rate').value) || 15);
+    var _rv = parseFloat(document.getElementById('rn-rate').value);
+    var rate = isNaN(_rv) ? 15 : _rv;
 
     // ── 결과 카드 ──
     var diffLabel = totalDiff > 0 ? '갱신형이 ' + f_kr(totalDiff) + ' 더 비쌈' : (totalDiff < 0 ? '비갱신형이 ' + f_kr(Math.abs(totalDiff)) + ' 더 비쌈' : '동일');
@@ -5528,6 +5543,7 @@ document.addEventListener('DOMContentLoaded', function() {
     calcGoalFund();
     calcDollar();
     calcSilson();
+    updateRnDefaultRate();
     calcRenewal();
 
     // 사이드바 스크롤 격리: 사이드바 위에서 스크롤하면 메인 콘텐츠 안 움직이게
