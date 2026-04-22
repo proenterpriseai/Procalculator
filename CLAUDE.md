@@ -16,17 +16,18 @@
 - **Vercel**: `pro-financecalculator.vercel.app` (정적 CDN, 자동 재배포)
 - **커밋 시**: Co-Authored-By 태그 필수
 
-## ⚠️ 배포 순서 (반드시 준수)
-1. **`.vercel.app` (pro-financecalculator.vercel.app) 먼저**: 모든 코드 수정 → git push → Vercel 배포 완료 확인
-2. **Streamlit 후속**: `.vercel.app` 배포가 완료된 후 바로 진행
-- 수정 작업 시 `.vercel.app` 배포를 건너뛰고 Streamlit만 배포하지 않는다
-- 코드 수정 후 반드시 push/배포까지 완료한 뒤 사용자에게 테스트 안내한다
+## ⚠️ 배포 순서 (반드시 준수, v=20260422 현실화)
+- **Vercel 단일 운영**: 설계사 700명 전원이 `pro-financecalculator.vercel.app`로 접속
+- 코드 수정 → git push → Vercel 자동 재배포(30초) 확인 → 사용자 테스트 안내
+- 커밋 시 Co-Authored-By 태그 필수
 
-## ⚠️ Streamlit 프로젝트 동기화
-- Streamlit 코드: 바탕화면 `계산기/` 폴더 (GitHub: `proenterpriseai/PRO_calculator`)
-- **제목/문구 변경 시 양쪽 동기화 필수** (Vercel index.html ↔ Streamlit tabs/*.py)
-- Vercel: `<h1 class="page-title">` + `<p class="page-desc">`
-- Streamlit: `render_title_with_reset()` + `st.markdown()`
+## 📦 Streamlit 프로젝트 (레거시, v=20260422 다운그레이드)
+- 위치: 바탕화면 `계산기/` 폴더 (GitHub: `proenterpriseai/PRO_calculator`)
+- **실사용 없음** — 2026-04-22 기준 설계사는 Vercel만 사용
+- 신규 기능 Streamlit 포팅 의무 **없음**
+- 기존 9개 탭은 유지 (부동산/상속증여/예적금/은퇴/목적자금/달러/전월세/대출/종합소득세)
+- 갱신형/실손 2개 탭은 Vercel 전용 (Streamlit 미포팅 확정)
+- **향후 Streamlit 사용자 요청 발생 시에만** 포팅 검토
 
 ## ⚠️ 환율 API 안전 규칙 (v=20260325)
 - `fetchExchangeRate()`: `AbortController` 15초 타임아웃 적용 (무한 대기 방지)
