@@ -369,6 +369,8 @@ h1.page-title {
     position: relative;
     overflow: hidden;
     box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    min-width: 0;
+    container-type: inline-size;
 }
 .result-card .rc-label {
     font-size: 0.78rem;
@@ -377,9 +379,14 @@ h1.page-title {
     margin-bottom: 8px;
 }
 .result-card .rc-value {
-    font-size: 1.5rem;
+    font-size: clamp(0.95rem, 7cqi, 1.5rem);
     font-weight: 800;
     margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
 }
 .result-card .rc-formula {
     font-size: 0.7rem;
@@ -810,7 +817,7 @@ body.presentation-mode h1.page-title {
     font-size: 2.2rem;
 }
 body.presentation-mode .result-card .rc-value {
-    font-size: 2rem;
+    font-size: clamp(1.1rem, 9cqi, 2rem);
 }
 body.presentation-mode .input-card {
     display: none !important;
@@ -868,8 +875,8 @@ body.presentation-mode .radio-group {
         <li><a data-tab="tab-retirement" onclick="switchTab('tab-retirement',this)"><span class="menu-icon">&#x1F3D6;&#xFE0F;</span>은퇴자금 설계</a></li>
         <li><a data-tab="tab-goalfund" onclick="switchTab('tab-goalfund',this)"><span class="menu-icon">&#x1F3AF;</span>목적자금 설계</a></li>
         <li><a data-tab="tab-dollar" onclick="switchTab('tab-dollar',this)"><span class="menu-icon">&#x1F4B5;</span>달러 설계</a></li>
-        <li style="display:none" id="menu-silson"><a data-tab="tab-silson" onclick="switchTab('tab-silson',this)"><span class="menu-icon">&#x1FA7A;</span>실손보험 갱신</a></li>
-        <li style="display:none" id="menu-renewal"><a data-tab="tab-renewal" onclick="switchTab('tab-renewal',this)"><span class="menu-icon">&#x2696;&#xFE0F;</span>갱신형 비교</a></li>
+        <li id="menu-renewal"><a data-tab="tab-renewal" onclick="switchTab('tab-renewal',this)"><span class="menu-icon">&#x2696;&#xFE0F;</span>갱신형/비갱신형 비교</a></li>
+        <li id="menu-silson"><a data-tab="tab-silson" onclick="switchTab('tab-silson',this)"><span class="menu-icon">&#x1FA7A;</span>실손보험 갱신</a></li>
         <li><a data-tab="tab-jeonwolse" onclick="switchTab('tab-jeonwolse',this)"><span class="menu-icon">&#x1F3D8;&#xFE0F;</span>전월세 전환 설계</a></li>
         <li><a data-tab="tab-loan" onclick="switchTab('tab-loan',this)"><span class="menu-icon">&#x1F3E6;</span>대출 상환 설계</a></li>
         <li><a data-tab="tab-incometax" onclick="switchTab('tab-incometax',this)"><span class="menu-icon">&#x1F4CA;</span>종합소득세 계산</a></li>
@@ -2055,6 +2062,34 @@ body.presentation-mode .radio-group {
                     <input type="number" id="sl-rate" value="14" min="1" max="80" step="1" oninput="calcSilson();">
                     <div style="margin-top:4px;font-size:0.72rem;color:#94a3b8;">세대 선택 시 기본값이 자동 설정됩니다. 직접 수정 가능.</div>
                 </div>
+
+                <!-- 실제 갱신 이력 입력 모드 -->
+                <details style="margin-top:10px;">
+                    <summary style="padding:10px 12px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;font-size:0.78rem;font-weight:600;color:#166534;cursor:pointer;list-style:none;">
+                        &#x1F4CB; 고객 실제 갱신 이력 입력 (선택) — 증권 기반 역산
+                    </summary>
+                    <div style="padding:12px;background:#f0fdf4;border-radius:0 0 8px 8px;border:1px solid #bbf7d0;border-top:none;margin-top:-4px;">
+                        <div style="font-size:0.72rem;color:#166534;margin-bottom:8px;line-height:1.55;">
+                            고객 보험증권의 최초 보험료와 현재 보험료, 경과 년수를 입력하면 실제 <strong>연평균 인상률</strong>을 역산합니다.
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <div class="form-group" style="margin-bottom:4px;">
+                                <label style="font-size:0.72rem;">최초 보험료 (원/월)</label>
+                                <input type="text" id="sl-hist-start" value="20,000" oninput="formatNumberInput(this);">
+                            </div>
+                            <div class="form-group" style="margin-bottom:4px;">
+                                <label style="font-size:0.72rem;">현재 보험료 (원/월)</label>
+                                <input type="text" id="sl-hist-now" value="30,000" oninput="formatNumberInput(this);">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label style="font-size:0.72rem;">경과 년수 (년)</label>
+                            <input type="number" id="sl-hist-years" value="5" min="1" max="30" step="1">
+                        </div>
+                        <button type="button" onclick="deriveSilsonRateFromHistory()" style="width:100%;padding:10px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">역산한 인상률 적용하기</button>
+                        <div id="sl-hist-result" style="margin-top:8px;font-size:0.75rem;color:#166534;text-align:center;"></div>
+                    </div>
+                </details>
             </div>
 
             <!-- 2026년 실손보험료 인상 현황 -->
@@ -2063,46 +2098,68 @@ body.presentation-mode .radio-group {
                 <table style="width:100%;margin:6px 0 4px;border-collapse:collapse;font-size:0.73rem;">
                     <tr style="background:#fee2e2;"><th style="padding:4px 6px;text-align:left;font-weight:600;"></th><th style="padding:4px 6px;text-align:center;">1세대</th><th style="padding:4px 6px;text-align:center;">2세대</th><th style="padding:4px 6px;text-align:center;">3세대</th><th style="padding:4px 6px;text-align:center;">4세대</th><th style="padding:4px 6px;text-align:center;">전체</th></tr>
                     <tr><td style="padding:3px 6px;font-weight:500;">2026년 인상률</td><td style="padding:3px 6px;text-align:center;">약 3%</td><td style="padding:3px 6px;text-align:center;">약 5%</td><td style="padding:3px 6px;text-align:center;font-weight:700;color:#dc2626;">약 16%</td><td style="padding:3px 6px;text-align:center;font-weight:700;color:#dc2626;">약 20%</td><td style="padding:3px 6px;text-align:center;font-weight:600;">7.8%</td></tr>
-                    <tr style="background:#f8fafc;"><td style="padding:3px 6px;font-weight:500;">갱신 주기</td><td style="padding:3px 6px;text-align:center;">3~5년</td><td style="padding:3px 6px;text-align:center;">1~3년</td><td style="padding:3px 6px;text-align:center;">매년</td><td style="padding:3px 6px;text-align:center;">매년</td><td style="padding:3px 6px;text-align:center;">-</td></tr>
-                    <tr><td style="padding:3px 6px;font-weight:500;">위험손해율</td><td style="padding:3px 6px;text-align:center;">113.2%</td><td style="padding:3px 6px;text-align:center;">112.6%</td><td style="padding:3px 6px;text-align:center;color:#dc2626;">138.8%</td><td style="padding:3px 6px;text-align:center;color:#dc2626;">147.9%</td><td style="padding:3px 6px;text-align:center;">-</td></tr>
+                    <tr style="background:#f8fafc;"><td style="padding:3px 6px;font-weight:500;">위험손해율</td><td style="padding:3px 6px;text-align:center;">113.2%</td><td style="padding:3px 6px;text-align:center;">112.6%</td><td style="padding:3px 6px;text-align:center;color:#dc2626;">138.8%</td><td style="padding:3px 6px;text-align:center;color:#dc2626;">147.9%</td><td style="padding:3px 6px;text-align:center;">-</td></tr>
                 </table>
                 <span style="color:#94a3b8;font-size:0.68rem;">출처: 보험업계, 대한금융신문 / 보험연구원 2025.12 발표자료</span>
             </div>
 
-            <!-- 종합 근거 STEP 박스 -->
+            <!-- 보험연구원 연령대별 추정치 참고 박스 -->
+            <div style="padding:12px 14px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca;font-size:0.78rem;color:#475569;line-height:1.65;margin-bottom:12px;">
+                &#x1F4C8; <strong>보험연구원 연령대별 추정치</strong> <span style="color:#94a3b8;font-size:0.68rem;">(40세 → 70세, 30년간 약 17배)</span>
+                <table style="width:100%;margin:6px 0 4px;border-collapse:collapse;font-size:0.73rem;">
+                    <tr style="background:#fee2e2;">
+                        <th style="padding:4px 6px;text-align:left;font-weight:600;">세대</th>
+                        <th style="padding:4px 6px;text-align:center;">40세</th>
+                        <th style="padding:4px 6px;text-align:center;">60세</th>
+                        <th style="padding:4px 6px;text-align:center;">70세</th>
+                        <th style="padding:4px 6px;text-align:center;">총 배율</th>
+                    </tr>
+                    <tr>
+                        <td style="padding:3px 6px;font-weight:500;">1세대</td>
+                        <td style="padding:3px 6px;text-align:center;">38,237원</td>
+                        <td style="padding:3px 6px;text-align:center;">약 25만원</td>
+                        <td style="padding:3px 6px;text-align:center;color:#dc2626;font-weight:700;">약 66만원</td>
+                        <td style="padding:3px 6px;text-align:center;font-weight:700;color:#dc2626;">17배</td>
+                    </tr>
+                    <tr style="background:#f8fafc;">
+                        <td style="padding:3px 6px;font-weight:500;">2세대</td>
+                        <td style="padding:3px 6px;text-align:center;">25,467원</td>
+                        <td style="padding:3px 6px;text-align:center;">약 17만원</td>
+                        <td style="padding:3px 6px;text-align:center;color:#dc2626;font-weight:700;">약 44만원</td>
+                        <td style="padding:3px 6px;text-align:center;font-weight:700;color:#dc2626;">17배</td>
+                    </tr>
+                </table>
+                <span style="color:#64748b;font-size:0.7rem;line-height:1.5;">
+                ※ 30년간 17배, 연평균 <strong>10% 상승</strong>
+                </span>
+                <br><span style="color:#94a3b8;font-size:0.68rem;">출처: 보험연구원 조사 발표</span>
+            </div>
+
+            <!-- 5세대 실손 개편 안내 박스 (2026 도입 예정) -->
+            <div style="padding:12px 14px;background:#fefce8;border-radius:8px;border:1px solid #fde68a;font-size:0.78rem;color:#475569;line-height:1.65;margin-bottom:12px;">
+                &#x1F4E2; <strong>5세대 실손 개편 (2026년 도입 예정)</strong>
+                <ul style="margin:6px 0 0 18px;padding:0;color:#78350f;font-size:0.74rem;line-height:1.7;">
+                    <li><strong>비중증 비급여 자기부담률 50%</strong> (현재 최대 30%)</li>
+                    <li><strong>연간 보장 한도 1,000만원 제한</strong> (비급여 항목)</li>
+                    <li>재가입 주기 <strong>5년</strong>으로 단축 (4세대와 동일)</li>
+                    <li>실손 손해율 개선 목적 — 기존 세대 대비 보장 축소</li>
+                </ul>
+                <span style="color:#94a3b8;font-size:0.68rem;">출처: 금융위원회·보건복지부 발표 (2024.12)</span>
+            </div>
+
+            <!-- 종합 근거 STEP 박스 (세대별 기본 인상률 출처) -->
             <div class="step-box">
-                <div class="step-num">참고</div>
-                <div class="step-title">실손보험 인상 구조와 핵심 원인</div>
+                <div class="step-num">근거</div>
+                <div class="step-title">세대별 기본 인상률 — 5년 누적 금감원 자료 (2017~2021)</div>
                 <div class="step-content">
-                    <strong>&#x1F4C8; 3·4세대 실손보험 최근 인상 흐름</strong><br>
-                    3세대와 4세대 실손보험은 매년 갱신 구조로, 연속적인 두 자릿수 인상이 이어지고 있습니다.
-                    <table style="width:100%;margin:6px 0;border-collapse:collapse;font-size:0.75rem;">
-                        <tr style="background:#fef3c7;"><th style="padding:4px 6px;text-align:left;">연도</th><th style="padding:4px 6px;text-align:center;">3세대</th><th style="padding:4px 6px;text-align:center;">4세대</th></tr>
-                        <tr><td style="padding:3px 6px;">2023년</td><td style="padding:3px 6px;text-align:center;font-weight:600;">14%</td><td style="padding:3px 6px;text-align:center;color:#94a3b8;">-</td></tr>
-                        <tr style="background:#f8fafc;"><td style="padding:3px 6px;">2024년</td><td style="padding:3px 6px;text-align:center;font-weight:600;">18%</td><td style="padding:3px 6px;text-align:center;color:#94a3b8;">-</td></tr>
-                        <tr><td style="padding:3px 6px;">2025년</td><td style="padding:3px 6px;text-align:center;font-weight:600;color:#dc2626;">20%</td><td style="padding:3px 6px;text-align:center;font-weight:600;">13%</td></tr>
-                        <tr style="background:#f8fafc;"><td style="padding:3px 6px;">2026년</td><td style="padding:3px 6px;text-align:center;font-weight:600;color:#dc2626;">16%</td><td style="padding:3px 6px;text-align:center;font-weight:600;color:#dc2626;">20%</td></tr>
-                    </table>
-                    50~60대 가입자의 경우 월 약 10,000원, 연간 약 120,000원의 추가 부담이 발생합니다.<br><br>
-
-                    <strong>&#x26A0;&#xFE0F; 인상의 핵심 원인 — 비급여 진료와 도수치료</strong><br>
-                    &#x2022; 보험업계는 <strong>비급여 과잉진료와 보험사기</strong>를 가장 큰 원인으로 지목합니다.<br>
-                    &#x2022; 2025년 3분기 기준, 5대 손해보험사의 실손보험금 지급액은 <strong>8조 5,000억 원</strong>(전년 대비 13.1% 증가)입니다.<br>
-                    &#x2022; 이 중 비급여 보험금은 <strong>4조 8,420억 원</strong>으로 전체 증가를 주도하고 있습니다.<br>
-                    &#x2022; 특히 <strong>도수치료</strong>가 주요 원인으로, 정형외과뿐 아니라 다양한 진료과에서 집중 발생 중입니다.<br><br>
-
-                    <strong>&#x1F4CB; 5년 누적 인상률 (금융감독원 국회 제출 자료, 2017~2021)</strong>
-                    <table style="width:100%;margin:6px 0;border-collapse:collapse;font-size:0.75rem;">
+                    <table style="width:100%;margin:4px 0;border-collapse:collapse;font-size:0.75rem;">
                         <tr style="background:#fef3c7;"><th style="padding:4px 6px;text-align:left;">구분</th><th style="padding:4px 6px;text-align:center;">5년 누적</th><th style="padding:4px 6px;text-align:center;">연평균</th></tr>
                         <tr><td style="padding:3px 6px;">1세대 구실손 (손보+생보)</td><td style="padding:3px 6px;text-align:center;font-weight:600;color:#dc2626;">63.6%</td><td style="padding:3px 6px;text-align:center;">~10.3%</td></tr>
                         <tr style="background:#f8fafc;"><td style="padding:3px 6px;">표준화 실손 1년갱신</td><td style="padding:3px 6px;text-align:center;font-weight:600;color:#dc2626;">76.4%</td><td style="padding:3px 6px;text-align:center;">~11.9%</td></tr>
                         <tr><td style="padding:3px 6px;">손보 상위 5사 (표준화)</td><td style="padding:3px 6px;text-align:center;font-weight:600;color:#dc2626;">85.0%</td><td style="padding:3px 6px;text-align:center;">~13.0%</td></tr>
                         <tr style="background:#f8fafc;"><td style="padding:3px 6px;">최대 (롯데손보)</td><td style="padding:3px 6px;text-align:center;font-weight:600;color:#dc2626;">135.2%</td><td style="padding:3px 6px;text-align:center;">~18.7%</td></tr>
                     </table>
-                    <span style="color:#94a3b8;font-size:0.68rem;">출처: 연합뉴스 2022.02.01, 금융감독원 국회 제출 자료</span><br><br>
-
-                    <strong>&#x2139;&#xFE0F; 시뮬레이션 안내</strong><br>
-                    본 계산은 현재 인상률이 지속된다는 가정하의 시뮬레이션입니다. 실제 인상률은 매년 변동되며, 보험사·가입 조건·정부 정책에 따라 달라질 수 있습니다. 인상률을 직접 조정하여 다양한 시나리오를 확인해 보세요.
+                    <span style="color:#94a3b8;font-size:0.68rem;">출처: 금융감독원 국회 제출 자료 / 연합뉴스 2022.02.01</span>
                 </div>
             </div>
 
@@ -2216,7 +2273,35 @@ body.presentation-mode .radio-group {
                         <div class="form-group" style="margin-bottom:6px;"><label style="font-size:0.72rem;">70대~ (%)</label><input type="number" id="rn-rate-70" value="30" min="0" max="100" step="1" oninput="calcRenewal();" style="padding:8px;font-size:0.85rem;"></div>
                     </div>
                 </div>
-                <div style="margin-top:4px;padding:12px 14px;background:#f0f9ff;border-radius:8px;border:1px solid #bae6fd;font-size:0.78rem;color:#475569;line-height:1.65;">
+                <!-- 실제 갱신 이력 입력 모드 -->
+                <details style="margin-top:10px;">
+                    <summary style="padding:10px 12px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;font-size:0.78rem;font-weight:600;color:#166534;cursor:pointer;list-style:none;">
+                        &#x1F4CB; 고객 실제 갱신 이력 입력 (선택) — 증권 기반 역산
+                    </summary>
+                    <div style="padding:12px;background:#f0fdf4;border-radius:0 0 8px 8px;border:1px solid #bbf7d0;border-top:none;margin-top:-4px;">
+                        <div style="font-size:0.72rem;color:#166534;margin-bottom:8px;line-height:1.55;">
+                            고객 보험증권의 최초 보험료와 현재 보험료, 경과 년수를 입력하면 실제 <strong>연평균 인상률</strong>을 역산합니다. 적용 시 기본 모드로 전환됩니다.
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <div class="form-group" style="margin-bottom:4px;">
+                                <label style="font-size:0.72rem;">최초 보험료 (원/월)</label>
+                                <input type="text" id="rn-hist-start" value="30,000" oninput="formatNumberInput(this);">
+                            </div>
+                            <div class="form-group" style="margin-bottom:4px;">
+                                <label style="font-size:0.72rem;">현재 보험료 (원/월)</label>
+                                <input type="text" id="rn-hist-now" value="50,000" oninput="formatNumberInput(this);">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label style="font-size:0.72rem;">경과 년수 (년)</label>
+                            <input type="number" id="rn-hist-years" value="5" min="1" max="30" step="1">
+                        </div>
+                        <button type="button" onclick="deriveRenewalRateFromHistory()" style="width:100%;padding:10px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">역산한 인상률 적용하기</button>
+                        <div id="rn-hist-result" style="margin-top:8px;font-size:0.75rem;color:#166534;text-align:center;"></div>
+                    </div>
+                </details>
+
+                <div style="margin-top:10px;padding:12px 14px;background:#f0f9ff;border-radius:8px;border:1px solid #bae6fd;font-size:0.78rem;color:#475569;line-height:1.65;">
                     &#x1F4CA; <strong>갱신형 보험료 인상폭 참고</strong>
                     <table style="width:100%;margin:6px 0 4px;border-collapse:collapse;font-size:0.75rem;">
                         <tr style="background:#e0f2fe;"><th style="padding:4px 6px;text-align:left;font-weight:600;">구분</th><th style="padding:4px 6px;text-align:center;">인상폭</th><th style="padding:4px 6px;text-align:left;">비고</th></tr>
@@ -4885,7 +4970,7 @@ function updateRnDefaultRate() {
     document.getElementById('rn-rate').value = rate;
 }
 
-/* ── 연령대별 갱신률 조회 헬퍼 ── */
+/* ── 연령대별 갱신률 조회 헬퍼 (단일 나이 rate, 기본 모드용) ── */
 function getRnRate(currentAge, multiplier) {
     var detailMode = document.getElementById('rn-detail-mode') && document.getElementById('rn-detail-mode').checked;
     if (!detailMode) {
@@ -4904,6 +4989,27 @@ function getRnRate(currentAge, multiplier) {
     return (r / 100) * multiplier;
 }
 
+/* ── 상세 모드 전용: 시작 나이부터 `elapsedYears`년 동안의 복리 배율 ──
+   각 연도별 해당 나이 구간의 rate로 복리 배율 계산.
+   예) 35세부터 35년 경과 (70세 시점): ∏(1+r[i]) for i=35..69
+   보험연구원 추정치(1.10^30 = 17배) 패턴과 일치 */
+function getRnCompoundMultiplier(startAge, elapsedYears, multiplier) {
+    var _p = function(id, def) { var v = parseFloat(document.getElementById(id).value); return isNaN(v) ? def : v; };
+    var m = 1;
+    for (var i = 0; i < elapsedYears; i++) {
+        var curAge = startAge + i;
+        var r;
+        if (curAge < 30) r = _p('rn-rate-20', 5);
+        else if (curAge < 40) r = _p('rn-rate-30', 10);
+        else if (curAge < 50) r = _p('rn-rate-40', 15);
+        else if (curAge < 60) r = _p('rn-rate-50', 20);
+        else if (curAge < 70) r = _p('rn-rate-60', 30);
+        else r = _p('rn-rate-70', 30);
+        m *= (1 + (r / 100) * multiplier);
+    }
+    return m;
+}
+
 /* ── 시나리오별 데이터 생성 함수 ── */
 function buildRenewalData(mRenew, age, coverYears, payPeriod, mFixed, cycle, multiplier) {
     var years = [];
@@ -4912,13 +5018,20 @@ function buildRenewalData(mRenew, age, coverYears, payPeriod, mFixed, cycle, mul
     var bepYear = 0;
     var totalYears = Math.max(coverYears, 1);
 
+    var detailMode = document.getElementById('rn-detail-mode') && document.getElementById('rn-detail-mode').checked;
     for (var y = 1; y <= totalYears; y++) {
         var isRenewal = (y > 1 && (y - 1) % cycle === 0);
         if (isRenewal) {
-            // 단리 방식: 최초 보험료 기준으로 경과년수에 비례 인상
-            // 연령대별 차등 모드일 때는 현재 나이의 갱신률 적용
-            var currentRate = getRnRate(age + y, multiplier);
-            curRenewMonthly = mRenew * (1 + currentRate * (y - 1));
+            // 복리 방식: 갱신 시마다 복리로 인상 (보험연구원 17배 추정치 = 1.10^30 패턴)
+            if (detailMode) {
+                // 연령대별 구간 복리 배율: ∏(1+r[i]) for i=0..y-2
+                var factor = getRnCompoundMultiplier(age, y - 1, multiplier);
+                curRenewMonthly = mRenew * factor;
+            } else {
+                // 기본 모드: 단일 rate × 경과년수 복리
+                var currentRate = getRnRate(age + y, multiplier);
+                curRenewMonthly = mRenew * Math.pow(1 + currentRate, y - 1);
+            }
         }
 
         var yearRenew = Math.round(curRenewMonthly) * 12;
@@ -4976,11 +5089,56 @@ var rnBurdenPlugin = {
    실손보험 갱신 보험료 시뮬레이션
    ============================================================ */
 var SILSON_DEFAULTS = {
-    '1': { rate: 10, cycle: 3, label: '1세대' },
-    '2': { rate: 12, cycle: 1, label: '2세대' },
-    '3': { rate: 14, cycle: 1, label: '3세대' },
-    '4': { rate: 16, cycle: 1, label: '4세대' }
+    '1': { rate: 10, cycle: 3, label: '1세대', source: '금감원 5년 평균' },
+    '2': { rate: 12, cycle: 1, label: '2세대', source: '금감원 5년 평균' },
+    '3': { rate: 14, cycle: 1, label: '3세대', source: '금감원 4년 평균(2023-2026)' },
+    '4': { rate: 16, cycle: 1, label: '4세대', source: '금감원 2년 평균(2025-2026)' }
 };
+
+/* ── 실손 실제 갱신 이력 역산 (복리: rate = (now/start)^(1/years) - 1) ── */
+function deriveSilsonRateFromHistory() {
+    var start = parseNumberInput(document.getElementById('sl-hist-start')) || 0;
+    var now = parseNumberInput(document.getElementById('sl-hist-now')) || 0;
+    var years = parseInt(document.getElementById('sl-hist-years').value) || 0;
+    var out = document.getElementById('sl-hist-result');
+    if (start <= 0 || now <= 0 || years <= 0) {
+        out.innerHTML = '<span style="color:#dc2626;">⚠️ 모든 값을 정상 입력해 주세요</span>';
+        return;
+    }
+    if (now < start) {
+        out.innerHTML = '<span style="color:#dc2626;">⚠️ 현재 보험료가 최초보다 작습니다 (인하 이력)</span>';
+        return;
+    }
+    var rate = (Math.pow(now / start, 1 / years) - 1) * 100;
+    var rounded = Math.round(rate * 10) / 10;
+    document.getElementById('sl-rate').value = rounded;
+    out.innerHTML = '✅ 역산 완료(복리): <strong>연 평균 ' + rounded + '%</strong> 인상 → 시뮬레이션 반영됨';
+    calcSilson();
+}
+
+/* ── 갱신형 실제 갱신 이력 역산 (복리) ── */
+function deriveRenewalRateFromHistory() {
+    var start = parseNumberInput(document.getElementById('rn-hist-start')) || 0;
+    var now = parseNumberInput(document.getElementById('rn-hist-now')) || 0;
+    var years = parseInt(document.getElementById('rn-hist-years').value) || 0;
+    var out = document.getElementById('rn-hist-result');
+    if (start <= 0 || now <= 0 || years <= 0) {
+        out.innerHTML = '<span style="color:#dc2626;">⚠️ 모든 값을 정상 입력해 주세요</span>';
+        return;
+    }
+    if (now < start) {
+        out.innerHTML = '<span style="color:#dc2626;">⚠️ 현재 보험료가 최초보다 작습니다 (인하 이력)</span>';
+        return;
+    }
+    var rate = (Math.pow(now / start, 1 / years) - 1) * 100;
+    var rounded = Math.round(rate * 10) / 10;
+    // 기본 모드로 전환(상세 모드면 해제) 후 rn-rate에 적용
+    var detailChk = document.getElementById('rn-detail-mode');
+    if (detailChk && detailChk.checked) { detailChk.checked = false; toggleRnDetailMode(); }
+    document.getElementById('rn-rate').value = rounded;
+    out.innerHTML = '✅ 역산 완료(복리): <strong>연 평균 ' + rounded + '%</strong> 인상 → 시뮬레이션 반영됨';
+    calcRenewal();
+}
 
 function onSilsonGenChange() {
     var gen = document.getElementById('sl-generation').value;
@@ -5002,16 +5160,16 @@ function buildSilsonData(mPremium, age, coverYears, cycle, annualRate) {
         // 갱신 발생: y > 1이고 (y-1)이 cycle의 배수
         var isRenewal = (y > 1 && (y - 1) % cycle === 0);
         if (isRenewal) {
-            // 단리 방식: 최초 보험료 기준으로 경과년수에 비례하여 인상
-            // 갱신 보험료 = 최초보험료 × (1 + 연간인상률 × 경과년수)
-            // 실제 갱신은 "전년 보험료 × X%"가 아니라 해당 나이의 위험률로 재산정되는 구조
-            curMonthly = mPremium * (1 + (annualRate / 100) * (y - 1));
+            // 복리 방식: 갱신 시마다 복리로 인상
+            // 갱신 보험료 = 최초보험료 × (1 + 연간인상률)^경과년수
+            // 보험연구원 추정치(40→70세 17배 = 1.10^30) 패턴과 일치
+            curMonthly = mPremium * Math.pow(1 + annualRate / 100, y - 1);
         }
 
         var yearAmount = Math.round(curMonthly) * 12;
         cumTotal += yearAmount;
 
-        if (fiveXYear === 0 && curMonthly >= fiveXLimit) fiveXYear = y;
+        if (mPremium > 0 && fiveXYear === 0 && curMonthly >= fiveXLimit) fiveXYear = y;
 
         years.push({
             year: y,
@@ -5051,11 +5209,14 @@ function calcSilson() {
     var monthly70 = (idx70 >= 0 && idx70 < years.length) ? years[idx70].monthly : 0;
     var ratio70 = mPremium > 0 && monthly70 > 0 ? (monthly70 / mPremium).toFixed(1) : '-';
 
+    var genDef = SILSON_DEFAULTS[gen];
+    var isCustom = genDef && (Number(genDef.rate) !== Number(annualRate) || Number(genDef.cycle) !== Number(cycle));
+    var genSource = genDef ? (isCustom ? '사용자 입력값' : genDef.source) : '';
     document.getElementById('sl-result-cards').innerHTML =
         '<div class="result-card" style="background:linear-gradient(135deg,#ef4444,#dc2626);">' +
             '<div class="rc-label">총 납입 예상액 (' + coverUntil + '세)</div>' +
             '<div class="rc-value">' + f_kr(lastRow.cumTotal) + '</div>' +
-            '<div class="rc-formula">' + genLabel + ' 실손 · 연 ' + annualRate + '% 갱신</div>' +
+            '<div class="rc-formula">' + genLabel + ' 실손 · 연 ' + annualRate + '% 복리<br><span style="opacity:0.75;font-size:0.7em;">출처: ' + genSource + '</span></div>' +
         '</div>' +
         '<div class="result-card" style="background:linear-gradient(135deg,#f59e0b,#d97706);">' +
             '<div class="rc-label">5배 도달 시점</div>' +
@@ -5079,9 +5240,9 @@ function calcSilson() {
             var row = years[idx];
             var ratio = mPremium > 0 ? (row.monthly / mPremium).toFixed(1) : '-';
             previewCards.push(
-                '<div style="flex:1;min-width:120px;padding:12px 14px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:12px;text-align:center;">' +
+                '<div style="flex:1;min-width:130px;padding:12px 14px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:12px;text-align:center;container-type:inline-size;overflow:hidden;">' +
                     '<div style="font-size:0.75rem;color:#92400e;font-weight:600;">' + pa + '세 시점</div>' +
-                    '<div style="font-size:1.15rem;font-weight:800;color:#b45309;margin:3px 0;">월 ' + f_w(row.monthly) + '원</div>' +
+                    '<div style="font-size:clamp(0.85rem,7cqi,1.15rem);font-weight:800;color:#b45309;margin:3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.02em;line-height:1.25;">월 ' + f_w(row.monthly) + '원</div>' +
                     '<div style="font-size:0.72rem;color:#a16207;">현재의 ' + ratio + '배</div>' +
                 '</div>'
             );
@@ -5181,8 +5342,9 @@ function calcSilson() {
         // 세대별 비교 요약 테이블 생성
         var compareHtml = '<div style="padding:14px 16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:16px;">';
         compareHtml += '<p style="font-weight:700;color:#1e293b;margin-bottom:8px;">&#x1F4CA; 세대별 비교 요약 (현재 월 ' + f_w(mPremium) + '원 기준)</p>';
-        compareHtml += '<table style="width:100%;border-collapse:collapse;font-size:0.8rem;">';
-        compareHtml += '<tr style="background:#e2e8f0;"><th style="padding:6px 8px;text-align:center;">세대</th><th style="padding:6px 8px;text-align:center;">연 인상률</th><th style="padding:6px 8px;text-align:center;">50세 월보험료</th><th style="padding:6px 8px;text-align:center;">60세 월보험료</th><th style="padding:6px 8px;text-align:center;">5배 도달</th><th style="padding:6px 8px;text-align:center;">총 납입</th></tr>';
+        compareHtml += '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">';
+        compareHtml += '<table style="width:100%;border-collapse:collapse;font-size:0.78rem;table-layout:auto;">';
+        compareHtml += '<tr style="background:#e2e8f0;white-space:nowrap;"><th style="padding:6px 8px;text-align:center;">세대</th><th style="padding:6px 8px;text-align:center;">연 인상률</th><th style="padding:6px 8px;text-align:center;">50세 월보험료</th><th style="padding:6px 8px;text-align:center;">60세 월보험료</th><th style="padding:6px 8px;text-align:center;">5배 도달</th><th style="padding:6px 8px;text-align:center;">총 납입</th></tr>';
         var cColors = { '1': '#3b82f6', '2': '#10b981', '3': '#f59e0b', '4': '#ef4444' };
         for (var cg = 1; cg <= 4; cg++) {
             var cgDef = SILSON_DEFAULTS[String(cg)];
@@ -5193,16 +5355,16 @@ function calcSilson() {
             var cgFiveX = cgData.fiveXYear > 0 ? (age + cgData.fiveXYear) + '세' : '-';
             var isCurrent = String(cg) === gen;
             var rowBg = isCurrent ? 'background:#fef3c7;font-weight:700;' : (cg % 2 === 0 ? 'background:#f8fafc;' : '');
-            compareHtml += '<tr style="' + rowBg + '">';
-            compareHtml += '<td style="padding:5px 8px;text-align:center;color:' + cColors[String(cg)] + ';font-weight:700;">' + cgDef.label + (isCurrent ? ' ★' : '') + '</td>';
-            compareHtml += '<td style="padding:5px 8px;text-align:center;">' + cgDef.rate + '%</td>';
-            compareHtml += '<td style="padding:5px 8px;text-align:center;">' + (cg50 > 0 ? f_w(cg50) + '원' : '-') + '</td>';
-            compareHtml += '<td style="padding:5px 8px;text-align:center;">' + (cg60 > 0 ? f_w(cg60) + '원' : '-') + '</td>';
-            compareHtml += '<td style="padding:5px 8px;text-align:center;">' + cgFiveX + '</td>';
-            compareHtml += '<td style="padding:5px 8px;text-align:center;">' + f_kr(cgLast.cumTotal) + '</td>';
+            compareHtml += '<tr style="' + rowBg + 'white-space:nowrap;">';
+            compareHtml += '<td style="padding:5px 8px;text-align:center;color:' + cColors[String(cg)] + ';font-weight:700;white-space:nowrap;">' + cgDef.label + (isCurrent ? ' ★' : '') + '</td>';
+            compareHtml += '<td style="padding:5px 8px;text-align:center;white-space:nowrap;">' + cgDef.rate + '%</td>';
+            compareHtml += '<td style="padding:5px 8px;text-align:center;white-space:nowrap;">' + (cg50 > 0 ? f_w(cg50) + '원' : '-') + '</td>';
+            compareHtml += '<td style="padding:5px 8px;text-align:center;white-space:nowrap;">' + (cg60 > 0 ? f_w(cg60) + '원' : '-') + '</td>';
+            compareHtml += '<td style="padding:5px 8px;text-align:center;white-space:nowrap;">' + cgFiveX + '</td>';
+            compareHtml += '<td style="padding:5px 8px;text-align:center;white-space:nowrap;">' + f_kr(cgLast.cumTotal) + '</td>';
             compareHtml += '</tr>';
         }
-        compareHtml += '</table></div>';
+        compareHtml += '</table></div></div>';
         document.getElementById('sl-verdict').insertAdjacentHTML('beforebegin', '');
         // 차트 아래, 판정 위에 비교 테이블 삽입
         var compareDiv = document.getElementById('sl-compare-summary');
@@ -5353,9 +5515,9 @@ function calcRenewal() {
             var row = years[idx];
             var ratio = mRenew > 0 ? (row.renewMonthly / mRenew).toFixed(1) : '-';
             previewCards.push(
-                '<div style="flex:1;min-width:140px;padding:14px 16px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:12px;text-align:center;">' +
+                '<div style="flex:1;min-width:150px;padding:14px 16px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:12px;text-align:center;container-type:inline-size;overflow:hidden;">' +
                     '<div style="font-size:0.78rem;color:#92400e;font-weight:600;">' + pa + '세 시점</div>' +
-                    '<div style="font-size:1.25rem;font-weight:800;color:#b45309;margin:4px 0;">월 ' + f_w(row.renewMonthly) + '원</div>' +
+                    '<div style="font-size:clamp(0.9rem,7cqi,1.25rem);font-weight:800;color:#b45309;margin:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.02em;line-height:1.25;">월 ' + f_w(row.renewMonthly) + '원</div>' +
                     '<div style="font-size:0.75rem;color:#a16207;">현재의 ' + ratio + '배</div>' +
                 '</div>'
             );
@@ -5429,8 +5591,10 @@ function calcRenewal() {
 
     // 부담 한계선 (현재 보험료의 5배) 도달 나이
     var burdenAge = 0;
-    for (var bi = 0; bi < years.length; bi++) {
-        if (years[bi].renewMonthly > burdenLimit) { burdenAge = years[bi].age; break; }
+    if (mRenew > 0) {
+        for (var bi = 0; bi < years.length; bi++) {
+            if (years[bi].renewMonthly > burdenLimit) { burdenAge = years[bi].age; break; }
+        }
     }
     var payCompleteAge = age + payPeriod;
     var initDiff = mFixed - mRenew;
@@ -5470,17 +5634,19 @@ function calcRenewal() {
         verdictHtml += '총 납입액은 <strong>' + f_kr(lastRow.cumFixed) + '</strong>으로, 갱신형 대비 <strong>' + f_kr(totalDiff) + '</strong>을 절약할 수 있습니다.';
         verdictHtml += '</p></div>';
 
-        // 4단계: 리모델링 제안
+        // 4단계: 리모델링 제안 (totalDiff > 0이면 항상 표시)
+        verdictHtml += '<div style="padding:14px 16px;background:#eff6ff;border-radius:10px;border-left:4px solid #3b82f6;">';
+        verdictHtml += '<p style="font-weight:700;color:#1e40af;margin-bottom:6px;">&#x1F504; 보험 리모델링을 권장합니다</p>';
+        verdictHtml += '<p style="font-size:0.88rem;line-height:1.7;color:#1e3a5f;">';
         if (initDiff > 0) {
-            verdictHtml += '<div style="padding:14px 16px;background:#eff6ff;border-radius:10px;border-left:4px solid #3b82f6;">';
-            verdictHtml += '<p style="font-weight:700;color:#1e40af;margin-bottom:6px;">&#x1F504; 보험 리모델링을 권장합니다</p>';
-            verdictHtml += '<p style="font-size:0.88rem;line-height:1.7;color:#1e3a5f;">';
             verdictHtml += '현재 갱신형과 비갱신형의 월 차이는 <strong>' + f_w(initDiff) + '원</strong>(하루 약 ' + f_w(dailyDiff) + '원)입니다.<br>';
-            verdictHtml += '비갱신형으로 리모델링하면 향후 <strong>' + f_kr(totalDiff) + '</strong>의 추가 부담을 예방하고, ';
-            verdictHtml += '보험료 인상 없이 안정적으로 보장을 유지할 수 있습니다.<br>';
-            verdictHtml += '<strong>갱신형을 비갱신형으로 전환하는 리모델링이 장기적으로 유리합니다.</strong>';
-            verdictHtml += '</p></div>';
+        } else {
+            verdictHtml += '현재 비갱신형 월 보험료가 갱신형과 같거나 더 낮아, 전환 즉시 부담 증가 없이 장기 안정성이 확보됩니다.<br>';
         }
+        verdictHtml += '비갱신형으로 리모델링하면 향후 <strong>' + f_kr(totalDiff) + '</strong>의 추가 부담을 예방하고, ';
+        verdictHtml += '보험료 인상 없이 안정적으로 보장을 유지할 수 있습니다.<br>';
+        verdictHtml += '<strong>갱신형을 비갱신형으로 전환하는 리모델링이 장기적으로 유리합니다.</strong>';
+        verdictHtml += '</p></div>';
 
     } else if (totalDiff < 0) {
         // ── 갱신형이 더 저렴할 때 ──
