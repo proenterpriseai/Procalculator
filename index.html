@@ -2572,7 +2572,7 @@ function formatNumberInput(el) {
      #4 Lazy init (Supabase 클라이언트 + 세션 ID 모두 첫 호출 시점 lazy)
    debounce 1.5초 — oninput 실시간 계산 폭주 차단 (드래그/타이핑 종료 후 1회만 기록)
    ============================================================ */
-var FEATURE_CALC_USAGE_LOGGING = false; // 대표님 명시 승인 후 true 전환
+var FEATURE_CALC_USAGE_LOGGING = true; // v=20260512b 700명 공개 (인센티브 협상 2~3달 후 시점 데이터 누적 시작 2026-05-12). 비활성: localStorage._flag_calc_usage_logging='false'
 var _CALC_SUPABASE_URL = 'https://pjxidjyckljhwmtkrgtg.supabase.co';
 var _CALC_SUPABASE_KEY = 'sb_publishable_5N6JtJrYA_EJZYb2DntTCQ_JhVyMAGz'; // publishable (anon) — 보장분석/DB영업과 동일 프로젝트
 var _calcSupabaseClient = null;
