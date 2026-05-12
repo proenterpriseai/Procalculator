@@ -8,6 +8,8 @@
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- Supabase v2 (익명 사용량 로깅용, v=20260512a, async 필수 — 4대 원칙 #3) -->
+<script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-NV114K1SQY"></script>
 <script>
@@ -2559,7 +2561,97 @@ function formatNumberInput(el) {
 /* ============================================================
    TAB SWITCHING
    ============================================================ */
+
+/* ============================================================
+   사용량 로깅 인프라 (v=20260512a, FEATURE_CALC_USAGE_LOGGING=false 기본)
+   목적: 인센티브 협상용 ROI 데이터. 공개 URL이라 로그인 없음 → localStorage UUID로 익명 세션 추적.
+   4대 원칙 준수:
+     #1 기존 기능 불변 (헬퍼는 완전 독립 블록, 기존 함수 흐름 0건 변경)
+     #2 Feature Flag 필수 (Flag=false 시 첫 줄 즉시 return → 700명 영향 0)
+     #3 CDN 비동기 (Supabase CDN <script async> 이미 head에 추가됨)
+     #4 Lazy init (Supabase 클라이언트 + 세션 ID 모두 첫 호출 시점 lazy)
+   debounce 1.5초 — oninput 실시간 계산 폭주 차단 (드래그/타이핑 종료 후 1회만 기록)
+   ============================================================ */
+var FEATURE_CALC_USAGE_LOGGING = false; // 대표님 명시 승인 후 true 전환
+var _CALC_SUPABASE_URL = 'https://pjxidjyckljhwmtkrgtg.supabase.co';
+var _CALC_SUPABASE_KEY = 'sb_publishable_5N6JtJrYA_EJZYb2DntTCQ_JhVyMAGz'; // publishable (anon) — 보장분석/DB영업과 동일 프로젝트
+var _calcSupabaseClient = null;
+var _calcSessionId = null;
+var _calcLogTimers = {}; // action별 debounce 타이머 (탭 전환은 즉시, 계산은 1.5초 debounce)
+var _calcLoggingReady = false; // 페이지 로드 직후 자동 호출(DOMContentLoaded 초기 calc + savedTab 복원) 차단용. 3초 후 활성.
+if (typeof window !== 'undefined') {
+    setTimeout(function () { _calcLoggingReady = true; }, 3000);
+}
+
+function _isCalcUsageLoggingOn() {
+    try {
+        var ss = localStorage.getItem('_flag_calc_usage_logging');
+        if (ss === 'true') return true;
+        if (ss === 'false') return false;
+    } catch (e) {}
+    return FEATURE_CALC_USAGE_LOGGING;
+}
+function _getCalcSessionId() {
+    // 익명 세션 ID — 같은 브라우저 재방문 시 같은 ID 유지. employee_id = 'anon_' + UUID 형태로 저장.
+    if (_calcSessionId) return _calcSessionId;
+    try {
+        var id = localStorage.getItem('pro_calc_session_id');
+        if (!id) {
+            id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 11);
+            localStorage.setItem('pro_calc_session_id', id);
+        }
+        _calcSessionId = 'anon_' + id;
+        return _calcSessionId;
+    } catch (e) { return null; }
+}
+function _getCalcSupabaseClient() {
+    // Lazy init — Supabase CDN 로드 완료 시점에 첫 호출
+    if (_calcSupabaseClient) return _calcSupabaseClient;
+    if (typeof supabase === 'undefined' || !supabase.createClient) return null; // CDN 미로드 시 skip
+    try {
+        _calcSupabaseClient = supabase.createClient(_CALC_SUPABASE_URL, _CALC_SUPABASE_KEY);
+        return _calcSupabaseClient;
+    } catch (e) { return null; }
+}
+async function _logCalcUsageImmediate(action, detail) {
+    // 즉시 로깅 (탭 전환 등 1회성 액션용 — debounce 불필요)
+    if (!_isCalcUsageLoggingOn()) return; // 게이트 1: Flag=false 즉시 종료
+    if (!_calcLoggingReady) return; // 게이트 2: 페이지 로드 직후 3초 자동 호출 차단 (savedTab 복원 + 초기 calc)
+    try {
+        var client = _getCalcSupabaseClient();
+        if (!client) return; // 게이트 3: CDN 미로드 시 skip
+        var sid = _getCalcSessionId();
+        if (!sid) return; // 게이트 4: localStorage 비활성 시 skip
+        var detailStr = '';
+        if (typeof detail === 'string') detailStr = detail;
+        else if (detail && typeof detail === 'object') {
+            try { detailStr = JSON.stringify(detail); } catch (e) {}
+        }
+        await client.from('usage_logs').insert({
+            employee_id: sid,
+            action: String(action),
+            detail: detailStr
+        });
+    } catch (e) {
+        if (typeof console !== 'undefined' && console.warn) {
+            console.warn('[_logCalcUsage] 로그 저장 실패 (계산 흐름 영향 0):', e && e.message);
+        }
+    }
+}
+function _logCalcUsage(action, detail) {
+    // debounce 1.5초 (실시간 계산용 — oninput 폭주 차단: 타이핑/드래그 종료 후 1회만 기록)
+    if (!_isCalcUsageLoggingOn()) return;
+    if (!_calcLoggingReady) return; // 페이지 로드 직후 3초 자동 호출 차단 (DOMContentLoaded 13개 자동 calc 노이즈 제거)
+    if (_calcLogTimers[action]) clearTimeout(_calcLogTimers[action]);
+    _calcLogTimers[action] = setTimeout(function () {
+        _logCalcUsageImmediate(action, detail);
+    }, 1500);
+}
+
 function switchTab(tabId, el) {
+    _logCalcUsageImmediate('calc_tab_switch', tabId); // v=20260512a 인센티브 ROI 로깅 (탭 클릭 — 즉시 1회)
     document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.add('hidden'); });
     document.getElementById(tabId).classList.remove('hidden');
     document.querySelectorAll('#sidebarMenu a').forEach(function(a) { a.classList.remove('active'); });
@@ -2615,6 +2707,7 @@ function setInstTax(label, rate) {
 var depChart = null;
 
 function calcDeposit() {
+    _logCalcUsage('calc_savings', '예금'); // v=20260512a 인센티브 ROI 로깅 (debounce 1.5s)
     var amount = parseNumberInput(document.getElementById('dep-amount'));
     var rate = parseFloat(document.getElementById('dep-rate').value) || 0;
     var years = parseInt(document.getElementById('dep-years').value) || 1;
@@ -2690,6 +2783,7 @@ function calcDeposit() {
 var instChart = null;
 
 function calcInstallment() {
+    _logCalcUsage('calc_savings', '적금'); // v=20260512a 인센티브 ROI 로깅 (debounce 1.5s)
     var amount = parseNumberInput(document.getElementById('inst-amount'));
     var rate = parseFloat(document.getElementById('inst-rate').value) || 0;
     var years = parseInt(document.getElementById('inst-years').value) || 1;
@@ -2779,6 +2873,7 @@ var loanAmortChart = null;
 var loanCompareChart = null;
 
 function calcLoan() {
+    _logCalcUsage('calc_loan', ''); // v=20260512a 인센티브 ROI 로깅 (debounce 1.5s)
     var amt = parseNumberInput(document.getElementById('loan-amount'));
     var rate = parseFloat(document.getElementById('loan-rate-slider').value) || 0;
     var years = parseInt(document.getElementById('loan-years-slider').value) || 1;
@@ -2959,6 +3054,7 @@ function setJwDir(label, dir) {
 }
 
 function calcJeonwolse() {
+    _logCalcUsage('calc_jeonwolse', ''); // v=20260512a 인센티브 ROI 로깅 (debounce 1.5s)
     var convRate = parseFloat(document.getElementById('jw-rate-slider').value) || 5.0;
     var investRate = parseFloat(document.getElementById('jw-invest-rate').value) || 0;
 
@@ -3189,6 +3285,7 @@ function calcProgressiveTax(taxable) {
 }
 
 function calcIncomeTaxTab() {
+    _logCalcUsage('calc_incometax', ''); // v=20260512a 인센티브 ROI 로깅 (debounce 1.5s)
     var salary = parseNumberInput(document.getElementById('it-salary'));
     var interest = parseNumberInput(document.getElementById('it-interest'));
     var dividend = parseNumberInput(document.getElementById('it-dividend'));
@@ -3389,6 +3486,7 @@ function switchRealEstateSubTab(which, btn) {
 var reAcqChart = null;
 
 function calcAcquisitionTax() {
+    _logCalcUsage('calc_realestate', '취득세'); // v=20260512a 인센티브 ROI 로깅 (debounce 1.5s)
     var propType = document.getElementById('re-acq-type').value;
     var area = parseFloat(document.getElementById('re-acq-area').value) || 0;
     var price = parseNumberInput(document.getElementById('re-acq-price'));
@@ -3912,6 +4010,7 @@ function getTaxRate5(base) {
 
 var giftPieChart = null;
 function calcGift() {
+    _logCalcUsage('calc_inheritance', '증여'); // v=20260512a 인센티브 ROI 로깅 (debounce 1.5s)
     var curr = parseNumberInput(document.getElementById('gift-amount'));
     var prev = parseNumberInput(document.getElementById('gift-prev'));
     var prevTaxCredit = parseNumberInput(document.getElementById('gift-prev-tax'));
@@ -4015,6 +4114,7 @@ function calcGift() {
    ============================================================ */
 var inhWaterfallChart = null;
 function calcInheritance() {
+    _logCalcUsage('calc_inheritance', '상속'); // v=20260512a 인센티브 ROI 로깅 (debounce 1.5s)
     var estate = parseNumberInput(document.getElementById('inh-estate'));
     var nontax = parseNumberInput(document.getElementById('inh-nontax'));
     var prevGift = parseNumberInput(document.getElementById('inh-prev-gift'));
@@ -4149,6 +4249,7 @@ function calcInheritance() {
    ============================================================ */
 var retLifecycleChart = null;
 function calcRetirement() {
+    _logCalcUsage('calc_retirement', ''); // v=20260512a \uC778\uC13C\uD2F0\uBE0C ROI \uB85C\uAE45 (debounce 1.5s)
     var name = document.getElementById('ret-name').value || '\uACE0\uAC1D';
     var currentAge = parseInt(document.getElementById('ret-age').value) || 35;
     var goalP = parseNumberInput(document.getElementById('ret-goal'));
@@ -4285,6 +4386,7 @@ function setGoalCalcType(label, type) {
 
 var goalGrowthChart = null;
 function calcGoalFund() {
+    _logCalcUsage('calc_goalfund', ''); // v=20260512a 인센티브 ROI 로깅 (debounce 1.5s)
     var period = parseInt(document.getElementById('goal-period-slider').value) || 10;
     var savRate = parseFloat(document.getElementById('goal-sav-slider').value) || 2.5;
     var rate = parseFloat(document.getElementById('goal-yield-slider').value) || 5.0;
@@ -4741,6 +4843,7 @@ async function fetchExchangeRate() {
 
 var dolRefundChart = null, dolScenarioChart = null, dolHistoryChart = null;
 function calcDollar() {
+    _logCalcUsage('calc_dollar', ''); // v=20260512a 인센티브 ROI 로깅 (debounce 1.5s)
     var ptype = document.getElementById('dol-product').value;
     var payPeriod = parseInt(document.getElementById('dol-pay-period').value) || 10;
     var monthly = parseFloat(document.getElementById('dol-monthly').value) || 0;
@@ -5184,6 +5287,7 @@ function buildSilsonData(mPremium, age, coverYears, cycle, annualRate) {
 }
 
 function calcSilson() {
+    _logCalcUsage('calc_silson', ''); // v=20260512a 인센티브 ROI 로깅 (debounce 1.5s)
     var gen = document.getElementById('sl-generation').value;
     var mPremium = parseNumberInput(document.getElementById('sl-monthly')) || 0;
     var age = parseInt(document.getElementById('sl-age').value) || 35;
@@ -5457,6 +5561,7 @@ function calcSilson() {
 }
 
 function calcRenewal() {
+    _logCalcUsage('calc_renewal', ''); // v=20260512a 인센티브 ROI 로깅 (debounce 1.5s)
     var mRenew = parseNumberInput(document.getElementById('rn-monthly-renew')) || 0;
     var mFixed = parseNumberInput(document.getElementById('rn-monthly-fixed')) || 0;
     var cycle = parseInt(document.getElementById('rn-cycle').value) || 3;
