@@ -5526,7 +5526,6 @@ function calcSilson() {
     if (fiveXAge > 0) {
         verdictHtml += '<br><strong>' + fiveXAge + '세</strong>에는 현재의 <strong>5배</strong>인 월 <strong>' + f_w(burdenLimit) + '원</strong>에 도달하게 됩니다.';
     }
-    verdictHtml += '<br>' + coverUntil + '세 만기까지 총 <strong>' + f_kr(lastRow.cumTotal) + '</strong>을 납입하게 됩니다.';
     verdictHtml += '</p></div>';
 
     // 2단계: 경제적 부담
@@ -5538,13 +5537,23 @@ function calcSilson() {
     verdictHtml += '<strong>가장 의료비가 필요한 시기에 보장을 잃게 됩니다.</strong>';
     verdictHtml += '</p></div>';
 
-    // 3단계: 대비 방안 제안
+    // 3단계: 대비 방안 제안 (세대별 조건부 5세대 안내 포함)
     verdictHtml += '<div style="padding:14px 16px;background:#f0fdf4;border-radius:10px;border-left:4px solid #16a34a;margin-bottom:14px;">';
     verdictHtml += '<p style="font-weight:700;color:#166534;margin-bottom:6px;">&#x2705; 대비 방안</p>';
     verdictHtml += '<p style="font-size:0.88rem;line-height:1.7;color:#14532d;">';
     verdictHtml += '&#x2022; 실손보험은 유지하되, <strong>비급여 특약 조정</strong>으로 갱신 부담을 줄일 수 있습니다.<br>';
     verdictHtml += '&#x2022; <strong>3대질병(암/뇌/심장) 진단비</strong>는 비갱신형으로 별도 설계하여 핵심 보장을 확보하는 것이 안정적입니다.<br>';
     verdictHtml += '&#x2022; 향후 보험료 부담에 대비한 <strong>의료비 전용 적립</strong>도 함께 고려하실 수 있습니다.';
+    // 세대별 5세대 전환 조건부 안내
+    if (gen === '1' || gen === '2') {
+        verdictHtml += '<br>&#x2022; <strong>5세대 실손 전환 검토</strong> (조건부): 평소 병원 이용이 적고 도수치료·비급여 주사를 거의 받지 않으신다면, ' +
+                       '2026.5 출시 5세대 전환 시 <strong>3년간 보험료 50% 할인 + 중증 자기부담 상한 500만원</strong> 혜택이 있습니다. ' +
+                       '단, 비급여 보장(자기부담 50%·연한도 1,000만)은 축소되므로 <strong>최근 3년 의료 이용 내역 점검 후</strong> 결정.';
+    } else if (gen === '3') {
+        verdictHtml += '<br>&#x2022; <strong>5세대 실손 전환 검토</strong> (선택): 비급여 이용이 적은 경우 4세대 대비 약 10% 저렴한 5세대 전환이 보험료 절감 대안이 될 수 있습니다. ' +
+                       '단, 비급여 자기부담률 50%·연한도 1,000만원 축소를 감수해야 합니다.';
+    }
+    // gen === '4'는 5세대 안내 생략 (이미 유사 구조, 보장만 더 축소되어 전환 실익 작음)
     verdictHtml += '</p></div>';
 
     // 4단계: 세대 특성 안내
