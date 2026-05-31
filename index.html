@@ -5872,14 +5872,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }, { passive: false });
     }
 
-    // 새로고침 시 마지막 탭 복원
-    try {
-        var savedTab = localStorage.getItem('pro_calc_active_tab');
-        if (savedTab && document.getElementById(savedTab)) {
-            var menuLink = document.querySelector('#sidebarMenu a[onclick*="' + savedTab + '"]');
-            switchTab(savedTab, menuLink);
-        }
-    } catch(e) {}
+    // 진입 시 항상 부동산 통합 카테고리로 시작 (마지막 탭 복원 제거)
+    try { localStorage.removeItem('pro_calc_active_tab'); } catch(e) {}
 });
 </script>
 
