@@ -871,9 +871,9 @@ body.presentation-mode .radio-group {
     </div>
     <div class="sidebar-category-banner">&#x26A1; 금융 솔루션 카테고리</div>
     <ul class="sidebar-menu" id="sidebarMenu">
-        <li><a data-tab="tab-realestate" onclick="switchTab('tab-realestate',this)"><span class="menu-icon">&#x1F3E0;</span>부동산 통합</a></li>
+        <li><a data-tab="tab-realestate" onclick="switchTab('tab-realestate',this)" class="active"><span class="menu-icon">&#x1F3E0;</span>부동산 통합</a></li>
         <li><a data-tab="tab-inheritance" onclick="switchTab('tab-inheritance',this)"><span class="menu-icon">&#x1F381;</span>상속 및 증여세</a></li>
-        <li><a data-tab="tab-savings" onclick="switchTab('tab-savings',this)" class="active"><span class="menu-icon">&#x1F4B0;</span>예적금 계산기</a></li>
+        <li><a data-tab="tab-savings" onclick="switchTab('tab-savings',this)"><span class="menu-icon">&#x1F4B0;</span>예적금 계산기</a></li>
         <li><a data-tab="tab-retirement" onclick="switchTab('tab-retirement',this)"><span class="menu-icon">&#x1F3D6;&#xFE0F;</span>은퇴자금 설계</a></li>
         <li><a data-tab="tab-goalfund" onclick="switchTab('tab-goalfund',this)"><span class="menu-icon">&#x1F3AF;</span>목적자금 설계</a></li>
         <li><a data-tab="tab-dollar" onclick="switchTab('tab-dollar',this)"><span class="menu-icon">&#x1F4B5;</span>달러 설계</a></li>
@@ -909,7 +909,7 @@ body.presentation-mode .radio-group {
 <!-- ============================================================
      TAB: 예적금 계산기
      ============================================================ -->
-<div class="tab-content" id="tab-savings">
+<div class="tab-content hidden" id="tab-savings">
     <h1 class="page-title">&#x1F4B0; 예적금 계산기</h1>
     <p class="page-desc">예금과 적금의 이자를 <strong>실시간</strong>으로 계산하고 비교합니다.</p>
 
@@ -1249,7 +1249,7 @@ body.presentation-mode .radio-group {
 <!-- ============================================================
      PLACEHOLDER TABS
      ============================================================ -->
-<div class="tab-content hidden" id="tab-realestate">
+<div class="tab-content" id="tab-realestate">
     <h1 class="page-title">&#x1F3E0; 부동산 세금 통합 분석</h1>
     <p class="page-desc">취득, 보유, 양도 전 단계에 걸친 세금을 <strong>정밀하게 분석</strong>하고 절세 전략을 수립합니다.</p>
     <div class="sub-tabs">
