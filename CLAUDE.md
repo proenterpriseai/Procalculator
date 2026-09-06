@@ -41,6 +41,33 @@
 - **page-title**: 각 탭의 `<h1 class="page-title">` 제목
 - **page-desc**: 각 탭의 `<p class="page-desc">` 설명문 (부동산 포함 모든 탭에 존재해야 함)
 
+## 🧾 리포트 출력 (v=20260906, `FEATURE_CALC_REPORT=false` 미공개)
+
+### 개요
+- 카테고리별 상담 결과를 A4 리포트로 출력. **A안 = 브라우저 인쇄 뷰**(새 창 미리보기 → 인쇄/PDF 저장). 서버 PDF 없음.
+- 독립 블록 위치: `INITIAL CALCULATIONS` 직전 (`var FEATURE_CALC_REPORT`부터 `document.addEventListener('DOMContentLoaded', _crInit)`까지). 접두사 `_cr`.
+- **기존 calc 함수·DOMContentLoaded 초기화 수정 없음** (예외 1건: calcSilson 상세표 루프 `ratio`→`rowRatio` 개명 — ESLint no-redeclare 해소, 전략실장 승인 2026-09-06, 동작 동일). 리포트는 화면 DOM에 이미 계산된 결과를 읽어 재배치만 한다(새 계산 0). 기존 마크업 변경은 `data-calc-report="appendix"` 속성 6곳(실손 4·갱신형 2)뿐 — 동작 무영향.
+- Flag=false → 버튼·스타일·모달 어느 것도 렌더 안 됨. 옵트인 `localStorage._flag_calc_report='true'` 후 새로고침.
+
+### Phase 1 파일럿 3탭 (`_CR_SPECS`)
+| 탭 | 입력 요약 | 섹션(kind) | 부록 |
+|----|-----------|-----------|------|
+| tab-silson | 세대·주기·월보험료·나이·만기·인상률(출처 라벨/역산 표기)·비교모드 | cards → raw(나이별) → chart → raw(세대 비교, 모드 ON만) → raw(판정) → table(요약) | 정보 박스 4종 |
+| tab-renewal | 갱신/비갱신 보험료·나이·납입기간·만기·주기·상승률(상세 모드면 연령대별) | cards → raw(나이별) → chart×2 → raw(판정) → table(요약) | 참고 박스 2종 |
+| tab-retirement | 나이·생활비·납입기간·은퇴나이·기대수명·물가·수익률 (고객명은 `ret-name` 기본값) | cards → chart → raw(산출 과정) | 없음 |
+
+### 규칙 (영구)
+- **리포트 6블록 고정**: 표지 헤더(고객명·상담일·설계사·연락처) → 입력 조건 → 핵심 결과 → 차트 → 산출 과정·판정·상세표 → 면책·출처. 새 탭 추가 시 `_CR_SPECS`에 명세만 추가, 빌더 수정 금지.
+- **보이는 것만 출력**: raw 섹션은 innerHTML 빈 문자열이면 skip(꺼진 토글 영역 자동 제외). 비활성 서브탭 영역은 spec에 넣지 않는다.
+- **0원 가드**: `spec.guard()` 메시지 반환 시 alert 후 중단. 제거 금지.
+- **긴 표 요약**: `_crKeepRowIndex` — total ≤ 10행 전체 / 첫·마지막·5년 단위·강조 행(`font-weight:700` 또는 '납입 완료')만. "전체 상세표" 옵션 시 전 행. 유닛테스트 `tests/unit-tests.js` §4.
+- **차트**: `Chart.getChart(id)` → `stop()` → `resize()` → `update('none')` → `toBase64Image`. resize=숨김 탭에서 생성된 0×0 캔버스 대비, update('none')=애니메이션 중 빈 캔버스 방지. 순서 변경 금지. 빈 이미지(길이 ≤100)는 섹션 생략.
+- **cards 섹션**: innerHTML 복제라 `.result-cards` 래퍼가 소실되므로 빌더가 `<div class="result-cards">`로 다시 감쌈(트리플 A 지적). `.result-card`에 `break-inside:avoid`.
+- **역산 라벨**: `_crHistApplied(id, currentRate)` — 역산 결과 문구의 "연 평균 X%"와 현재 입력값이 일치할 때만 "고객 증권 기반 역산" 표기(역산 후 수동 변경 시 오표기 방지).
+- **인쇄 CSS**: 리포트 창은 메인 `<style>` 전체 복사 + `_crReportCss()` 오버라이드(`body{display:block}` 필수, 메인은 flex). 카드 그리드·step-box·표 행 `break-inside:avoid`, 부록은 `break-before:page`. 러닝 바닥글·페이지 번호는 A안 한계로 미지원(B안 서버 PDF 검토 항목).
+- 설계사명·연락처 = `localStorage.pro_calc_report_agent`(JSON). 사용량 로그 action `calc_report_print`.
+- 문서 제목 = `고객명_리포트명_상담일` → 크롬 "PDF로 저장" 기본 파일명.
+
 ## 갱신형/실손 보험료 탭 (v=20260422, 공개)
 
 ### 탭 현황

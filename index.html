@@ -2112,7 +2112,7 @@ body.presentation-mode .radio-group {
             </div>
 
             <!-- 2026년 실손보험료 인상 현황 -->
-            <div style="padding:12px 14px;background:#f0f9ff;border-radius:8px;border:1px solid #bae6fd;font-size:0.78rem;color:#475569;line-height:1.65;margin-bottom:12px;">
+            <div data-calc-report="appendix" style="padding:12px 14px;background:#f0f9ff;border-radius:8px;border:1px solid #bae6fd;font-size:0.78rem;color:#475569;line-height:1.65;margin-bottom:12px;">
                 &#x1F4CA; <strong>2026년 실손보험료 인상 현황</strong> <span style="color:#94a3b8;font-size:0.68rem;">(전체 평균 7.8%, 최근 5년 평균 9.0%)</span>
                 <table style="width:100%;margin:6px 0 4px;border-collapse:collapse;font-size:0.73rem;">
                     <tr style="background:#fee2e2;"><th style="padding:4px 6px;text-align:left;font-weight:600;"></th><th style="padding:4px 6px;text-align:center;">1세대</th><th style="padding:4px 6px;text-align:center;">2세대</th><th style="padding:4px 6px;text-align:center;">3세대</th><th style="padding:4px 6px;text-align:center;">4세대</th><th style="padding:4px 6px;text-align:center;">전체</th></tr>
@@ -2123,7 +2123,7 @@ body.presentation-mode .radio-group {
             </div>
 
             <!-- 보험연구원 연령대별 추정치 참고 박스 -->
-            <div style="padding:12px 14px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca;font-size:0.78rem;color:#475569;line-height:1.65;margin-bottom:12px;">
+            <div data-calc-report="appendix" style="padding:12px 14px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca;font-size:0.78rem;color:#475569;line-height:1.65;margin-bottom:12px;">
                 &#x1F4C8; <strong>보험연구원 연령대별 추정치</strong> <span style="color:#94a3b8;font-size:0.68rem;">(40세 → 70세, 30년간 약 17배)</span>
                 <table style="width:100%;margin:6px 0 4px;border-collapse:collapse;font-size:0.73rem;">
                     <tr style="background:#fee2e2;">
@@ -2155,7 +2155,7 @@ body.presentation-mode .radio-group {
             </div>
 
             <!-- 5세대 실손 개편 안내 박스 (2026.05 출시) -->
-            <div style="padding:12px 14px;background:#fefce8;border-radius:8px;border:1px solid #fde68a;font-size:0.78rem;color:#475569;line-height:1.65;margin-bottom:12px;">
+            <div data-calc-report="appendix" style="padding:12px 14px;background:#fefce8;border-radius:8px;border:1px solid #fde68a;font-size:0.78rem;color:#475569;line-height:1.65;margin-bottom:12px;">
                 &#x1F4E2; <strong>5세대 실손 개편</strong> <span style="color:#16a34a;font-size:0.7rem;font-weight:700;">(2026.05 출시)</span>
                 <div style="margin:6px 0 4px;color:#78350f;font-size:0.74rem;line-height:1.65;">
                     비급여를 <strong>중증(특약1) / 비중증(특약2)</strong>으로 분리. 도수치료·체외충격파·비급여 주사제·MRI 등 과잉 이용 항목 자기부담 강화 + 중증 질환자 자기부담 상한 신설.
@@ -2187,7 +2187,7 @@ body.presentation-mode .radio-group {
             </div>
 
             <!-- 종합 근거 STEP 박스 (세대별 기본 인상률 출처) -->
-            <div class="step-box">
+            <div class="step-box" data-calc-report="appendix">
                 <div class="step-num">근거</div>
                 <div class="step-title">세대별 기본 인상률 — 5년 누적 금감원 자료 (2017~2021)</div>
                 <div class="step-content">
@@ -2340,7 +2340,7 @@ body.presentation-mode .radio-group {
                     </div>
                 </details>
 
-                <div style="margin-top:10px;padding:12px 14px;background:#f0f9ff;border-radius:8px;border:1px solid #bae6fd;font-size:0.78rem;color:#475569;line-height:1.65;">
+                <div data-calc-report="appendix" style="margin-top:10px;padding:12px 14px;background:#f0f9ff;border-radius:8px;border:1px solid #bae6fd;font-size:0.78rem;color:#475569;line-height:1.65;">
                     &#x1F4CA; <strong>갱신형 보험료 인상폭 참고</strong>
                     <table style="width:100%;margin:6px 0 4px;border-collapse:collapse;font-size:0.75rem;">
                         <tr style="background:#e0f2fe;"><th style="padding:4px 6px;text-align:left;font-weight:600;">구분</th><th style="padding:4px 6px;text-align:center;">인상폭</th><th style="padding:4px 6px;text-align:left;">비고</th></tr>
@@ -2353,7 +2353,7 @@ body.presentation-mode .radio-group {
             </div>
 
             <!-- 갱신폭 근거 상세 STEP 박스 -->
-            <div class="step-box">
+            <div class="step-box" data-calc-report="appendix">
                 <div class="step-num">참고</div>
                 <div class="step-title">갱신형 보험료 인상의 구조와 요인</div>
                 <div class="step-content">
@@ -5584,7 +5584,7 @@ function calcSilson() {
     tbl += '<thead><tr style="background:#f1f5f9;"><th style="padding:8px 6px;text-align:center;">년차</th><th style="padding:8px 6px;text-align:center;">나이</th><th style="padding:8px 6px;">월 보험료</th><th style="padding:8px 6px;">연간 납입</th><th style="padding:8px 6px;">누적 납입</th><th style="padding:8px 6px;text-align:center;">배율</th></tr></thead><tbody>';
     for (var i = 0; i < years.length; i++) {
         var r = years[i];
-        var ratio = mPremium > 0 ? (r.monthly / mPremium).toFixed(1) : '-';
+        var rowRatio = mPremium > 0 ? (r.monthly / mPremium).toFixed(1) : '-'; // v=20260906 ESLint no-redeclare 해소(전략실장 승인) — 값·동작 동일
         var renewMark = r.isRenewal ? ' <span style="color:#ef4444;font-size:0.7rem;">&#x2191;갱신</span>' : '';
         var isFiveX = (base.fiveXYear > 0 && r.year === base.fiveXYear);
         var rowStyle = isFiveX ? 'background:#fef3c7;font-weight:700;' : (i % 2 === 0 ? '' : 'background:#f8fafc;');
@@ -5595,7 +5595,7 @@ function calcSilson() {
         tbl += '<td style="padding:6px;">' + f_w(r.monthly) + renewMark + '</td>';
         tbl += '<td style="padding:6px;">' + f_w(r.yearAmount) + '</td>';
         tbl += '<td style="padding:6px;">' + f_w(r.cumTotal) + '</td>';
-        tbl += '<td style="padding:6px;text-align:center;color:' + (parseFloat(ratio) >= 5 ? '#ef4444' : '#64748b') + ';">' + ratio + '배</td>';
+        tbl += '<td style="padding:6px;text-align:center;color:' + (parseFloat(rowRatio) >= 5 ? '#ef4444' : '#64748b') + ';">' + rowRatio + '배</td>';
         tbl += '</tr>';
     }
     tbl += '</tbody></table>';
@@ -5837,6 +5837,489 @@ function calcRenewal() {
     tbl += '</tbody></table>';
     document.getElementById('rn-detail-table').innerHTML = tbl;
 }
+
+/* ============================================================
+   리포트 출력 (v=20260906, FEATURE_CALC_REPORT=false 기본)
+   목적: 카테고리별 상담 결과를 A4 리포트로 출력(브라우저 인쇄 뷰 → 인쇄/PDF 저장).
+   4대 원칙:
+     #1 기존 기능 불변 — 이 블록은 완전 독립. 기존 calc 함수·DOMContentLoaded 초기화 수정 없음
+        (예외 1건: calcSilson 상세표 루프 `ratio`→`rowRatio` 개명, ESLint no-redeclare 해소, 전략실장 승인 2026-09-06, 동작 동일).
+        화면 DOM에 이미 계산된 결과를 읽어 재배치만 한다(새 계산 0 → 화면·리포트 수치 불일치 불가).
+     #2 Feature Flag — false면 버튼·스타일·모달 어느 것도 렌더되지 않음(700명 영향 0).
+        옵트인: localStorage._flag_calc_report='true' 후 새로고침 / 해제: 'false' 또는 removeItem.
+     #3 외부 스크립트 추가 없음 — 차트는 기존 Chart.js 인스턴스(Chart.getChart) → toBase64Image.
+     #4 Lazy init — 자체 DOMContentLoaded 리스너에서 flag 확인 후에만 버튼/스타일 삽입.
+   Phase 1 파일럿 3탭: 실손(tab-silson) · 갱신형(tab-renewal) · 은퇴자금(tab-retirement).
+   리포트 6블록: 표지 헤더 → 입력 조건 요약 → 핵심 결과 → 차트 → 산출 과정·판정·상세표 → 면책·출처.
+   공통 제외: 입력 UI, 교육용 참고 박스(data-calc-report="appendix" → '근거 자료 첨부' 옵션일 때만 부록).
+   ============================================================ */
+var FEATURE_CALC_REPORT = false;
+var _CR_AGENT_KEY = 'pro_calc_report_agent'; // 설계사명·연락처 기억(localStorage, JSON)
+var _CR_TABLE_STEP = 5; // 연도별 상세표 요약 간격(년)
+
+function _isCalcReportOn() {
+    try {
+        var ss = localStorage.getItem('_flag_calc_report');
+        if (ss === 'true') return true;
+        if (ss === 'false') return false;
+    } catch (e) {}
+    return FEATURE_CALC_REPORT;
+}
+
+/* 순수 함수 — 긴 표 요약 시 유지할 행 판정 (tests/unit-tests.js 대상)
+   idx: 0-based 행 인덱스 / total: 전체 행 수 / step: 요약 간격 / isKey: 강조 행(5배 도달·분기점·납입완료) */
+function _crKeepRowIndex(idx, total, step, isKey) {
+    if (total <= step * 2) return true; // 짧은 표는 전 행 유지
+    if (isKey) return true;
+    if (idx === 0 || idx === total - 1) return true;
+    return (idx + 1) % step === 0;
+}
+
+function _crEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+}
+function _crText(id) {
+    var el = document.getElementById(id);
+    if (!el) return '';
+    if (el.tagName === 'SELECT') { var o = el.options[el.selectedIndex]; return o ? o.text : el.value; }
+    if (el.type === 'checkbox') return el.checked ? '해당' : '미해당';
+    return (el.value != null ? el.value : el.textContent) || '';
+}
+function _crWon(id) {
+    var el = document.getElementById(id);
+    return el ? f_w(parseNumberInput(el)) + '원' : '';
+}
+function _crTodayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function _crHistApplied(id, currentRate) {
+    // 역산 결과 문구("연 평균 X%")의 X가 현재 입력 인상률과 일치할 때만 true — 역산 후 수동 변경 시 오표기 방지(트리플 A 🟡3)
+    var el = document.getElementById(id);
+    if (!el || (el.textContent || '').indexOf('역산 완료') < 0) return false;
+    var m = /연 평균 ([0-9.]+)%/.exec(el.textContent);
+    if (!m) return false;
+    return Math.abs(parseFloat(m[1]) - (parseFloat(currentRate) || 0)) < 0.05;
+}
+
+/* 탭별 리포트 명세 — kind: cards(결과 카드) / raw(화면 HTML 그대로) / chart(canvas→이미지) / table(요약 규칙 적용) */
+var _CR_SPECS = {
+    'tab-silson': {
+        title: '실손보험 갱신 보험료 시뮬레이션',
+        nameField: null,
+        guard: function () {
+            return parseNumberInput(document.getElementById('sl-monthly')) > 0 ? '' : '현재 월 보험료를 입력하면 리포트를 만들 수 있습니다.';
+        },
+        inputs: function () {
+            var gen = document.getElementById('sl-generation').value;
+            var def = SILSON_DEFAULTS[gen];
+            var rate = parseFloat(document.getElementById('sl-rate').value) || 0;
+            var cycle = parseInt(document.getElementById('sl-cycle').value) || 1;
+            var src = _crHistApplied('sl-hist-result', rate) ? '고객 증권 기반 역산'
+                : (def && Number(def.rate) === rate && Number(def.cycle) === cycle ? def.source : '사용자 입력값');
+            var rows = [
+                ['실손보험 세대', _crText('sl-generation')],
+                ['갱신 주기', _crText('sl-cycle')],
+                ['현재 월 보험료', _crWon('sl-monthly')],
+                ['현재 나이', _crText('sl-age') + '세'],
+                ['보장 만기', _crText('sl-cover-until')],
+                ['평균 연간 인상률', rate + '% (' + src + ')']
+            ];
+            if (document.getElementById('sl-compare-mode').checked) rows.push(['세대 간 비교', '1~4세대 동시 비교']);
+            return rows;
+        },
+        sections: [
+            { kind: 'cards', id: 'sl-result-cards', title: '핵심 결과' },
+            { kind: 'raw', id: 'sl-age-preview', title: '나이별 예상 월 보험료' },
+            { kind: 'chart', id: 'sl-monthly-chart', title: '월 보험료 추이' },
+            { kind: 'raw', id: 'sl-compare-summary', title: '세대별 비교 요약' },
+            { kind: 'raw', id: 'sl-verdict', title: '분석 결과' },
+            { kind: 'table', id: 'sl-detail-table', title: '연도별 상세 분석표' }
+        ],
+        sources: '세대별 기본 인상률: 금융감독원 국회 제출 자료(2017~2021 5년 누적) · 2026년 인상 현황: 보험업계 공시, 보험연구원 2025.12 · 5세대 개편: 금융위원회·보건복지부 발표 2026.5'
+    },
+    'tab-renewal': {
+        title: '갱신형 vs 비갱신형 보험료 비교',
+        nameField: null,
+        guard: function () {
+            var a = parseNumberInput(document.getElementById('rn-monthly-renew'));
+            var b = parseNumberInput(document.getElementById('rn-monthly-fixed'));
+            return (a > 0 && b > 0) ? '' : '갱신형·비갱신형 월 보험료를 모두 입력하면 리포트를 만들 수 있습니다.';
+        },
+        inputs: function () {
+            var rows = [
+                ['갱신형 월 보험료', _crWon('rn-monthly-renew')],
+                ['비갱신형 월 보험료', _crWon('rn-monthly-fixed')],
+                ['현재 나이', _crText('rn-age') + '세'],
+                ['비갱신형 납입기간', _crText('rn-pay-period')],
+                ['보장 만기', _crText('rn-cover-until')],
+                ['갱신 주기', _crText('rn-cycle')]
+            ];
+            var detail = document.getElementById('rn-detail-mode');
+            if (detail && detail.checked) {
+                rows.push(['갱신 상승률 (연령대별)',
+                    '20대 ' + _crText('rn-rate-20') + '% · 30대 ' + _crText('rn-rate-30') + '% · 40대 ' + _crText('rn-rate-40') +
+                    '% · 50대 ' + _crText('rn-rate-50') + '% · 60대 ' + _crText('rn-rate-60') + '% · 70대~ ' + _crText('rn-rate-70') + '%']);
+            } else {
+                rows.push(['평균 갱신 상승률', _crText('rn-rate') + '%' + (_crHistApplied('rn-hist-result', _crText('rn-rate')) ? ' (고객 증권 기반 역산)' : '')]);
+            }
+            return rows;
+        },
+        sections: [
+            { kind: 'cards', id: 'rn-result-cards', title: '핵심 결과' },
+            { kind: 'raw', id: 'rn-age-preview', title: '나이별 예상 갱신형 월 보험료' },
+            { kind: 'chart', id: 'rn-monthly-chart', title: '월 보험료 추이' },
+            { kind: 'chart', id: 'rn-cumulative-chart', title: '누적 납입액 비교' },
+            { kind: 'raw', id: 'rn-verdict', title: '분석 결과' },
+            { kind: 'table', id: 'rn-detail-table', title: '연도별 상세 분석표' }
+        ],
+        sources: '갱신형 인상폭 참고: 금융감독원 보험상품 비교공시 · 연령대별 기본 갱신률은 참고 추정치이며 보험사·상품·손해율에 따라 달라질 수 있습니다'
+    },
+    'tab-retirement': {
+        title: '은퇴자금 설계',
+        nameField: 'ret-name',
+        guard: function () {
+            return parseNumberInput(document.getElementById('ret-goal')) > 0 ? '' : '희망 월 생활비를 입력하면 리포트를 만들 수 있습니다.';
+        },
+        inputs: function () {
+            return [
+                ['현재 나이', _crText('ret-age') + '세'],
+                ['희망 월 생활비 (현재 가치)', _crWon('ret-goal')],
+                ['납입 기간', _crText('ret-pay-label') + '년'],
+                ['은퇴 목표 나이', _crText('ret-retire-label') + '세'],
+                ['기대 수명', _crText('ret-life-label') + '세'],
+                ['물가상승률', _crText('ret-inf-label') + '%'],
+                ['투자수익률', _crText('ret-yield-label') + '%']
+            ];
+        },
+        sections: [
+            { kind: 'cards', id: 'ret-result-cards', title: '핵심 결과' },
+            { kind: 'chart', id: 'ret-lifecycle-chart', title: '자산 라이프사이클' },
+            { kind: 'raw', id: 'ret-steps-body', title: '산출 과정' }
+        ],
+        sources: '계산 가정: 입력한 물가상승률·투자수익률을 적용한 월복리 방식. 실제 수익률과 물가는 변동될 수 있으며 세금·수수료는 반영되지 않았습니다'
+    }
+};
+
+function _crChartImage(canvasId) {
+    try {
+        var c = (typeof Chart !== 'undefined' && Chart.getChart) ? Chart.getChart(canvasId) : null;
+        if (!c) return '';
+        c.stop();
+        c.resize();       // 숨김 탭에서 생성된 차트(캔버스 0×0) 대비 — 현재 컨테이너 크기로 동기 재계산
+        c.update('none'); // 애니메이션 없이 즉시 렌더 → 빈 캔버스 방지
+        var data = c.toBase64Image('image/png', 1);
+        return (data && data.length > 100) ? data : ''; // 'data:,' 같은 빈 이미지는 섹션 자체 생략
+    } catch (e) { return ''; }
+}
+
+function _crSanitize(clone) {
+    clone.querySelectorAll('canvas, button, input, select, script, summary').forEach(function (n) { n.parentNode.removeChild(n); });
+    clone.querySelectorAll('details').forEach(function (d) { d.setAttribute('open', ''); });
+    return clone;
+}
+
+function _crCloneHtml(id) {
+    var el = document.getElementById(id);
+    if (!el || !el.innerHTML.trim()) return '';
+    return _crSanitize(el.cloneNode(true)).innerHTML;
+}
+
+function _crTableHtml(id, fullTable) {
+    var el = document.getElementById(id);
+    if (!el || !el.querySelector('table')) return '';
+    var clone = _crSanitize(el.cloneNode(true));
+    var table = clone.querySelector('table');
+    var rows = Array.prototype.slice.call(table.querySelectorAll('tbody tr'));
+    var total = rows.length;
+    var summarized = false;
+    if (!fullTable && total > _CR_TABLE_STEP * 2) {
+        rows.forEach(function (tr, i) {
+            var style = tr.getAttribute('style') || '';
+            var isKey = /font-weight:\s*700/.test(style) || tr.textContent.indexOf('납입 완료') >= 0;
+            if (!_crKeepRowIndex(i, total, _CR_TABLE_STEP, isKey)) tr.parentNode.removeChild(tr);
+        });
+        summarized = true;
+    }
+    var note = summarized
+        ? '<p class="cr-note">요약 표시: 첫 해 · ' + _CR_TABLE_STEP + '년 단위 · 마지막 해와 주요 시점(★, ✅) 행만 표시했습니다. 전체 ' + total + '개 연도는 "전체 상세표" 옵션으로 출력할 수 있습니다.</p>'
+        : '';
+    return note + clone.innerHTML;
+}
+
+function _crAppendixHtml(tabId) {
+    var nodes = document.querySelectorAll('#' + tabId + ' [data-calc-report="appendix"]');
+    var html = '';
+    nodes.forEach(function (n) {
+        var clone = _crSanitize(n.cloneNode(true));
+        clone.style.marginTop = '0';
+        clone.style.marginBottom = '12px';
+        html += clone.outerHTML;
+    });
+    return html;
+}
+
+function _crReportCss() {
+    return [
+        'html{font-size:13px}',
+        'body{display:block;background:#fff;color:#1e293b;min-height:0}',
+        '.cr-toolbar{position:sticky;top:0;z-index:10;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:10px 16px;background:#1e3a8a;color:#fff;font-size:0.9rem}',
+        '@media (max-width:600px){.cr-toolbar .cr-tb-sub{display:none}}',
+        '.cr-toolbar .cr-tb-title{font-weight:700}',
+        '.cr-toolbar .cr-tb-sub{font-size:0.78rem;opacity:.8;margin-left:8px}',
+        '.cr-toolbar button{padding:8px 14px;border:0;border-radius:6px;font-weight:700;cursor:pointer;font-family:inherit;font-size:0.85rem}',
+        '.cr-toolbar .cr-print{background:#f59e0b;color:#1e293b}',
+        '.cr-toolbar .cr-close{background:rgba(255,255,255,.15);color:#fff;margin-left:6px}',
+        'body.cr-in-frame .cr-toolbar{display:none}',
+        '.cr-page{max-width:760px;margin:0 auto;padding:24px 20px 40px}',
+        '.cr-brand{font-size:0.75rem;letter-spacing:.08em;color:#64748b;font-weight:600}',
+        '.cr-page h1{font-size:1.6rem;font-weight:800;color:#1e3a8a;margin:6px 0 12px;line-height:1.3}',
+        '.cr-meta{width:100%;border-collapse:collapse;font-size:0.85rem;margin-bottom:6px;border-top:2px solid #1e3a8a;border-bottom:1px solid #cbd5e1}',
+        '.cr-meta th{text-align:left;color:#64748b;font-weight:600;padding:7px 10px;width:14%;white-space:nowrap;background:#f8fafc}',
+        '.cr-meta td{padding:7px 10px;font-weight:700;color:#1e293b;width:36%}',
+        '.cr-section{margin-top:22px}',
+        '.cr-section h2{font-size:1.02rem;font-weight:800;color:#1e3a8a;padding-bottom:6px;border-bottom:1.5px solid #e2e8f0;margin-bottom:12px}',
+        '.cr-inputs{width:100%;border-collapse:collapse;font-size:0.85rem}',
+        '.cr-inputs th{text-align:left;color:#475569;font-weight:600;padding:6px 10px;background:#f8fafc;border-bottom:1px solid #e2e8f0;width:40%}',
+        '.cr-inputs td{padding:6px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;text-align:right}',
+        '.cr-chart{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px}',
+        '.cr-chart img{display:block;width:100%;height:auto}',
+        '.cr-note{font-size:0.75rem;color:#64748b;margin:0 0 8px}',
+        '.cr-appendix{break-before:page;page-break-before:always}',
+        '.cr-foot{margin-top:28px;padding-top:12px;border-top:2px solid #1e3a8a;font-size:0.74rem;color:#64748b;line-height:1.6}',
+        '.cr-foot .cr-brandline{display:flex;justify-content:space-between;font-weight:600;color:#1e3a8a;margin-bottom:6px}',
+        '.result-cards{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:0}',
+        '.result-card,.step-box,.verdict-card,.chart-container{box-shadow:none}',
+        '.result-card{break-inside:avoid;page-break-inside:avoid}',
+        '.step-box,.verdict-card{border:1px solid #e2e8f0}',
+        '.verdict-card{padding:18px}',
+        '.verdict-card .verdict-body > div{break-inside:avoid;page-break-inside:avoid}',
+        'table{break-inside:auto} tr{break-inside:avoid;page-break-inside:avoid} thead{display:table-header-group}',
+        '@page{size:A4 portrait;margin:16mm 14mm 18mm 14mm}',
+        '@media print{',
+        '  .cr-toolbar{display:none !important}',
+        '  .cr-page{max-width:none;padding:0}',
+        '  body{-webkit-print-color-adjust:exact;print-color-adjust:exact}',
+        '  .cr-chart,.step-box,.result-cards,.cr-meta,.cr-inputs tr{break-inside:avoid;page-break-inside:avoid}',
+        '  .cr-section h2{break-after:avoid;page-break-after:avoid}',
+        '}'
+    ].join('\n');
+}
+
+function _crBuildReportHtml(tabId, spec, meta) {
+    var baseStyle = document.querySelector('head style');
+    var fontLink = document.querySelector('link[href*="pretendard"]');
+    var disclaimerEl = document.querySelector('.sidebar-disclaimer');
+    var disclaimer = disclaimerEl ? disclaimerEl.textContent.trim() : '';
+    var customer = (meta.name || '').trim();
+    var docTitle = (customer ? customer + '_' : '') + spec.title + '_' + meta.date;
+
+    var n = 1;
+    var body = '';
+    body += '<section class="cr-section"><h2>' + (n++) + '. 입력 조건</h2><table class="cr-inputs"><tbody>';
+    spec.inputs().forEach(function (r) {
+        body += '<tr><th>' + _crEsc(r[0]) + '</th><td>' + _crEsc(r[1]) + '</td></tr>';
+    });
+    body += '</tbody></table></section>';
+
+    spec.sections.forEach(function (s) {
+        var inner = '';
+        if (s.kind === 'cards') {
+            var cardsInner = _crCloneHtml(s.id);
+            inner = cardsInner ? '<div class="result-cards">' + cardsInner + '</div>' : ''; // 그리드 래퍼 복원(innerHTML 복제 시 소실 — 트리플 A 🟡1)
+        } else if (s.kind === 'raw') inner = _crCloneHtml(s.id);
+        else if (s.kind === 'chart') {
+            var img = _crChartImage(s.id);
+            inner = img ? '<div class="cr-chart"><img src="' + img + '" alt="' + _crEsc(s.title) + '"></div>' : '';
+        } else if (s.kind === 'table') inner = _crTableHtml(s.id, !!meta.fullTable);
+        if (!inner) return; // 화면에 없는(꺼진) 영역은 리포트에도 없음
+        body += '<section class="cr-section"><h2>' + (n++) + '. ' + _crEsc(s.title) + '</h2>' + inner + '</section>';
+    });
+
+    if (meta.appendix) {
+        var apx = _crAppendixHtml(tabId);
+        if (apx) body += '<section class="cr-section cr-appendix"><h2>부록. 근거 자료</h2>' + apx + '</section>';
+    }
+
+    return '<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+        '<title>' + _crEsc(docTitle.replace(/[\\/:*?"<>|]/g, '')) + '</title>' +
+        (fontLink ? '<link href="' + _crEsc(fontLink.getAttribute('href')) + '" rel="stylesheet">' : '') +
+        '<style>' + (baseStyle ? baseStyle.textContent : '') + '</style>' +
+        '<style>' + _crReportCss() + '</style></head><body>' +
+        '<div class="cr-toolbar"><div><span class="cr-tb-title">리포트 미리보기</span><span class="cr-tb-sub">인쇄 대화상자에서 "PDF로 저장"을 선택하면 파일로 저장됩니다</span></div>' +
+        '<div><button type="button" class="cr-print" onclick="window.print()">&#x1F5A8;&#xFE0F; 인쇄 / PDF 저장</button><button type="button" class="cr-close" onclick="window.close()">닫기</button></div></div>' +
+        '<div class="cr-page">' +
+        '<header><div class="cr-brand">PRO Calculator · 금융 솔루션 상담 리포트</div><h1>' + _crEsc(spec.title) + '</h1>' +
+        '<table class="cr-meta"><tbody>' +
+        '<tr><th>고객명</th><td>' + (customer ? _crEsc(customer) : '－') + '</td><th>상담일</th><td>' + _crEsc(meta.date) + '</td></tr>' +
+        '<tr><th>담당 설계사</th><td>' + (meta.agent ? _crEsc(meta.agent) : '－') + '</td><th>연락처</th><td>' + (meta.phone ? _crEsc(meta.phone) : '－') + '</td></tr>' +
+        '</tbody></table></header>' +
+        body +
+        '<footer class="cr-foot"><div class="cr-brandline"><span>PRO Calculator · 금융 솔루션 상담 리포트</span><span>출력일 ' + _crEsc(_crTodayStr()) + '</span></div>' +
+        '<div>출처·가정: ' + _crEsc(spec.sources) + '</div>' +
+        (disclaimer ? '<div>' + _crEsc(disclaimer) + '</div>' : '') +
+        '</footer></div></body></html>';
+}
+
+function _crGenerate(tabId, meta) {
+    var spec = _CR_SPECS[tabId];
+    if (!spec) return;
+    var html = _crBuildReportHtml(tabId, spec, meta);
+    var w = null;
+    try { w = window.open('', '_blank'); } catch (e) { w = null; }
+    if (w) {
+        w.document.open();
+        w.document.write(html);
+        w.document.close();
+    } else {
+        _crShowInline(html); // 팝업 차단 환경(일부 모바일·인앱 브라우저) → 같은 탭 전체화면 뷰어 폴백
+    }
+    try { _logCalcUsageImmediate('calc_report_print', tabId); } catch (e) {}
+}
+
+function _crCloseInline() {
+    var el = document.getElementById('cr-inline');
+    if (el) el.parentNode.removeChild(el);
+}
+function _crShowInline(html) {
+    _crCloseInline();
+    var wrap = document.createElement('div');
+    wrap.id = 'cr-inline';
+    wrap.className = 'cr-inline';
+    var bar = document.createElement('div');
+    bar.className = 'cr-inline-bar';
+    bar.innerHTML = '<span>리포트 미리보기 <small>(새 창이 차단되어 현재 탭에 표시)</small></span>' +
+        '<span><button type="button" class="cr-inline-print">&#x1F5A8;&#xFE0F; 인쇄 / PDF 저장</button><button type="button" class="cr-inline-close">닫기</button></span>';
+    var frame = document.createElement('iframe');
+    frame.className = 'cr-inline-frame';
+    frame.setAttribute('title', '리포트 미리보기');
+    frame.srcdoc = html.replace('<body>', '<body class="cr-in-frame">'); // 내부 툴바 숨김(바깥 바가 대신)
+    wrap.appendChild(bar);
+    wrap.appendChild(frame);
+    document.body.appendChild(wrap);
+    bar.querySelector('.cr-inline-print').addEventListener('click', function () {
+        try { frame.contentWindow.focus(); frame.contentWindow.print(); } catch (e) {}
+    });
+    bar.querySelector('.cr-inline-close').addEventListener('click', _crCloseInline);
+}
+
+function _crLoadAgent() {
+    try { return JSON.parse(localStorage.getItem(_CR_AGENT_KEY) || '{}') || {}; } catch (e) { return {}; }
+}
+function _crSaveAgent(agent, phone) {
+    try { localStorage.setItem(_CR_AGENT_KEY, JSON.stringify({ agent: agent, phone: phone })); } catch (e) {}
+}
+
+function _crCloseModal() {
+    var ov = document.getElementById('cr-overlay');
+    if (ov) ov.parentNode.removeChild(ov);
+}
+
+function _crOpenModal(tabId) {
+    var spec = _CR_SPECS[tabId];
+    if (!spec) return;
+    var guardMsg = spec.guard ? spec.guard() : '';
+    if (guardMsg) { alert(guardMsg); return; }
+    _crCloseModal();
+
+    var saved = _crLoadAgent();
+    var defName = spec.nameField ? (_crText(spec.nameField) || '') : '';
+    var hasAppendix = document.querySelectorAll('#' + tabId + ' [data-calc-report="appendix"]').length > 0;
+    var hasTable = spec.sections.some(function (s) { return s.kind === 'table'; });
+
+    var ov = document.createElement('div');
+    ov.id = 'cr-overlay';
+    ov.className = 'cr-overlay';
+    ov.innerHTML =
+        '<div class="cr-modal" role="dialog" aria-modal="true" aria-labelledby="cr-modal-title">' +
+        '<h3 id="cr-modal-title">&#x1F9FE; 리포트 출력</h3>' +
+        '<p class="cr-sub">' + _crEsc(spec.title) + ' — 현재 화면의 계산 결과를 A4 리포트로 만듭니다.</p>' +
+        '<label for="cr-f-name">고객명</label><input type="text" id="cr-f-name" placeholder="예: 홍길동" value="' + _crEsc(defName) + '">' +
+        '<label for="cr-f-date">상담일</label><input type="date" id="cr-f-date" value="' + _crTodayStr() + '">' +
+        '<div class="cr-two"><div><label for="cr-f-agent">담당 설계사</label><input type="text" id="cr-f-agent" placeholder="설계사명" value="' + _crEsc(saved.agent || '') + '"></div>' +
+        '<div><label for="cr-f-phone">연락처</label><input type="tel" id="cr-f-phone" placeholder="010-0000-0000" value="' + _crEsc(saved.phone || '') + '"></div></div>' +
+        (hasAppendix ? '<label class="cr-check"><input type="checkbox" id="cr-f-appendix"> 근거 자료 첨부 (참고 통계·제도 안내를 부록으로)</label>' : '') +
+        (hasTable ? '<label class="cr-check"><input type="checkbox" id="cr-f-full"> 전체 상세표 출력 (기본은 ' + _CR_TABLE_STEP + '년 단위 요약)</label>' : '') +
+        '<div class="cr-actions"><button type="button" class="cr-cancel" id="cr-btn-cancel">취소</button><button type="button" class="cr-go" id="cr-btn-go">리포트 만들기</button></div>' +
+        '</div>';
+    document.body.appendChild(ov);
+
+    ov.addEventListener('click', function (e) { if (e.target === ov) _crCloseModal(); });
+    ov.addEventListener('keydown', function (e) { if (e.key === 'Escape') _crCloseModal(); });
+    document.getElementById('cr-btn-cancel').addEventListener('click', _crCloseModal);
+    document.getElementById('cr-btn-go').addEventListener('click', function () {
+        var meta = {
+            name: document.getElementById('cr-f-name').value,
+            date: document.getElementById('cr-f-date').value || _crTodayStr(),
+            agent: document.getElementById('cr-f-agent').value.trim(),
+            phone: document.getElementById('cr-f-phone').value.trim(),
+            appendix: !!(document.getElementById('cr-f-appendix') && document.getElementById('cr-f-appendix').checked),
+            fullTable: !!(document.getElementById('cr-f-full') && document.getElementById('cr-f-full').checked)
+        };
+        _crSaveAgent(meta.agent, meta.phone);
+        _crCloseModal();
+        _crGenerate(tabId, meta);
+    });
+    var first = document.getElementById('cr-f-name');
+    if (first) first.focus();
+}
+
+function _crScreenCss() {
+    return [
+        '.cr-btn-row{display:flex;justify-content:flex-end;margin:10px 0 2px}',
+        '.cr-btn{padding:9px 16px;border-radius:8px;border:1.5px solid #1e3a8a;background:#fff;color:#1e3a8a;font-weight:700;font-size:.85rem;cursor:pointer;font-family:inherit}',
+        '.cr-btn:hover{background:#eff6ff}',
+        '.cr-btn:focus-visible{outline:2px solid #f59e0b;outline-offset:2px}',
+        '.cr-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}',
+        '.cr-modal{background:#fff;border-radius:14px;width:100%;max-width:440px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:92vh;overflow-y:auto}',
+        '.cr-modal h3{font-size:1.05rem;font-weight:800;color:#1e3a8a;margin-bottom:4px}',
+        '.cr-modal .cr-sub{font-size:.8rem;color:#64748b;margin-bottom:10px;line-height:1.5}',
+        '.cr-modal label{display:block;font-size:.8rem;font-weight:600;color:#334155;margin:10px 0 4px}',
+        '.cr-modal input[type="text"],.cr-modal input[type="date"],.cr-modal input[type="tel"]{width:100%;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:.92rem;font-family:inherit;color:#1e293b;background:#fff}',
+        '.cr-modal .cr-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}',
+        '.cr-modal .cr-check{display:flex;align-items:center;gap:8px;font-size:.82rem;color:#334155;margin-top:12px;font-weight:500;cursor:pointer}',
+        '.cr-modal .cr-check input{width:16px;height:16px;accent-color:#1e3a8a}',
+        '.cr-modal .cr-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}',
+        '.cr-modal .cr-actions button{padding:9px 16px;border-radius:8px;border:0;font-weight:700;cursor:pointer;font-family:inherit;font-size:.88rem}',
+        '.cr-modal .cr-go{background:#1e3a8a;color:#fff}',
+        '.cr-modal .cr-cancel{background:#f1f5f9;color:#334155}',
+        '.cr-inline{position:fixed;inset:0;z-index:1100;background:#fff;display:flex;flex-direction:column}',
+        '.cr-inline-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 16px;background:#1e3a8a;color:#fff;font-size:.88rem;font-weight:700;flex-wrap:wrap}',
+        '.cr-inline-bar small{font-weight:500;opacity:.8}',
+        '.cr-inline-bar button{padding:8px 14px;border:0;border-radius:6px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem;margin-left:6px}',
+        '.cr-inline-bar .cr-inline-print{background:#f59e0b;color:#1e293b}',
+        '.cr-inline-bar .cr-inline-close{background:rgba(255,255,255,.15);color:#fff}',
+        '.cr-inline-frame{flex:1;border:0;width:100%;background:#fff}',
+        '@media (max-width:768px){.cr-btn{width:100%} .cr-modal .cr-two{grid-template-columns:1fr}}',
+        '@media print{.cr-btn-row,.cr-overlay{display:none !important}}'
+    ].join('\n');
+}
+
+function _crInit() {
+    if (!_isCalcReportOn()) return; // Flag=false → 아무것도 하지 않음 (기존 화면 바이트 동일)
+    if (document.getElementById('cr-style')) return;
+    var st = document.createElement('style');
+    st.id = 'cr-style';
+    st.textContent = _crScreenCss();
+    document.head.appendChild(st);
+    Object.keys(_CR_SPECS).forEach(function (tabId) {
+        var tab = document.getElementById(tabId);
+        var h1 = tab ? tab.querySelector('h1.page-title') : null;
+        if (!h1) return;
+        var row = document.createElement('div');
+        row.className = 'cr-btn-row';
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cr-btn';
+        btn.innerHTML = '&#x1F9FE; 리포트 출력';
+        btn.addEventListener('click', function () { _crOpenModal(tabId); });
+        row.appendChild(btn);
+        h1.insertAdjacentElement('afterend', row);
+    });
+}
+document.addEventListener('DOMContentLoaded', _crInit);
 
 /* ============================================================
    INITIAL CALCULATIONS

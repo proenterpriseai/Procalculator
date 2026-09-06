@@ -189,3 +189,46 @@ describe('calcBankEquivYield', () => {
     assert.ok(result > 0.1, '퍼센트 단위이므로 0.1% 이상');
   });
 });
+
+// ============================================================
+// 4. _crKeepRowIndex(idx, total, step, isKey) — 리포트 연도별 상세표 요약 행 판정
+//    (v=20260906 FEATURE_CALC_REPORT 독립 블록의 유일한 순수 함수)
+// ============================================================
+describe('_crKeepRowIndex', () => {
+  let keep;
+
+  it('함수 로딩', () => {
+    const sandbox = createSandbox();
+    keep = extractFunction(HTML_PATH, '_crKeepRowIndex', sandbox);
+    assert.ok(typeof keep === 'function');
+  });
+
+  it('짧은 표(total ≤ step×2)는 전 행 유지', () => {
+    for (let i = 0; i < 10; i++) assert.equal(keep(i, 10, 5, false), true);
+  });
+
+  it('긴 표: 첫 행·마지막 행은 항상 유지', () => {
+    assert.equal(keep(0, 65, 5, false), true);
+    assert.equal(keep(64, 65, 5, false), true);
+  });
+
+  it('긴 표: 5년 단위(5·10·15년차 = idx 4·9·14)만 유지, 나머지 제거', () => {
+    assert.equal(keep(4, 65, 5, false), true);
+    assert.equal(keep(9, 65, 5, false), true);
+    assert.equal(keep(14, 65, 5, false), true);
+    assert.equal(keep(1, 65, 5, false), false);
+    assert.equal(keep(5, 65, 5, false), false);
+    assert.equal(keep(63, 65, 5, false), false);
+  });
+
+  it('강조 행(5배 도달·분기점·납입완료)은 위치와 무관하게 유지', () => {
+    assert.equal(keep(1, 65, 5, true), true);
+    assert.equal(keep(63, 65, 5, true), true);
+  });
+
+  it('65행 표를 step 5로 요약하면 강조 행 없이 14행 남음 (첫·5년 단위 12·마지막)', () => {
+    let kept = 0;
+    for (let i = 0; i < 65; i++) if (keep(i, 65, 5, false)) kept++;
+    assert.equal(kept, 14);
+  });
+});
