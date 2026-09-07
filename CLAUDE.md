@@ -75,7 +75,7 @@
 - **cards 섹션**: innerHTML 복제라 `.result-cards` 래퍼가 소실되므로 빌더가 `<div class="result-cards">`로 다시 감쌈(트리플 A 지적). `.result-card`에 `break-inside:avoid`.
 - **역산 라벨**: `_crHistApplied(id, currentRate)` — 역산 결과 문구의 "연 평균 X%"와 현재 입력값이 일치할 때만 "고객 증권 기반 역산" 표기(역산 후 수동 변경 시 오표기 방지).
 - **인쇄 CSS**: 리포트 창은 메인 `<style>` 전체 복사 + `_crReportCss()` 오버라이드(`body{display:block}` 필수, 메인은 flex). 카드 그리드·step-box·표 행 `break-inside:avoid`, 부록은 `break-before:page`. 러닝 바닥글·페이지 번호는 A안 한계로 미지원(B안 서버 PDF 검토 항목).
-- **페이지 채움 규칙 (v=20260907, 전략실장 실측 피드백)**: 차트 이미지 `width:72%` 가운데 정렬 + `max-height:95mm`(정사각 도넛 차트 세로 과대 방지) — 잔여 공간에 들어가 페이지 하단 여백 최소화(실손 p1에 차트 동반). 판정 카드 `.verdict-card{break-inside:avoid}`·avoid 섹션 `.cr-keep` — 잔여 공간에 안 들어가면 통째로 다음 페이지 처음부터(어중간 분할 금지). 100%로 되돌리거나 avoid 제거 금지.
+- **페이지 채움 규칙 (v=20260907, 전략실장 실측 피드백)**: 차트 이미지 `width:72%` 가운데 정렬 + `max-height:95mm`(정사각 도넛 차트 세로 과대 방지) — 잔여 공간에 들어가 페이지 하단 여백 최소화(실손 p1에 차트 동반). 판정 카드 `.verdict-card{break-inside:avoid}`·avoid 섹션 `.cr-keep` — 잔여 공간에 안 들어가면 통째로 다음 페이지 처음부터(어중간 분할 금지). `@media print` STEP 박스 압축(패딩 12/16·표 행 3px !important·섹션 16px) — 양도세 FINAL 박스 앞 페이지 동반용, 인쇄 전용이라 화면 미리보기 불변. 100% 복원·avoid 제거·압축 해제 금지.
 - 설계사명·연락처 = `localStorage.pro_calc_report_agent`(JSON). 사용량 로그 action `calc_report_print`.
 - 문서 제목 = `고객명_리포트명_상담일` → 크롬 "PDF로 저장" 기본 파일명.
 
