@@ -6484,6 +6484,11 @@ function _crReportCss() {
         '  body{-webkit-print-color-adjust:exact;print-color-adjust:exact}',
         '  .cr-chart,.step-box,.result-cards,.cr-meta,.cr-inputs tr{break-inside:avoid;page-break-inside:avoid}',
         '  .cr-section h2{break-after:avoid;page-break-after:avoid}',
+        // STEP 박스 인쇄 압축(2026-09-07 피드백: 양도세 FINAL 박스가 잔여 공간에 아슬아슬하게 못 들어가 혼자 다음 페이지로) —
+        // 패딩·행간을 줄여 FINAL이 STEP 3과 같은 페이지에 들어가도록. !important=인라인 padding(6px 0) 우선 제압.
+        '  .step-box{padding:12px 16px;margin-bottom:10px}',
+        '  .step-box .step-content td{padding-top:3px !important;padding-bottom:3px !important}',
+        '  .cr-section{margin-top:16px}',
         '}'
     ].join('\n');
 }
