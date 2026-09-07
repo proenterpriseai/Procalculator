@@ -41,13 +41,14 @@
 - **page-title**: 각 탭의 `<h1 class="page-title">` 제목
 - **page-desc**: 각 탭의 `<p class="page-desc">` 설명문 (부동산 포함 모든 탭에 존재해야 함)
 
-## 🧾 리포트 출력 (v=20260907, `FEATURE_CALC_REPORT=false` 미공개 — **전체 11탭**)
+## 🧾 리포트 출력 (v=20260907a, `FEATURE_CALC_REPORT=true` **700명 공개** — 전체 11탭)
 
 ### 개요
 - 카테고리별 상담 결과를 A4 리포트로 출력. **A안 = 브라우저 인쇄 뷰**(새 창 미리보기 → 인쇄/PDF 저장). 서버 PDF 없음.
 - 독립 블록 위치: `INITIAL CALCULATIONS` 직전 (`var FEATURE_CALC_REPORT`부터 `document.addEventListener('DOMContentLoaded', _crInit)`까지). 접두사 `_cr`.
 - **기존 calc 함수·DOMContentLoaded 초기화 수정 없음** (예외 1건: calcSilson 상세표 루프 `ratio`→`rowRatio` 개명 — ESLint no-redeclare 해소, 전략실장 승인 2026-09-06, 동작 동일). 리포트는 화면 DOM에 이미 계산된 결과를 읽어 재배치만 한다(새 계산 0). 기존 마크업 변경은 속성뿐(동작 무영향): `data-calc-report="appendix"` 6곳(실손 4·갱신형 2) + `data-cr="cr-*"` 9곳(id 없는 결과 카드 컨테이너 표식 — 대출·종소세 2·부동산 5·상속 종신전략).
-- Flag=false → 버튼·스타일·모달 어느 것도 렌더 안 됨. 옵트인 `localStorage._flag_calc_report='true'` 후 새로고침.
+- **2026-09-07 v=20260907a `true` 공개** (main `5497b2b`, 전략실장 승인. 트리플 A 4회 GO=Phase1·차트 델타·Phase2·true 전환 / 실측 피드백 5건 반영 완결). 문제 신고 시 개인 롤백: `localStorage._flag_calc_report='false'` 후 새로고침(버튼·스타일·모달 전부 미생성, 화면 바이트 동일). 전체 롤백=상수 false 재배포.
+- CI 가드: `.github/workflows/quality-check.yml`에 리포트 잔존 grep 5패턴(`var FEATURE_CALC_REPORT = true`·`_crInit`·`_crBuildReportHtml`·`_CR_SPECS`·`cr-tablewrap`) — 삭제·회귀 시 push 차단. **flag 라인 수정 시 CI 패턴도 동반 수정 의무.**
 
 ### `_CR_SPECS` — 전체 11탭 (Phase 1 3탭 + Phase 2 8탭 v=20260907)
 - **서브탭 탭은 명세가 함수** — 호출 시점의 활성 서브탭(`_crSubActive`, `.hidden` 판정) 명세를 반환. **활성 서브탭 1개 = 리포트 1부**(확정 결정 ②).
