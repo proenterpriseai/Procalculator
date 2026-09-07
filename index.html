@@ -6097,8 +6097,9 @@ function _crReportCss() {
         '.cr-inputs{width:100%;border-collapse:collapse;font-size:0.85rem}',
         '.cr-inputs th{text-align:left;color:#475569;font-weight:600;padding:6px 10px;background:#f8fafc;border-bottom:1px solid #e2e8f0;width:40%}',
         '.cr-inputs td{padding:6px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;text-align:right}',
-        '.cr-chart{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px}',
-        '.cr-chart img{display:block;width:100%;height:auto}',
+        '.cr-chart{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:8px 10px}',
+        // 차트 72% 축소·가운데 정렬 — 페이지 하단 잔여 공간에 들어가도록(2026-09-07 전략실장 실측 피드백: 실손 p1 하단 여백)
+        '.cr-chart img{display:block;width:72%;max-width:620px;height:auto;margin:0 auto}',
         '.cr-note{font-size:0.75rem;color:#64748b;margin:0 0 8px}',
         '.cr-appendix{break-before:page;page-break-before:always}',
         '.cr-foot{margin-top:28px;padding-top:12px;border-top:2px solid #1e3a8a;font-size:0.74rem;color:#64748b;line-height:1.6}',
@@ -6108,6 +6109,8 @@ function _crReportCss() {
         '.result-card{break-inside:avoid;page-break-inside:avoid}',
         '.step-box,.verdict-card{border:1px solid #e2e8f0}',
         '.verdict-card{padding:18px}',
+        // 판정 카드는 통째로 유지 — 잔여 공간에 안 들어가면 다음 페이지 처음부터(2026-09-07 피드백: 갱신형 분석 결과 어중간 분할)
+        '.verdict-card{break-inside:avoid;page-break-inside:avoid}',
         '.verdict-card .verdict-body > div{break-inside:avoid;page-break-inside:avoid}',
         'table{break-inside:auto} tr{break-inside:avoid;page-break-inside:avoid} thead{display:table-header-group}',
         '@page{size:A4 portrait;margin:16mm 14mm 18mm 14mm}',
