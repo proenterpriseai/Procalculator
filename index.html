@@ -5839,7 +5839,7 @@ function calcRenewal() {
 }
 
 /* ============================================================
-   리포트 출력 (v=20260906, FEATURE_CALC_REPORT=false 기본)
+   리포트 출력 (v=20260907a, FEATURE_CALC_REPORT=true 공개 — 2026-09-07 전략실장 승인)
    목적: 카테고리별 상담 결과를 A4 리포트로 출력(브라우저 인쇄 뷰 → 인쇄/PDF 저장).
    4대 원칙:
      #1 기존 기능 불변 — 이 블록은 완전 독립. 기존 calc 함수·DOMContentLoaded 초기화 수정 없음
@@ -5855,7 +5855,7 @@ function calcRenewal() {
    리포트 6블록: 표지 헤더 → 입력 조건 요약 → 핵심 결과 → 차트 → 산출 과정·판정·상세표 → 면책·출처.
    공통 제외: 입력 UI, 교육용 참고 박스(data-calc-report="appendix" → '근거 자료 첨부' 옵션일 때만 부록).
    ============================================================ */
-var FEATURE_CALC_REPORT = false;
+var FEATURE_CALC_REPORT = true; // v=20260907a 700명 공개 (전략실장 승인 2026-09-07, 트리플 A 3회 GO·실측 피드백 5건 반영). 비활성: localStorage._flag_calc_report='false'
 var _CR_AGENT_KEY = 'pro_calc_report_agent'; // 설계사명·연락처 기억(localStorage, JSON)
 var _CR_TABLE_STEP = 5; // 연도별 상세표 요약 간격(년)
 
