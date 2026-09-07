@@ -41,20 +41,30 @@
 - **page-title**: 각 탭의 `<h1 class="page-title">` 제목
 - **page-desc**: 각 탭의 `<p class="page-desc">` 설명문 (부동산 포함 모든 탭에 존재해야 함)
 
-## 🧾 리포트 출력 (v=20260906, `FEATURE_CALC_REPORT=false` 미공개)
+## 🧾 리포트 출력 (v=20260907, `FEATURE_CALC_REPORT=false` 미공개 — **전체 11탭**)
 
 ### 개요
 - 카테고리별 상담 결과를 A4 리포트로 출력. **A안 = 브라우저 인쇄 뷰**(새 창 미리보기 → 인쇄/PDF 저장). 서버 PDF 없음.
 - 독립 블록 위치: `INITIAL CALCULATIONS` 직전 (`var FEATURE_CALC_REPORT`부터 `document.addEventListener('DOMContentLoaded', _crInit)`까지). 접두사 `_cr`.
-- **기존 calc 함수·DOMContentLoaded 초기화 수정 없음** (예외 1건: calcSilson 상세표 루프 `ratio`→`rowRatio` 개명 — ESLint no-redeclare 해소, 전략실장 승인 2026-09-06, 동작 동일). 리포트는 화면 DOM에 이미 계산된 결과를 읽어 재배치만 한다(새 계산 0). 기존 마크업 변경은 `data-calc-report="appendix"` 속성 6곳(실손 4·갱신형 2)뿐 — 동작 무영향.
+- **기존 calc 함수·DOMContentLoaded 초기화 수정 없음** (예외 1건: calcSilson 상세표 루프 `ratio`→`rowRatio` 개명 — ESLint no-redeclare 해소, 전략실장 승인 2026-09-06, 동작 동일). 리포트는 화면 DOM에 이미 계산된 결과를 읽어 재배치만 한다(새 계산 0). 기존 마크업 변경은 속성뿐(동작 무영향): `data-calc-report="appendix"` 6곳(실손 4·갱신형 2) + `data-cr="cr-*"` 9곳(id 없는 결과 카드 컨테이너 표식 — 대출·종소세 2·부동산 5·상속 종신전략).
 - Flag=false → 버튼·스타일·모달 어느 것도 렌더 안 됨. 옵트인 `localStorage._flag_calc_report='true'` 후 새로고침.
 
-### Phase 1 파일럿 3탭 (`_CR_SPECS`)
-| 탭 | 입력 요약 | 섹션(kind) | 부록 |
-|----|-----------|-----------|------|
-| tab-silson | 세대·주기·월보험료·나이·만기·인상률(출처 라벨/역산 표기)·비교모드 | cards → raw(나이별) → chart → raw(세대 비교, 모드 ON만) → raw(판정) → table(요약) | 정보 박스 4종 |
-| tab-renewal | 갱신/비갱신 보험료·나이·납입기간·만기·주기·상승률(상세 모드면 연령대별) | cards → raw(나이별) → chart×2 → raw(판정) → table(요약) | 참고 박스 2종 |
-| tab-retirement | 나이·생활비·납입기간·은퇴나이·기대수명·물가·수익률 (고객명은 `ret-name` 기본값) | cards → chart → raw(산출 과정) | 없음 |
+### `_CR_SPECS` — 전체 11탭 (Phase 1 3탭 + Phase 2 8탭 v=20260907)
+- **서브탭 탭은 명세가 함수** — 호출 시점의 활성 서브탭(`_crSubActive`, `.hidden` 판정) 명세를 반환. **활성 서브탭 1개 = 리포트 1부**(확정 결정 ②).
+- 섹션 kind: `cards`(result-cards 재래핑 — 원본 inline grid-template은 소실, auto-fit으로 렌더=의도) / `raw`(innerHTML, `outer:true`=outerHTML, `avoid:true`=.cr-keep 분할방지) / `chart`(canvas→PNG) / `table`(요약, `step`·`unit` 옵션). `sel`=querySelector(data-cr 표식), `when()`=토글 게이트.
+- ⚠️ `_crVisible`은 **자기 자신의** computed display만 본다(조상 숨김은 오판). 새 명세의 raw 대상은 반드시 자기 자신이 display 토글되는 요소만 쓸 것 — 조상 토글 구조면 `when()`으로 게이트.
+
+| 탭 | 단위 | 핵심 섹션 | 특이사항 |
+|----|------|-----------|---------|
+| tab-silson / tab-renewal / tab-retirement | 탭 | (Phase 1 그대로) | 부록 첨부 옵션은 이 2탭만 |
+| tab-realestate | 취득/보유/양도 서브탭 | cards(data-cr)+차트+상세보고서 | 생애최초 감면 메시지·공제 내역은 표시 중일 때만(`_crVisible`) |
+| tab-inheritance | 증여/상속 서브탭 | cards+차트+산출과정+납부안내/종신보험전략(outer·avoid) | 입력 요약은 0원 항목 생략, 특례·할증 체크만 표기 |
+| tab-savings | 예금/적금 서브탭 | cards+차트+상세표 | 적금 월별표 `step:12, unit:'개월'` 요약 |
+| tab-goalfund | 탭 | cards+차트+전략 리포트+자산 증식 비교 | 3종 비교 3섹션은 `when: 토글 ON`만 |
+| tab-dollar | 탭 | cards×3+차트×3(히스토리 포함)+BEP 근거 | 환율 시나리오 3값 한 행 |
+| tab-jeonwolse | 탭 | cards+차트×2+판정(outer) | 법정 상한 초과 시 입력 행에 경고 병기 |
+| tab-loan | 탭 | cards(data-cr)+차트×2+상세 리포트 | guard=원금>0 |
+| tab-incometax | 탭 | cards+종합vs분리 그리드(outer·avoid)+판정+파이 | guard=6개 소득 합>0 |
 
 ### 규칙 (영구)
 - **리포트 6블록 고정**: 표지 헤더(고객명·상담일·설계사·연락처) → 입력 조건 → 핵심 결과 → 차트 → 산출 과정·판정·상세표 → 면책·출처. 새 탭 추가 시 `_CR_SPECS`에 명세만 추가, 빌더 수정 금지.
@@ -65,7 +75,7 @@
 - **cards 섹션**: innerHTML 복제라 `.result-cards` 래퍼가 소실되므로 빌더가 `<div class="result-cards">`로 다시 감쌈(트리플 A 지적). `.result-card`에 `break-inside:avoid`.
 - **역산 라벨**: `_crHistApplied(id, currentRate)` — 역산 결과 문구의 "연 평균 X%"와 현재 입력값이 일치할 때만 "고객 증권 기반 역산" 표기(역산 후 수동 변경 시 오표기 방지).
 - **인쇄 CSS**: 리포트 창은 메인 `<style>` 전체 복사 + `_crReportCss()` 오버라이드(`body{display:block}` 필수, 메인은 flex). 카드 그리드·step-box·표 행 `break-inside:avoid`, 부록은 `break-before:page`. 러닝 바닥글·페이지 번호는 A안 한계로 미지원(B안 서버 PDF 검토 항목).
-- **페이지 채움 규칙 (v=20260907, 전략실장 실측 피드백)**: 차트 이미지 `width:72%` 가운데 정렬 — 잔여 공간에 들어가 페이지 하단 여백 최소화(실손 p1에 차트 동반). 판정 카드 `.verdict-card{break-inside:avoid}` — 잔여 공간에 안 들어가면 통째로 다음 페이지 처음부터(어중간 분할 금지). 100%로 되돌리거나 avoid 제거 금지.
+- **페이지 채움 규칙 (v=20260907, 전략실장 실측 피드백)**: 차트 이미지 `width:72%` 가운데 정렬 + `max-height:95mm`(정사각 도넛 차트 세로 과대 방지) — 잔여 공간에 들어가 페이지 하단 여백 최소화(실손 p1에 차트 동반). 판정 카드 `.verdict-card{break-inside:avoid}`·avoid 섹션 `.cr-keep` — 잔여 공간에 안 들어가면 통째로 다음 페이지 처음부터(어중간 분할 금지). 100%로 되돌리거나 avoid 제거 금지.
 - 설계사명·연락처 = `localStorage.pro_calc_report_agent`(JSON). 사용량 로그 action `calc_report_print`.
 - 문서 제목 = `고객명_리포트명_상담일` → 크롬 "PDF로 저장" 기본 파일명.
 
