@@ -6244,7 +6244,7 @@ var _CR_SPECS = {
             { kind: 'raw', id: 'goal-steps-body', title: '전략 리포트' },
             { kind: 'raw', id: 'goal-strategy-report-body', title: '스마트 자산 증식 전략 비교' },
             { kind: 'chart', id: 'goal-comp-chart', title: '3종 상품 비교 시뮬레이션', when: function () { return _crChk('goal-comp-toggle'); } },
-            { kind: 'raw', id: 'goal-comp-period-cards', title: '기간별 비교', when: function () { return _crChk('goal-comp-toggle'); } },
+            { kind: 'raw', id: 'goal-comp-period-cards', title: '기간별 비교', avoid: true, when: function () { return _crChk('goal-comp-toggle'); } }, // avoid=카드 grid 어중간 분할 방지(2026-09-07 피드백)
             { kind: 'raw', id: 'goal-comp-table-wrap', title: '3종 비교 상세표', when: function () { return _crChk('goal-comp-toggle'); } }
         ],
         sources: '적금=단리·이자소득세 15.4% / 펀드=선취수수료 1%·운용보수 연 1.2%·환매 시 배당소득세 15.4% / 변액=납입사업비·운용관리비 반영, 10년 이상 유지 시 비과세 가정. 기대수익률은 보장되지 않습니다'
@@ -6421,7 +6421,9 @@ function _crTableHtml(el, fullTable, step, unit) {
     var note = summarized
         ? '<p class="cr-note">요약 표시: 첫 행 · ' + step + (unit || '행') + ' 단위 · 마지막 행과 주요 시점(★, ✅) 행만 표시했습니다. 전체 ' + total + '행은 "전체 상세표" 옵션으로 출력할 수 있습니다.</p>'
         : '';
-    return note + clone.outerHTML;
+    // cr-tablewrap: 한 페이지에 들어가는 표는 통째 유지(2026-09-07 피드백: 적금 월별표 3행/9행 어중간 분할).
+    // 페이지보다 큰 표(전체 상세표 옵션)는 Chromium이 avoid를 무시하고 행 단위 분할 + thead 반복 — 기존 동작 유지.
+    return '<div class="cr-tablewrap">' + note + clone.outerHTML + '</div>';
 }
 
 function _crAppendixHtml(tabId) {
@@ -6489,6 +6491,8 @@ function _crReportCss() {
         '  .step-box{padding:12px 16px;margin-bottom:10px}',
         '  .step-box .step-content td{padding-top:3px !important;padding-bottom:3px !important}',
         '  .cr-section{margin-top:16px}',
+        // 한 페이지에 들어가는 표는 통째 유지 — 페이지 초과 표는 avoid 무시되어 기존처럼 행 분할(thead 반복)
+        '  .cr-tablewrap{break-inside:avoid;page-break-inside:avoid}',
         '}'
     ].join('\n');
 }
