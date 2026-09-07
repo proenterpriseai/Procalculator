@@ -48,6 +48,15 @@
 - 독립 블록 위치: `INITIAL CALCULATIONS` 직전 (`var FEATURE_CALC_REPORT`부터 `document.addEventListener('DOMContentLoaded', _crInit)`까지). 접두사 `_cr`.
 - **기존 calc 함수·DOMContentLoaded 초기화 수정 없음** (예외 1건: calcSilson 상세표 루프 `ratio`→`rowRatio` 개명 — ESLint no-redeclare 해소, 전략실장 승인 2026-09-06, 동작 동일). 리포트는 화면 DOM에 이미 계산된 결과를 읽어 재배치만 한다(새 계산 0). 기존 마크업 변경은 속성뿐(동작 무영향): `data-calc-report="appendix"` 6곳(실손 4·갱신형 2) + `data-cr="cr-*"` 9곳(id 없는 결과 카드 컨테이너 표식 — 대출·종소세 2·부동산 5·상속 종신전략).
 - **2026-09-07 v=20260907a `true` 공개** (main `5497b2b`, 전략실장 승인. 트리플 A 4회 GO=Phase1·차트 델타·Phase2·true 전환 / 실측 피드백 5건 반영 완결). 문제 신고 시 개인 롤백: `localStorage._flag_calc_report='false'` 후 새로고침(버튼·스타일·모달 전부 미생성, 화면 바이트 동일). 전체 롤백=상수 false 재배포.
+### ↺ 탭별 초기화 버튼 (v=20260907b, `FEATURE_CALC_RESET=false` 미공개)
+- 위치: 리포트 출력 버튼 **왼쪽**(같은 `.cr-btn-row`, 보조 톤 `.cr-btn-reset`). 11탭 전체. 옵트인 `localStorage._flag_calc_reset='true'`.
+- **동작 원리(영구 룰)**: `_crResetTab(tabId)`은 값을 `defaultValue`/`defaultChecked`/`defaultSelected`로 되돌린 뒤 **사용자 조작과 동일한 이벤트를 발화**한다 — 라디오=기본 라벨 `click()`(라벨 onclick이 상태변수·active·영역전환 담당), 체크박스·셀렉트=`change`, 텍스트·숫자·슬라이더=`input`+`change`. **기존 calc 함수 직접 호출 금지** — 인라인 핸들러가 재계산까지 담당하므로 호출 경로가 곧 로드 시점 재현.
+- 전제: 모든 토글 핸들러가 **상태 기반 멱등**(checked를 읽어 set). 새 토글 추가 시 이 성질 유지 의무 — 아니면 초기화 결과가 로드 상태와 달라진다.
+- 예외 훅 `spec.resetAfter`: 로드 시 값이 함수로 덮어써지는 탭만(갱신형 `updateRnDefaultRate()`+`calcRenewal()` — rn-rate는 마크업 15%가 아니라 나이 기반 10%). DOM 순서상 rn-age가 rn-rate보다 앞이라 필요.
+- 접이식(`details`) 열림 상태는 `_crInit`이 로드 직후 `data-cr-open`으로 스냅샷 → 초기화 시 복원.
+- 항목 단위 `safely()` try — 한 핸들러 예외가 나머지를 막지 않고, 실패 시 "새로고침하면 전체 복귀" 안내 alert. 사용량 로그 action `calc_reset`.
+- ⚠️ 초기화는 **현재 탭만**. 달러 탭에서 '실시간 수신'으로 받은 환율도 하드코딩 기본값으로 되돌아간다.
+
 - CI 가드: `.github/workflows/quality-check.yml`에 리포트 잔존 grep 5패턴(`var FEATURE_CALC_REPORT = true`·`_crInit`·`_crBuildReportHtml`·`_CR_SPECS`·`cr-tablewrap`) — 삭제·회귀 시 push 차단. **flag 라인 수정 시 CI 패턴도 동반 수정 의무.**
 
 ### `_CR_SPECS` — 전체 11탭 (Phase 1 3탭 + Phase 2 8탭 v=20260907)
