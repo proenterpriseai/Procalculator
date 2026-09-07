@@ -4870,9 +4870,13 @@ async function fetchExchangeRate() {
             tsEl.textContent = '\uC218\uC2E0: ' + ts + ' (' + (data.source === 'naver' ? '\uB124\uC774\uBC84 \uB9E4\uB9E4\uAE30\uC900\uC728' : data.source) + ')';
             tsEl.style.display = 'block';
             calcDollar();
+        } else {
+            // v=20260907f: 3\uB2E8\uACC4 \uC81C\uACF5\uCC98\uAC00 \uBAA8\uB450 \uC2E4\uD328\uD558\uBA74 \uC11C\uBC84\uAC00 200/500 + {error} JSON\uC744 \uC8FC\uBBC0\uB85C catch\uB85C \uAC00\uC9C0 \uC54A\uB294\uB2E4.
+            // \uC885\uC804\uC5D4 \uC774 \uACBD\uB85C\uAC00 \uBB34\uB3D9\uC791(\uC548\uB0B4 \uC5C6\uC74C)\uC774\uB77C \uC0AC\uC6A9\uC790\uAC00 \uC2E4\uD328\uB97C \uC778\uC9C0 \uBABB \uD588\uC74C \u2192 \uC548\uB0B4 \uCD94\uAC00. \uAC12\uC740 \uAC74\uB4DC\uB9AC\uC9C0 \uC54A\uB294\uB2E4.
+            _crFailNotice('\uD658\uC728\uC744 \uBC1B\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4', '\uD658\uC728 \uC81C\uACF5\uCC98\uC5D0\uC11C \uAC12\uC744 \uBC1B\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4 (\uC81C\uACF5\uCC98 \uC77C\uC2DC \uC7A5\uC560).');
         }
     } catch(e) {
-        alert('\uD658\uC728 \uC218\uC2E0 \uC2E4\uD328. \uC218\uB3D9\uC73C\uB85C \uC785\uB825\uD574\uC8FC\uC138\uC694.');
+        _crFailNotice('\uD658\uC728\uC744 \uBC1B\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4', '\uC5F0\uACB0\uC774 \uB418\uC9C0 \uC54A\uAC70\uB098 \uC751\uB2F5\uC774 \uC9C0\uC5F0\uB418\uC5C8\uC2B5\uB2C8\uB2E4.');
     }
     if (btn) { btn.textContent = '\uD83D\uDD04 \uC2E4\uC2DC\uAC04 \uC218\uC2E0'; btn.disabled = false; }
     _fetchRateBusy = false;
@@ -5893,6 +5897,7 @@ function _crReducedMotion() {
 function _crDlgClose(ov, cb) {
     if (!ov || ov._crClosing) return;
     ov._crClosing = true;
+    ov.setAttribute('data-cr-closing', '1'); // 닫히는 중인 모달을 '열린 모달'로 오인하지 않게(_crFailNotice 재사용 판정)
     if (ov._crKeyHandler) document.removeEventListener('keydown', ov._crKeyHandler);
     ov.classList.remove('show');
     var done = function () {
@@ -5907,8 +5912,41 @@ function _crDlgClose(ov, cb) {
     setTimeout(done, 400); // transitionend 미발화 폴백
 }
 
+/* 모달 스타일 자급자족 — Flag를 모두 끈 브라우저에서도 안내창이 무스타일로 뜨지 않게(v=20260907f).
+   _crInit도 이 함수를 쓰므로 주입은 항상 1회. */
+function _crEnsureStyle() {
+    if (document.getElementById('cr-style')) return;
+    var st = document.createElement('style');
+    st.id = 'cr-style';
+    st.textContent = _crScreenCss();
+    document.head.appendChild(st);
+}
+
+/* 실패 안내 공통(v=20260907f) — 환율 수신 실패 등.
+   종전 alert은 스레드를 막아 재클릭이 불가했으나 모달은 비차단 → 연속 실패 시 모달이 겹겹이 쌓임(트리플 A 🟡).
+   이미 떠 있으면 새로 만들지 않고 문구만 갱신한다. _crModal이 동기 throw하면 오버레이 잔존을 정리하고 alert 폴백. */
+function _crFailNotice(title, reason) {
+    var msg = reason + '\n잠시 후 다시 시도하거나, 현재 환율을 직접 입력해 주세요.';
+    var open = document.querySelector('.cr-dlg:not([data-cr-closing])');
+    if (open) {
+        var t = open.querySelector('.cr-dlg-title'), m = open.querySelector('.cr-dlg-msg');
+        if (t) t.textContent = title;
+        if (m) m.innerHTML = _crEsc(msg).replace(/\n/g, '<br>');
+        return;
+    }
+    try {
+        _crModal({ type: 'danger', title: title, message: msg, confirmText: '확인' });
+    } catch (e) {
+        Array.prototype.forEach.call(document.querySelectorAll('.cr-dlg'), function (n) {
+            if (n.parentNode) n.parentNode.removeChild(n); // 클릭 먹는 투명 오버레이 잔존 차단
+        });
+        alert(title + '\n' + msg);
+    }
+}
+
 function _crModal(opts) {
     opts = opts || {};
+    _crEnsureStyle();
     var type = opts.type || 'info';
     var icons = { warning: 'fa-exclamation-triangle', danger: 'fa-circle-exclamation', info: 'fa-circle-info', success: 'fa-check' };
     var ov = document.createElement('div');
@@ -7011,12 +7049,9 @@ function _crScreenCss() {
 function _crInit() {
     var reportOn = _isCalcReportOn();
     var resetOn = _isCalcResetOn();
-    if (!reportOn && !resetOn) return; // 두 Flag 모두 off → 아무것도 하지 않음 (기존 화면 바이트 동일)
-    if (document.getElementById('cr-style')) return;
-    var st = document.createElement('style');
-    st.id = 'cr-style';
-    st.textContent = _crScreenCss();
-    document.head.appendChild(st);
+    if (!reportOn && !resetOn) return; // 두 Flag 모두 off → 버튼 미생성 (기존 화면 동일)
+    if (document.querySelector('.cr-btn-row')) return; // 중복 삽입 방지
+    _crEnsureStyle();
     Object.keys(_CR_SPECS).forEach(function (tabId) {
         var tab = document.getElementById(tabId);
         var h1 = tab ? tab.querySelector('h1.page-title') : null;

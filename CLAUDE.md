@@ -7,7 +7,7 @@
 ## 🟢 현재 LIVE (버전 단일 진실원 — 배포마다 이 표 갱신 의무)
 | 항목 | 값 |
 |------|-----|
-| 버전 태그 | **v=20260907e** (flag 주석 기준. 계산기는 단일 HTML이라 `?v=` 에셋 태그 없음) |
+| 버전 태그 | **v=20260907f** (flag 주석 기준. 계산기는 단일 HTML이라 `?v=` 에셋 태그 없음) |
 | 기능 최종 커밋 | **`fcb9629`** (2026-09-07 · 코드 변경 커밋 기준. 이후 문서 전용 커밋은 제외) |
 | 공개 Flag | `FEATURE_CALC_USAGE_LOGGING`(v=20260512b) · `FEATURE_CALC_REPORT`(v=20260907a) · `FEATURE_CALC_RESET`(v=20260907d) — **미공개 0** |
 | Flag 오버라이드 | `sessionStorage._flag_calc_report` / `_flag_calc_reset` (탭 닫으면 소멸, Chrome 세션 복원 시 지연 가능) |
@@ -38,11 +38,15 @@
 - 갱신형/실손 2개 탭은 Vercel 전용 (Streamlit 미포팅 확정)
 - **향후 Streamlit 사용자 요청 발생 시에만** 포팅 검토
 
-## ⚠️ 환율 API 안전 규칙 (v=20260325)
+## ⚠️ 환율 API 안전 규칙 (v=20260325 / 실패 안내 v=20260907f)
 - `fetchExchangeRate()`: `AbortController` 15초 타임아웃 적용 (무한 대기 방지)
 - `_fetchRateBusy` 플래그 + 버튼 disabled로 연타 방지
 - 3단계 fallback: 네이버 → 두나무/하나은행 → ExchangeRate-API
 - **fetch 타임아웃/debounce 제거 금지** — 사용자 경험과 서버 보호에 필수
+- 🔴 **실패 안내 2경로 필수(v=20260907f)**: ①`data.rate` 없음(3단계 모두 실패 → 서버가 500+`{error}` JSON) = `else` 분기 ②`catch`(연결 불가·지연). 둘 다 `_crFailNotice`로 안내. **종전엔 ①이 무동작이라 사용자가 실패를 인지 못 했음(fetch는 500에 throw하지 않음). `else` 분기 제거 금지.**
+- 실패 시 **기존 환율 값은 건드리지 않는다**(사용자가 입력해 둔 값 보존).
+- `api/rate.js` 3차 폴백도 1·2차와 동일하게 `res.ok` + `rate > 0` 가드(v=20260907f). 종전엔 `rates.KRW` 부재 시 `rate:undefined`가 JSON에서 삭제되어 **HTTP 200에 값 없는 응답**이 나갔음.
+- CI 가드: `_crFailNotice`·`_crEnsureStyle` grep(사라지면 실패 안내가 다시 0이 됨).
 
 ## 코드 수정 안전 규칙
 - **index.html 단일 파일**: 전체 UI가 하나의 HTML에 포함
@@ -50,7 +54,7 @@
 - **page-title**: 각 탭의 `<h1 class="page-title">` 제목
 - **page-desc**: 각 탭의 `<p class="page-desc">` 설명문 (부동산 포함 모든 탭에 존재해야 함)
 
-## 🧾 리포트 출력 + 탭 초기화 (v=20260907e, 두 Flag **true 700명 공개** — 전체 11탭)
+## 🧾 리포트 출력 + 탭 초기화 (v=20260907f, 두 Flag **true 700명 공개** — 전체 11탭)
 
 ### 🔑 Flag 오버라이드 = sessionStorage (v=20260907e, **영구 룰 — 신규 Flag 전부 적용**)
 - `_crFlagOverride(key)` 단일 헬퍼. `sessionStorage._flag_calc_report` / `_flag_calc_reset` = `'true'`|`'false'`, 그 외/미설정이면 상수값. 탭을 닫으면 소멸(⚠️ Chrome 세션 복원 시 지연될 수 있음).
@@ -81,9 +85,11 @@
 - **디자인 = 보장분석 `customModal` 토큰 이식**(글래스 카드 radius 24·`scale(.9)→1` 스프링 `cubic-bezier(.34,1.56,.64,1)`·아이콘 원형 60px·오버레이 `rgba(15,23,42,.6)`+blur 8px·버튼 radius 12). 두 시스템 UI 통일이 목적이라 **임의 변경 금지**.
 - 호출 `_crModal({type:'warning'|'danger'|'info'|'success', title, message, confirmText, cancelText, showCancel, onConfirm, onCancel})`. **비동기 콜백 패턴**(confirm 동기 리턴값 대체) — 새 확인 절차 추가 시 동기 confirm 쓰지 말 것.
 - 매 호출 DOM 생성 → 닫힘 시 제거(`_crDlgClose`, `_crClosing` 이중 가드 + transitionend + 400ms 폴백). ESC·배경 클릭 닫힘, 확인 버튼 자동 포커스, `prefers-reduced-motion` 존중. z-index 1200(리포트 오버레이 1000·인라인 뷰어 1100 위).
-- 적용 3곳: 초기화 확인(warning) / 부분 실패 안내(danger) / 리포트 0원 가드(info).
+- 적용 5곳: 초기화 확인(warning) / 초기화 부분 실패(danger) / 리포트 0원 가드(info) / **환율 제공처 실패(danger)** / **환율 연결 실패(danger)**.
 - 동반: 리포트 입력 모달 `.cr-modal`도 같은 계열로 정렬(radius 24·글래스·그림자·버튼 hover). ⚠️`FEATURE_CALC_REPORT=true` 라이브라 이 CSS는 700명에게 즉시 보임.
-- ⚠️ 잔여 네이티브 `alert` 1건 = 기존 `fetchExchangeRate` 실패 안내(기존 함수, 사전 승인 대상이라 미변경).
+- `_crEnsureStyle()`: `_crModal` 진입 시 `#cr-style` 자동 주입 → **두 Flag를 모두 끈 브라우저에서도** 안내창이 무스타일로 뜨지 않음. `_crInit`도 이 함수를 쓰고, 중복 삽입 가드는 `.cr-btn-row` 존재 검사.
+- `_crFailNotice(title, reason)`: 이미 떠 있는 모달이 있으면 **새로 만들지 않고 문구만 갱신**(alert과 달리 모달은 비차단이라 연속 실패 시 겹겹이 쌓임). 닫히는 중 모달은 `data-cr-closing`으로 제외. `_crModal` 동기 throw 시 오버레이 정리 후 alert 폴백.
+- ⚠️ 네이티브 `alert`는 `_crFailNotice` 폴백 1곳만 남음(정상).
 - ⚠️ 초기화는 **현재 탭만**. 달러 탭에서 '실시간 수신'으로 받은 환율도 하드코딩 기본값으로 되돌아간다.
 
 - CI 가드: `.github/workflows/quality-check.yml`에 리포트 잔존 grep 5패턴(`var FEATURE_CALC_REPORT = true`·`_crInit`·`_crBuildReportHtml`·`_CR_SPECS`·`cr-tablewrap`) — 삭제·회귀 시 push 차단. **flag 라인 수정 시 CI 패턴도 동반 수정 의무.**
