@@ -5856,7 +5856,7 @@ function calcRenewal() {
    공통 제외: 입력 UI, 교육용 참고 박스(data-calc-report="appendix" → '근거 자료 첨부' 옵션일 때만 부록).
    ============================================================ */
 var FEATURE_CALC_REPORT = true; // v=20260907a 700명 공개 (전략실장 승인 2026-09-07, 트리플 A 3회 GO·실측 피드백 5건 반영). 비활성: localStorage._flag_calc_report='false'
-var FEATURE_CALC_RESET = false; // v=20260907b 탭별 초기화 버튼 (리포트 버튼 왼쪽). 검증 전 false — 옵트인: localStorage._flag_calc_reset='true'
+var FEATURE_CALC_RESET = true; // v=20260907d 700명 공개 (전략실장 승인 2026-09-07 "사용자들이 사용할 수 있도록 노출", 트리플 A GO·모달 v=20260907c 확인 완료). 비활성: localStorage._flag_calc_reset='false'
 var _CR_AGENT_KEY = 'pro_calc_report_agent'; // 설계사명·연락처 기억(localStorage, JSON)
 var _CR_TABLE_STEP = 5; // 연도별 상세표 요약 간격(년)
 
@@ -5924,10 +5924,13 @@ function _crModal(opts) {
     ov.querySelector('.cr-dlg-ok').addEventListener('click', function () { fire(opts.onConfirm); });
     var cancelBtn = ov.querySelector('.cr-dlg-cancel');
     if (cancelBtn) cancelBtn.addEventListener('click', function () { fire(opts.onCancel); });
-    ov.addEventListener('click', function (e) { if (e.target === ov) fire(opts.showCancel ? opts.onCancel : opts.onConfirm); });
+    // 배경 클릭·ESC = 항상 '취소' 의미 — 단일 버튼 모달이라도 onConfirm을 태우지 않는다(트리플 A 🟡4)
+    ov.addEventListener('click', function (e) { if (e.target === ov) fire(opts.onCancel); });
     ov._crPrevFocus = document.activeElement;
+    // 파괴적 액션(warning/danger + 취소 있음)은 기본 포커스를 '취소'에 — 습관적 Enter 1회로 실행되는 사고 방지(트리플 A 🟡1)
+    ov._crFocusTarget = (opts.showCancel && (type === 'warning' || type === 'danger')) ? '.cr-dlg-cancel' : '.cr-dlg-ok';
     ov._crKeyHandler = function (e) {
-        if (e.key === 'Escape') { fire(opts.showCancel ? opts.onCancel : opts.onConfirm); return; }
+        if (e.key === 'Escape') { fire(opts.onCancel); return; }
         if (e.key !== 'Tab') return;
         // 포커스 트랩 — 모달 밖으로 나가지 않게 순환(트리플 A 🟡 접근성)
         var f = ov.querySelectorAll('button');
@@ -5945,8 +5948,8 @@ function _crModal(opts) {
         if (ov._crShown || !ov.parentNode) return;
         ov._crShown = true;
         ov.classList.add('show');
-        var ok = ov.querySelector('.cr-dlg-ok');
-        if (ok) ok.focus();
+        var f = ov.querySelector(ov._crFocusTarget) || ov.querySelector('.cr-dlg-ok');
+        if (f) f.focus();
     };
     requestAnimationFrame(function () { requestAnimationFrame(reveal); });
     setTimeout(reveal, 60);
@@ -5982,7 +5985,81 @@ function _crResetTab(tabId) {
     });
 }
 
+/* ── 초기화 되돌리기 (v=20260907d) ──
+   파괴적 액션 안전장치(트리플 A 🟡2). 초기화 직전 값을 스냅샷 → 토스트의 '되돌리기'로 복원.
+   복원도 초기화와 같은 방식(값 대입 + 사용자와 동일 이벤트 발화)이라 기존 함수 수정 0. */
+function _crSnapshotTab(tab) {
+    var snap = [];
+    Array.prototype.forEach.call(tab.querySelectorAll('input,select'), function (el) {
+        if (el.type === 'radio' || el.type === 'checkbox') snap.push({ el: el, k: 'c', v: el.checked });
+        else if (el.tagName === 'SELECT') snap.push({ el: el, k: 's', v: el.selectedIndex });
+        else snap.push({ el: el, k: 'v', v: el.value });
+    });
+    Array.prototype.forEach.call(tab.querySelectorAll('details'), function (d) { snap.push({ el: d, k: 'd', v: d.open }); });
+    return snap;
+}
+
+function _crRestoreSnapshot(snap) {
+    function put(it, fireIt) {
+        var el = it.el;
+        if (it.k === 'c') {
+            if (el.checked === it.v) return false;
+            if (el.type === 'radio' && it.v) {
+                var lab = document.querySelector('label[for="' + el.id + '"]');
+                if (lab) { lab.click(); return true; }
+            }
+            el.checked = it.v;
+            if (fireIt) el.dispatchEvent(new Event('change'));
+            return true;
+        }
+        if (it.k === 's') {
+            if (el.selectedIndex === it.v) return false;
+            el.selectedIndex = it.v;
+            if (fireIt) el.dispatchEvent(new Event('change'));
+            return true;
+        }
+        if (it.k === 'd') { el.open = it.v; return false; }
+        if (el.value === it.v) return false;
+        el.value = it.v;
+        if (fireIt) { el.dispatchEvent(new Event('input')); el.dispatchEvent(new Event('change')); }
+        return true;
+    }
+    snap.forEach(function (it) { try { put(it, true); } catch (e) {} });
+    // 2차 패스 — 앞 요소의 핸들러가 뒤 값을 덮어쓰는 연쇄(예: 나이 변경 → 갱신률 재설정) 보정
+    snap.forEach(function (it) { try { put(it, true); } catch (e) {} });
+}
+
+function _crCloseToast() {
+    var t = document.getElementById('cr-toast');
+    if (!t) return;
+    if (t._crTimer) clearTimeout(t._crTimer);
+    t.classList.remove('show');
+    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 300);
+}
+
+function _crShowUndo(tabTitle, snap) {
+    _crCloseToast();
+    var t = document.createElement('div');
+    t.id = 'cr-toast';
+    t.className = 'cr-toast';
+    t.setAttribute('role', 'status');
+    t.innerHTML = '<span class="cr-toast-msg">「' + _crEsc(tabTitle) + '」 입력값을 초기화했습니다.</span>' +
+        '<button type="button" class="cr-toast-undo">되돌리기</button>' +
+        '<button type="button" class="cr-toast-x" aria-label="닫기">&times;</button>';
+    document.body.appendChild(t);
+    t.querySelector('.cr-toast-undo').addEventListener('click', function () {
+        _crRestoreSnapshot(snap);
+        _crCloseToast();
+    });
+    t.querySelector('.cr-toast-x').addEventListener('click', _crCloseToast);
+    var reveal = function () { if (!t._crShown && t.parentNode) { t._crShown = true; t.classList.add('show'); } };
+    requestAnimationFrame(function () { requestAnimationFrame(reveal); });
+    setTimeout(reveal, 60);
+    t._crTimer = setTimeout(_crCloseToast, 8000); // 8초 후 자동 사라짐
+}
+
 function _crResetTabApply(tabId, tab) {
+    var snap = _crSnapshotTab(tab); // 되돌리기용 — 변형 전에 캡처
     // 항목 단위 try — 한 핸들러 예외가 나머지 초기화를 막지 않게(트리플 A 🟡: 단일 try의 부분 초기화 침묵 방지)
     var errs = 0;
     function safely(fn) {
@@ -6038,6 +6115,8 @@ function _crResetTabApply(tabId, tab) {
     });
     // 5) 역산 결과 안내 라벨 제거(값은 이미 기본으로 복원됨) + 접이식 열림 상태를 로드 시점으로(_crInit 스냅샷)
     Array.prototype.forEach.call(tab.querySelectorAll('[id$="-hist-result"]'), function (n) { n.innerHTML = ''; });
+    // 실시간 환율 수신 시각 — 값은 기본값으로 돌아갔는데 "방금 받은 환율"로 오인되지 않게 함께 초기화(트리플 A 🟡3)
+    Array.prototype.forEach.call(tab.querySelectorAll('[id$="-rate-timestamp"]'), function (n) { n.innerHTML = ''; n.style.display = 'none'; });
     Array.prototype.forEach.call(tab.querySelectorAll('details'), function (d) {
         safely(function () { if (d.dataset.crOpen) d.open = d.dataset.crOpen === '1'; });
     });
@@ -6046,14 +6125,17 @@ function _crResetTabApply(tabId, tab) {
         var spec = _crSpec(tabId);
         if (spec && spec.resetAfter) spec.resetAfter();
     });
+    var h1r = tab.querySelector('h1.page-title');
+    var tTitle = h1r ? h1r.textContent.replace(/^[^가-힣A-Za-z]+/, '').trim() : '현재 카테고리';
     if (errs > 0) {
         _crModal({
             type: 'danger',
             title: '일부 항목 초기화 실패',
-            message: '일부 입력값이 초기화되지 않았습니다.\n새로고침(F5)하면 전체가 기본값으로 돌아갑니다.',
+            message: '일부 입력값이 초기화되지 않았습니다.\n아래 「되돌리기」로 직전 값으로 복구할 수 있습니다.',
             confirmText: '확인'
         });
     }
+    _crShowUndo(tTitle, snap); // 8초 되돌리기 토스트
     try { _logCalcUsageImmediate('calc_reset', tabId); } catch (e) {}
 }
 
@@ -6898,6 +6980,16 @@ function _crScreenCss() {
         '.cr-dlg-cancel{background:#f1f5f9;color:#64748b}',
         '.cr-dlg-cancel:hover{background:#e2e8f0;color:#475569}',
         '@media (prefers-reduced-motion:reduce){.cr-dlg,.cr-dlg-card{transition:none} .cr-dlg-ok:hover{transform:none}}',
+        // 되돌리기 토스트(v=20260907d) — 초기화 직후 8초간 복구 기회
+        '.cr-toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);z-index:1300;display:flex;align-items:center;gap:12px;padding:12px 14px 12px 18px;border-radius:14px;background:#0f172a;color:#f8fafc;box-shadow:0 12px 32px rgba(0,0,0,.28);font-size:.88rem;max-width:calc(100% - 32px);opacity:0;transition:opacity .25s ease,transform .25s ease}',
+        '.cr-toast.show{opacity:1;transform:translate(-50%,0)}',
+        '.cr-toast-msg{font-weight:600;word-break:keep-all}',
+        '.cr-toast-undo{background:#f59e0b;color:#1e293b;border:0;border-radius:9px;padding:7px 14px;font-weight:800;font-size:.85rem;cursor:pointer;font-family:inherit;white-space:nowrap}',
+        '.cr-toast-undo:hover{background:#fbbf24}',
+        '.cr-toast-x{background:transparent;color:#94a3b8;border:0;font-size:1.15rem;line-height:1;cursor:pointer;padding:2px 4px;font-family:inherit}',
+        '.cr-toast-x:hover{color:#e2e8f0}',
+        '.cr-toast button:focus-visible{outline:2px solid #f59e0b;outline-offset:2px}',
+        '@media (prefers-reduced-motion:reduce){.cr-toast{transition:none}}',
         '.cr-inline{position:fixed;inset:0;z-index:1100;background:#fff;display:flex;flex-direction:column}',
         '.cr-inline-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 16px;background:#1e3a8a;color:#fff;font-size:.88rem;font-weight:700;flex-wrap:wrap}',
         '.cr-inline-bar small{font-weight:500;opacity:.8}',
@@ -6906,7 +6998,7 @@ function _crScreenCss() {
         '.cr-inline-bar .cr-inline-close{background:rgba(255,255,255,.15);color:#fff}',
         '.cr-inline-frame{flex:1;border:0;width:100%;background:#fff}',
         '@media (max-width:768px){.cr-btn{flex:1 1 auto;width:auto} .cr-modal .cr-two{grid-template-columns:1fr}}',
-        '@media print{.cr-btn-row,.cr-overlay,.cr-dlg{display:none !important}}' // 모달 열린 채 Ctrl+P 시 인쇄물 침범 방지
+        '@media print{.cr-btn-row,.cr-overlay,.cr-dlg,.cr-toast{display:none !important}}' // 모달·토스트 열린 채 Ctrl+P 시 인쇄물 침범 방지
     ].join('\n');
 }
 

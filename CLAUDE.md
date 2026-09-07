@@ -48,8 +48,13 @@
 - 독립 블록 위치: `INITIAL CALCULATIONS` 직전 (`var FEATURE_CALC_REPORT`부터 `document.addEventListener('DOMContentLoaded', _crInit)`까지). 접두사 `_cr`.
 - **기존 calc 함수·DOMContentLoaded 초기화 수정 없음** (예외 1건: calcSilson 상세표 루프 `ratio`→`rowRatio` 개명 — ESLint no-redeclare 해소, 전략실장 승인 2026-09-06, 동작 동일). 리포트는 화면 DOM에 이미 계산된 결과를 읽어 재배치만 한다(새 계산 0). 기존 마크업 변경은 속성뿐(동작 무영향): `data-calc-report="appendix"` 6곳(실손 4·갱신형 2) + `data-cr="cr-*"` 9곳(id 없는 결과 카드 컨테이너 표식 — 대출·종소세 2·부동산 5·상속 종신전략).
 - **2026-09-07 v=20260907a `true` 공개** (main `5497b2b`, 전략실장 승인. 트리플 A 4회 GO=Phase1·차트 델타·Phase2·true 전환 / 실측 피드백 5건 반영 완결). 문제 신고 시 개인 롤백: `localStorage._flag_calc_report='false'` 후 새로고침(버튼·스타일·모달 전부 미생성, 화면 바이트 동일). 전체 롤백=상수 false 재배포.
-### ↺ 탭별 초기화 버튼 (v=20260907b, `FEATURE_CALC_RESET=false` 미공개)
-- 위치: 리포트 출력 버튼 **왼쪽**(같은 `.cr-btn-row`, 보조 톤 `.cr-btn-reset`). 11탭 전체. 옵트인 `localStorage._flag_calc_reset='true'`.
+### ↺ 탭별 초기화 버튼 (v=20260907d, `FEATURE_CALC_RESET=true` **700명 공개**)
+- 위치: 리포트 출력 버튼 **왼쪽**(같은 `.cr-btn-row`, 보조 톤 `.cr-btn-reset`). 11탭 전체.
+- **2026-09-07 v=20260907d `true` 공개**(전략실장 승인, 트리플 A GO 🔴0). 개인 롤백 `localStorage._flag_calc_reset='false'`+새로고침 / 전체 롤백=상수 false 재배포. CI grep 6패턴 가드.
+- **파괴적 액션 안전장치 3중**(제거 금지): ①확인 모달 ②모달 기본 포커스=**취소**(warning/danger+취소 있을 때. 습관적 Enter 사고 방지) ③초기화 후 **8초 되돌리기 토스트**(`_crShowUndo`, 직전 값 스냅샷 복원). ESC·배경 클릭은 항상 취소 의미.
+- 되돌리기 `_crRestoreSnapshot`은 복원도 "값 대입 + 동일 이벤트 발화" 방식이고 **2차 패스**로 연쇄 덮어쓰기(나이→갱신률) 보정. 실측: 상속 탭 23입력 마구 변경→초기화→되돌리기 = 직전 상태와 완전 일치.
+- 초기화 시 함께 정리: 역산 결과 라벨(`[id$="-hist-result"]`), **실시간 환율 수신 시각**(`[id$="-rate-timestamp"]` — 값은 기본값인데 "방금 받은 환율"로 오인 방지).
+- ⚠️ **활성 서브탭은 복원하지 않는다**(값만 초기화, 보던 탭 유지 = 의도). "로드 시점 재현"은 값 기준 표현.
 - **동작 원리(영구 룰)**: `_crResetTab(tabId)`은 값을 `defaultValue`/`defaultChecked`/`defaultSelected`로 되돌린 뒤 **사용자 조작과 동일한 이벤트를 발화**한다 — 라디오=기본 라벨 `click()`(라벨 onclick이 상태변수·active·영역전환 담당), 체크박스·셀렉트=`change`, 텍스트·숫자·슬라이더=`input`+`change`. **기존 calc 함수 직접 호출 금지** — 인라인 핸들러가 재계산까지 담당하므로 호출 경로가 곧 로드 시점 재현.
 - 전제: 모든 토글 핸들러가 **상태 기반 멱등**(checked를 읽어 set). 새 토글 추가 시 이 성질 유지 의무 — 아니면 초기화 결과가 로드 상태와 달라진다.
 - 예외 훅 `spec.resetAfter`: 로드 시 값이 함수로 덮어써지는 탭만(갱신형 `updateRnDefaultRate()`+`calcRenewal()` — rn-rate는 마크업 15%가 아니라 나이 기반 10%). DOM 순서상 rn-age가 rn-rate보다 앞이라 필요.

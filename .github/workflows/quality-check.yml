@@ -60,6 +60,17 @@ jobs:
             fi
           done
 
+      - name: 초기화 버튼·확인 모달 잔존 확인 (v=20260907d 공개)
+        run: |
+          for pat in "var FEATURE_CALC_RESET = true" "_crResetTab" "_crResetTabApply" "_crModal" "_crShowUndo" "cr-btn-reset"; do
+            if grep -qF "$pat" index.html; then
+              echo "✅ $pat 존재"
+            else
+              echo "❌ $pat 미존재 — 초기화 버튼 회귀"
+              exit 1
+            fi
+          done
+
   site-health:
     name: 사이트 접속 확인
     runs-on: ubuntu-latest
