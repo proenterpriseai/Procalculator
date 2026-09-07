@@ -5856,6 +5856,7 @@ function calcRenewal() {
    공통 제외: 입력 UI, 교육용 참고 박스(data-calc-report="appendix" → '근거 자료 첨부' 옵션일 때만 부록).
    ============================================================ */
 var FEATURE_CALC_REPORT = true; // v=20260907a 700명 공개 (전략실장 승인 2026-09-07, 트리플 A 3회 GO·실측 피드백 5건 반영). 비활성: localStorage._flag_calc_report='false'
+var FEATURE_CALC_RESET = false; // v=20260907b 탭별 초기화 버튼 (리포트 버튼 왼쪽). 검증 전 false — 옵트인: localStorage._flag_calc_reset='true'
 var _CR_AGENT_KEY = 'pro_calc_report_agent'; // 설계사명·연락처 기억(localStorage, JSON)
 var _CR_TABLE_STEP = 5; // 연도별 상세표 요약 간격(년)
 
@@ -5866,6 +5867,90 @@ function _isCalcReportOn() {
         if (ss === 'false') return false;
     } catch (e) {}
     return FEATURE_CALC_REPORT;
+}
+function _isCalcResetOn() {
+    try {
+        var ss = localStorage.getItem('_flag_calc_reset');
+        if (ss === 'true') return true;
+        if (ss === 'false') return false;
+    } catch (e) {}
+    return FEATURE_CALC_RESET;
+}
+
+/* ── 탭 초기화 (v=20260907b) ──
+   원리: 값을 HTML 기본값(defaultValue/defaultChecked/defaultSelected)으로 되돌리고,
+   사용자가 조작했을 때와 동일한 이벤트(input/change/label click)를 발화시켜
+   기존 인라인 핸들러가 라벨·표시 상태·재계산까지 처리하게 한다(기존 함수 직접 호출 0).
+   모든 토글 핸들러는 상태 기반(checked 읽어서 set)이라 멱등 — 발화 순서 무관하게 종착 상태 = 최초 로드 상태. */
+function _crResetTab(tabId) {
+    var tab = document.getElementById(tabId);
+    if (!tab) return;
+    if (!confirm('현재 카테고리의 입력값을 모두 기본값으로 되돌립니다. 계속할까요?')) return;
+    // 항목 단위 try — 한 핸들러 예외가 나머지 초기화를 막지 않게(트리플 A 🟡: 단일 try의 부분 초기화 침묵 방지)
+    var errs = 0;
+    function safely(fn) {
+        try { fn(); } catch (e) {
+            errs++;
+            if (typeof console !== 'undefined' && console.warn) console.warn('[_crResetTab]', e && e.message);
+        }
+    }
+    // 1) 라디오: 기본 선택 라벨을 클릭 — 라벨 onclick이 상태 변수·active 클래스·영역 전환·재계산을 담당
+    var groups = {};
+    Array.prototype.forEach.call(tab.querySelectorAll('input[type="radio"]'), function (r) {
+        (groups[r.name] = groups[r.name] || []).push(r);
+    });
+    Object.keys(groups).forEach(function (name) {
+        safely(function () {
+            var def = null;
+            groups[name].forEach(function (r) { if (r.defaultChecked) def = r; });
+            if (!def) def = groups[name][0];
+            var lab = document.querySelector('label[for="' + def.id + '"]');
+            if (lab) lab.click();
+            else def.checked = true;
+        });
+    });
+    // 2) 체크박스: 기본값 복원 후 change 발화(토글 함수가 표시 상태 정리)
+    Array.prototype.forEach.call(tab.querySelectorAll('input[type="checkbox"]'), function (c) {
+        safely(function () {
+            if (c.checked !== c.defaultChecked) {
+                c.checked = c.defaultChecked;
+                c.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+    // 3) 셀렉트: defaultSelected 옵션(markup selected 속성) 복원, 없으면 첫 옵션
+    Array.prototype.forEach.call(tab.querySelectorAll('select'), function (s) {
+        safely(function () {
+            var idx = 0;
+            for (var i = 0; i < s.options.length; i++) { if (s.options[i].defaultSelected) { idx = i; break; } }
+            if (s.selectedIndex !== idx) {
+                s.selectedIndex = idx;
+                s.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+    // 4) 텍스트·숫자·슬라이더: defaultValue 복원 + input/change 발화(라벨 strong·쌍 슬라이더 동기 포함)
+    Array.prototype.forEach.call(tab.querySelectorAll('input[type="text"],input[type="number"],input[type="range"]'), function (el) {
+        safely(function () {
+            if (el.value !== el.defaultValue) {
+                el.value = el.defaultValue;
+                el.dispatchEvent(new Event('input'));
+                el.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+    // 5) 역산 결과 안내 라벨 제거(값은 이미 기본으로 복원됨) + 접이식 열림 상태를 로드 시점으로(_crInit 스냅샷)
+    Array.prototype.forEach.call(tab.querySelectorAll('[id$="-hist-result"]'), function (n) { n.innerHTML = ''; });
+    Array.prototype.forEach.call(tab.querySelectorAll('details'), function (d) {
+        safely(function () { if (d.dataset.crOpen) d.open = d.dataset.crOpen === '1'; });
+    });
+    // 6) 탭별 로드 시점 초기화 재현 — 최초 로드 때 값이 함수로 덮어써지는 탭(갱신형 rn-rate=나이 기반)은 명세 훅으로
+    safely(function () {
+        var spec = _crSpec(tabId);
+        if (spec && spec.resetAfter) spec.resetAfter();
+    });
+    if (errs > 0) alert('일부 항목이 초기화되지 않았습니다. 새로고침(F5)하면 전체가 기본값으로 돌아갑니다.');
+    try { _logCalcUsageImmediate('calc_reset', tabId); } catch (e) {}
 }
 
 /* 순수 함수 — 긴 표 요약 시 유지할 행 판정 (tests/unit-tests.js 대상)
@@ -5992,6 +6077,7 @@ var _CR_SPECS = {
             { kind: 'raw', id: 'rn-verdict', title: '분석 결과' },
             { kind: 'table', id: 'rn-detail-table', title: '연도별 상세 분석표', unit: '년' }
         ],
+        resetAfter: function () { updateRnDefaultRate(); calcRenewal(); }, // 로드 시 rn-rate=나이 기반 기본값(35세→10%) 재현 — 마크업 15%가 아님
         sources: '갱신형 인상폭 참고: 금융감독원 보험상품 비교공시 · 연령대별 기본 갱신률은 참고 추정치이며 보험사·상품·손해율에 따라 달라질 수 있습니다'
     },
     'tab-retirement': {
@@ -6661,10 +6747,12 @@ function _crOpenModal(tabId) {
 
 function _crScreenCss() {
     return [
-        '.cr-btn-row{display:flex;justify-content:flex-end;margin:10px 0 2px}',
+        '.cr-btn-row{display:flex;justify-content:flex-end;gap:8px;margin:10px 0 2px}',
         '.cr-btn{padding:9px 16px;border-radius:8px;border:1.5px solid #1e3a8a;background:#fff;color:#1e3a8a;font-weight:700;font-size:.85rem;cursor:pointer;font-family:inherit}',
         '.cr-btn:hover{background:#eff6ff}',
         '.cr-btn:focus-visible{outline:2px solid #f59e0b;outline-offset:2px}',
+        '.cr-btn-reset{border-color:#94a3b8;color:#475569}', // 보조 톤 — 리포트(주 액션)와 위계 구분
+        '.cr-btn-reset:hover{background:#f1f5f9}',
         '.cr-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}',
         '.cr-modal{background:#fff;border-radius:14px;width:100%;max-width:440px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:92vh;overflow-y:auto}',
         '.cr-modal h3{font-size:1.05rem;font-weight:800;color:#1e3a8a;margin-bottom:4px}',
@@ -6685,13 +6773,15 @@ function _crScreenCss() {
         '.cr-inline-bar .cr-inline-print{background:#f59e0b;color:#1e293b}',
         '.cr-inline-bar .cr-inline-close{background:rgba(255,255,255,.15);color:#fff}',
         '.cr-inline-frame{flex:1;border:0;width:100%;background:#fff}',
-        '@media (max-width:768px){.cr-btn{width:100%} .cr-modal .cr-two{grid-template-columns:1fr}}',
+        '@media (max-width:768px){.cr-btn{flex:1 1 auto;width:auto} .cr-modal .cr-two{grid-template-columns:1fr}}',
         '@media print{.cr-btn-row,.cr-overlay{display:none !important}}'
     ].join('\n');
 }
 
 function _crInit() {
-    if (!_isCalcReportOn()) return; // Flag=false → 아무것도 하지 않음 (기존 화면 바이트 동일)
+    var reportOn = _isCalcReportOn();
+    var resetOn = _isCalcResetOn();
+    if (!reportOn && !resetOn) return; // 두 Flag 모두 off → 아무것도 하지 않음 (기존 화면 바이트 동일)
     if (document.getElementById('cr-style')) return;
     var st = document.createElement('style');
     st.id = 'cr-style';
@@ -6703,12 +6793,26 @@ function _crInit() {
         if (!h1) return;
         var row = document.createElement('div');
         row.className = 'cr-btn-row';
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'cr-btn';
-        btn.innerHTML = '&#x1F9FE; 리포트 출력';
-        btn.addEventListener('click', function () { _crOpenModal(tabId); });
-        row.appendChild(btn);
+        if (resetOn) { // 초기화 = 리포트 버튼 왼쪽 (v=20260907b)
+            // 접이식 기본 열림 상태 스냅샷(로드 직후=마크업 기본) — 리셋 시 복원용. data 속성만 추가, 동작 무영향.
+            Array.prototype.forEach.call(tab.querySelectorAll('details'), function (d) {
+                if (!d.dataset.crOpen) d.dataset.crOpen = d.open ? '1' : '0';
+            });
+            var rbtn = document.createElement('button');
+            rbtn.type = 'button';
+            rbtn.className = 'cr-btn cr-btn-reset';
+            rbtn.innerHTML = '&#x21BA; 초기화';
+            rbtn.addEventListener('click', function () { _crResetTab(tabId); });
+            row.appendChild(rbtn);
+        }
+        if (reportOn) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'cr-btn';
+            btn.innerHTML = '&#x1F9FE; 리포트 출력';
+            btn.addEventListener('click', function () { _crOpenModal(tabId); });
+            row.appendChild(btn);
+        }
         h1.insertAdjacentElement('afterend', row);
     });
 }
