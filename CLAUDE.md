@@ -54,7 +54,15 @@
 - 전제: 모든 토글 핸들러가 **상태 기반 멱등**(checked를 읽어 set). 새 토글 추가 시 이 성질 유지 의무 — 아니면 초기화 결과가 로드 상태와 달라진다.
 - 예외 훅 `spec.resetAfter`: 로드 시 값이 함수로 덮어써지는 탭만(갱신형 `updateRnDefaultRate()`+`calcRenewal()` — rn-rate는 마크업 15%가 아니라 나이 기반 10%). DOM 순서상 rn-age가 rn-rate보다 앞이라 필요.
 - 접이식(`details`) 열림 상태는 `_crInit`이 로드 직후 `data-cr-open`으로 스냅샷 → 초기화 시 복원.
-- 항목 단위 `safely()` try — 한 핸들러 예외가 나머지를 막지 않고, 실패 시 "새로고침하면 전체 복귀" 안내 alert. 사용량 로그 action `calc_reset`.
+- 항목 단위 `safely()` try — 한 핸들러 예외가 나머지를 막지 않고, 실패 시 "새로고침하면 전체 복귀" 안내 모달. 사용량 로그 action `calc_reset`.
+
+### 💬 확인 모달 `_crModal` (v=20260907c) — 네이티브 confirm/alert 대체
+- **디자인 = 보장분석 `customModal` 토큰 이식**(글래스 카드 radius 24·`scale(.9)→1` 스프링 `cubic-bezier(.34,1.56,.64,1)`·아이콘 원형 60px·오버레이 `rgba(15,23,42,.6)`+blur 8px·버튼 radius 12). 두 시스템 UI 통일이 목적이라 **임의 변경 금지**.
+- 호출 `_crModal({type:'warning'|'danger'|'info'|'success', title, message, confirmText, cancelText, showCancel, onConfirm, onCancel})`. **비동기 콜백 패턴**(confirm 동기 리턴값 대체) — 새 확인 절차 추가 시 동기 confirm 쓰지 말 것.
+- 매 호출 DOM 생성 → 닫힘 시 제거(`_crDlgClose`, `_crClosing` 이중 가드 + transitionend + 400ms 폴백). ESC·배경 클릭 닫힘, 확인 버튼 자동 포커스, `prefers-reduced-motion` 존중. z-index 1200(리포트 오버레이 1000·인라인 뷰어 1100 위).
+- 적용 3곳: 초기화 확인(warning) / 부분 실패 안내(danger) / 리포트 0원 가드(info).
+- 동반: 리포트 입력 모달 `.cr-modal`도 같은 계열로 정렬(radius 24·글래스·그림자·버튼 hover). ⚠️`FEATURE_CALC_REPORT=true` 라이브라 이 CSS는 700명에게 즉시 보임.
+- ⚠️ 잔여 네이티브 `alert` 1건 = 기존 `fetchExchangeRate` 실패 안내(기존 함수, 사전 승인 대상이라 미변경).
 - ⚠️ 초기화는 **현재 탭만**. 달러 탭에서 '실시간 수신'으로 받은 환율도 하드코딩 기본값으로 되돌아간다.
 
 - CI 가드: `.github/workflows/quality-check.yml`에 리포트 잔존 grep 5패턴(`var FEATURE_CALC_REPORT = true`·`_crInit`·`_crBuildReportHtml`·`_CR_SPECS`·`cr-tablewrap`) — 삭제·회귀 시 push 차단. **flag 라인 수정 시 CI 패턴도 동반 수정 의무.**

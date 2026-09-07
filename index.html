@@ -5877,6 +5877,82 @@ function _isCalcResetOn() {
     return FEATURE_CALC_RESET;
 }
 
+/* ── 확인 모달 (v=20260907c) — 브라우저 기본 confirm/alert 대체 ──
+   디자인 = 보장분석 시스템 `customModal` 토큰 이식(글래스 카드 24px·스프링 확대·아이콘 원형 60px·2버튼 12px).
+   비동기 콜백 패턴(confirm의 동기 리턴값 대체). 접근성: ESC 닫기·확인 버튼 포커스·reduced-motion 존중. */
+function _crReducedMotion() {
+    try { return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; }
+}
+
+function _crDlgClose(ov, cb) {
+    if (!ov || ov._crClosing) return;
+    ov._crClosing = true;
+    if (ov._crKeyHandler) document.removeEventListener('keydown', ov._crKeyHandler);
+    ov.classList.remove('show');
+    var done = function () {
+        if (!ov.parentNode) return;
+        ov.parentNode.removeChild(ov);
+        if (ov._crPrevFocus && ov._crPrevFocus.focus) { try { ov._crPrevFocus.focus(); } catch (e) {} } // 트리거 버튼으로 포커스 복귀
+        if (cb) cb();
+    };
+    // reduced-motion이면 transition이 없어 transitionend가 발화하지 않음 → 콜백 400ms 지연 방지(트리플 A 🟡)
+    if (_crReducedMotion()) { done(); return; }
+    ov.addEventListener('transitionend', done);
+    setTimeout(done, 400); // transitionend 미발화 폴백
+}
+
+function _crModal(opts) {
+    opts = opts || {};
+    var type = opts.type || 'info';
+    var icons = { warning: 'fa-exclamation-triangle', danger: 'fa-circle-exclamation', info: 'fa-circle-info', success: 'fa-check' };
+    var ov = document.createElement('div');
+    ov.className = 'cr-dlg';
+    ov.setAttribute('role', 'dialog');
+    ov.setAttribute('aria-modal', 'true');
+    ov.innerHTML =
+        '<div class="cr-dlg-card">' +
+        '<div class="cr-dlg-icon ' + type + '"><i class="fas ' + (icons[type] || icons.info) + '"></i></div>' +
+        '<div class="cr-dlg-title">' + _crEsc(opts.title || '알림') + '</div>' +
+        '<div class="cr-dlg-msg">' + _crEsc(opts.message || '').replace(/\n/g, '<br>') + '</div>' +
+        '<div class="cr-dlg-btns">' +
+        (opts.showCancel ? '<button type="button" class="cr-dlg-cancel">' + _crEsc(opts.cancelText || '취소') + '</button>' : '') +
+        '<button type="button" class="cr-dlg-ok">' + _crEsc(opts.confirmText || '확인') + '</button>' +
+        '</div></div>';
+    document.body.appendChild(ov);
+
+    var fire = function (fn) { _crDlgClose(ov, fn); };
+    ov.querySelector('.cr-dlg-ok').addEventListener('click', function () { fire(opts.onConfirm); });
+    var cancelBtn = ov.querySelector('.cr-dlg-cancel');
+    if (cancelBtn) cancelBtn.addEventListener('click', function () { fire(opts.onCancel); });
+    ov.addEventListener('click', function (e) { if (e.target === ov) fire(opts.showCancel ? opts.onCancel : opts.onConfirm); });
+    ov._crPrevFocus = document.activeElement;
+    ov._crKeyHandler = function (e) {
+        if (e.key === 'Escape') { fire(opts.showCancel ? opts.onCancel : opts.onConfirm); return; }
+        if (e.key !== 'Tab') return;
+        // 포커스 트랩 — 모달 밖으로 나가지 않게 순환(트리플 A 🟡 접근성)
+        var f = ov.querySelectorAll('button');
+        if (!f.length) return;
+        var first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        else if (ov.contains(document.activeElement) === false) { e.preventDefault(); first.focus(); }
+    };
+    document.addEventListener('keydown', ov._crKeyHandler);
+
+    // 페이드/스프링 진입 — 삽입 후 페인트 1회를 거쳐야 transition이 걸리므로 rAF 2중첩.
+    // ⚠️ 백그라운드·숨김 문서에서는 rAF가 멈춰 모달이 opacity 0으로 남으므로 setTimeout 폴백 필수(차트 이미지화와 동일 함정).
+    var reveal = function () {
+        if (ov._crShown || !ov.parentNode) return;
+        ov._crShown = true;
+        ov.classList.add('show');
+        var ok = ov.querySelector('.cr-dlg-ok');
+        if (ok) ok.focus();
+    };
+    requestAnimationFrame(function () { requestAnimationFrame(reveal); });
+    setTimeout(reveal, 60);
+    return ov;
+}
+
 /* ── 탭 초기화 (v=20260907b) ──
    원리: 값을 HTML 기본값(defaultValue/defaultChecked/defaultSelected)으로 되돌리고,
    사용자가 조작했을 때와 동일한 이벤트(input/change/label click)를 발화시켜
@@ -5885,7 +5961,28 @@ function _isCalcResetOn() {
 function _crResetTab(tabId) {
     var tab = document.getElementById(tabId);
     if (!tab) return;
-    if (!confirm('현재 카테고리의 입력값을 모두 기본값으로 되돌립니다. 계속할까요?')) return;
+    // ⚠️ 문구는 반드시 '탭' 기준 — _crSpec은 활성 서브탭 명세라 "취득세만 초기화"로 오해를 준다(트리플 A 🟡).
+    // 실제 초기화 범위는 tab 전체(서브탭 포함)이므로 h1 제목 + 하위 탭 목록을 명시한다.
+    var h1 = tab.querySelector('h1.page-title');
+    var tabTitle = h1 ? h1.textContent.replace(/^[^가-힣A-Za-z]+/, '').trim() : '현재 카테고리';
+    var subBtns = tab.querySelectorAll('.sub-tab-btn');
+    var subNote = subBtns.length > 1
+        ? '\n하위 탭(' + Array.prototype.map.call(subBtns, function (b) {
+            return b.textContent.replace(/^[^가-힣A-Za-z]+/, '').trim();
+        }).join(' · ') + ')도 함께 초기화됩니다.'
+        : '';
+    _crModal({
+        type: 'warning',
+        title: '입력값 초기화',
+        message: '「' + tabTitle + '」의 입력값을 모두 기본값으로 되돌립니다.' + subNote + '\n계속할까요?',
+        confirmText: '초기화',
+        cancelText: '취소',
+        showCancel: true,
+        onConfirm: function () { _crResetTabApply(tabId, tab); }
+    });
+}
+
+function _crResetTabApply(tabId, tab) {
     // 항목 단위 try — 한 핸들러 예외가 나머지 초기화를 막지 않게(트리플 A 🟡: 단일 try의 부분 초기화 침묵 방지)
     var errs = 0;
     function safely(fn) {
@@ -5949,7 +6046,14 @@ function _crResetTab(tabId) {
         var spec = _crSpec(tabId);
         if (spec && spec.resetAfter) spec.resetAfter();
     });
-    if (errs > 0) alert('일부 항목이 초기화되지 않았습니다. 새로고침(F5)하면 전체가 기본값으로 돌아갑니다.');
+    if (errs > 0) {
+        _crModal({
+            type: 'danger',
+            title: '일부 항목 초기화 실패',
+            message: '일부 입력값이 초기화되지 않았습니다.\n새로고침(F5)하면 전체가 기본값으로 돌아갑니다.',
+            confirmText: '확인'
+        });
+    }
     try { _logCalcUsageImmediate('calc_reset', tabId); } catch (e) {}
 }
 
@@ -6700,7 +6804,10 @@ function _crOpenModal(tabId) {
     var spec = _crSpec(tabId); // 서브탭 탭은 이 시점의 활성 서브탭 명세
     if (!spec) return;
     var guardMsg = spec.guard ? spec.guard() : '';
-    if (guardMsg) { alert(guardMsg); return; }
+    if (guardMsg) {
+        _crModal({ type: 'info', title: '입력값이 필요합니다', message: guardMsg, confirmText: '확인' });
+        return;
+    }
     _crCloseModal();
 
     var saved = _crLoadAgent();
@@ -6754,7 +6861,8 @@ function _crScreenCss() {
         '.cr-btn-reset{border-color:#94a3b8;color:#475569}', // 보조 톤 — 리포트(주 액션)와 위계 구분
         '.cr-btn-reset:hover{background:#f1f5f9}',
         '.cr-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}',
-        '.cr-modal{background:#fff;border-radius:14px;width:100%;max-width:440px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:92vh;overflow-y:auto}',
+        // 리포트 입력 모달 — 확인 모달과 같은 계열로 정돈(글래스 카드·radius 24·동일 그림자)
+        '.cr-modal{background:rgba(255,255,255,.97);border:1px solid rgba(255,255,255,.5);border-radius:24px;width:100%;max-width:440px;padding:26px 26px 20px;box-shadow:0 20px 50px rgba(0,0,0,.15);max-height:92vh;overflow-y:auto}',
         '.cr-modal h3{font-size:1.05rem;font-weight:800;color:#1e3a8a;margin-bottom:4px}',
         '.cr-modal .cr-sub{font-size:.8rem;color:#64748b;margin-bottom:10px;line-height:1.5}',
         '.cr-modal label{display:block;font-size:.8rem;font-weight:600;color:#334155;margin:10px 0 4px}',
@@ -6763,9 +6871,33 @@ function _crScreenCss() {
         '.cr-modal .cr-check{display:flex;align-items:center;gap:8px;font-size:.82rem;color:#334155;margin-top:12px;font-weight:500;cursor:pointer}',
         '.cr-modal .cr-check input{width:16px;height:16px;accent-color:#1e3a8a}',
         '.cr-modal .cr-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}',
-        '.cr-modal .cr-actions button{padding:9px 16px;border-radius:8px;border:0;font-weight:700;cursor:pointer;font-family:inherit;font-size:.88rem}',
-        '.cr-modal .cr-go{background:#1e3a8a;color:#fff}',
-        '.cr-modal .cr-cancel{background:#f1f5f9;color:#334155}',
+        '.cr-modal .cr-actions button{padding:11px 18px;border-radius:12px;border:0;font-weight:700;cursor:pointer;font-family:inherit;font-size:.88rem;transition:all .2s}',
+        '.cr-modal .cr-go{background:#1e3a8a;color:#fff;box-shadow:0 4px 12px rgba(30,58,138,.2)}',
+        '.cr-modal .cr-go:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(30,58,138,.3)}',
+        '.cr-modal .cr-cancel{background:#f1f5f9;color:#64748b}',
+        '.cr-modal .cr-cancel:hover{background:#e2e8f0;color:#475569}',
+        '.cr-overlay{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}',
+        '@media (prefers-reduced-motion:reduce){.cr-modal .cr-go:hover{transform:none}}',
+        // 확인 모달(v=20260907c) — 보장분석 customModal 디자인 토큰 이식. z-index 1200=리포트 오버레이(1000)·인라인 뷰어(1100) 위.
+        '.cr-dlg{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.6);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);opacity:0;transition:opacity .3s ease}',
+        '.cr-dlg.show{opacity:1}',
+        '.cr-dlg-card{background:rgba(255,255,255,.97);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.5);border-radius:24px;padding:32px;width:100%;max-width:400px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.15);transform:scale(.9);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}',
+        '.cr-dlg.show .cr-dlg-card{transform:scale(1)}',
+        '.cr-dlg-icon{width:60px;height:60px;border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:28px}',
+        '.cr-dlg-icon.warning{background:#ffedd5;color:#ea580c}',
+        '.cr-dlg-icon.danger{background:#fee2e2;color:#dc2626}',
+        '.cr-dlg-icon.info{background:#dbeafe;color:#2563eb}',
+        '.cr-dlg-icon.success{background:#dcfce7;color:#16a34a}',
+        '.cr-dlg-title{font-size:1.25rem;font-weight:800;color:#1e293b;margin-bottom:12px;letter-spacing:-.01em}',
+        '.cr-dlg-msg{font-size:.94rem;color:#64748b;margin-bottom:28px;line-height:1.65;word-break:keep-all}',
+        '.cr-dlg-btns{display:flex;gap:12px;justify-content:center}',
+        '.cr-dlg-btns button{flex:1;padding:12px;border-radius:12px;font-weight:700;font-size:.88rem;cursor:pointer;border:none;font-family:inherit;transition:all .2s}',
+        '.cr-dlg-btns button:focus-visible{outline:2px solid #f59e0b;outline-offset:2px}',
+        '.cr-dlg-ok{background:#1e3a8a;color:#fff;box-shadow:0 4px 12px rgba(30,58,138,.2)}',
+        '.cr-dlg-ok:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(30,58,138,.3)}',
+        '.cr-dlg-cancel{background:#f1f5f9;color:#64748b}',
+        '.cr-dlg-cancel:hover{background:#e2e8f0;color:#475569}',
+        '@media (prefers-reduced-motion:reduce){.cr-dlg,.cr-dlg-card{transition:none} .cr-dlg-ok:hover{transform:none}}',
         '.cr-inline{position:fixed;inset:0;z-index:1100;background:#fff;display:flex;flex-direction:column}',
         '.cr-inline-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 16px;background:#1e3a8a;color:#fff;font-size:.88rem;font-weight:700;flex-wrap:wrap}',
         '.cr-inline-bar small{font-weight:500;opacity:.8}',
@@ -6774,7 +6906,7 @@ function _crScreenCss() {
         '.cr-inline-bar .cr-inline-close{background:rgba(255,255,255,.15);color:#fff}',
         '.cr-inline-frame{flex:1;border:0;width:100%;background:#fff}',
         '@media (max-width:768px){.cr-btn{flex:1 1 auto;width:auto} .cr-modal .cr-two{grid-template-columns:1fr}}',
-        '@media print{.cr-btn-row,.cr-overlay{display:none !important}}'
+        '@media print{.cr-btn-row,.cr-overlay,.cr-dlg{display:none !important}}' // 모달 열린 채 Ctrl+P 시 인쇄물 침범 방지
     ].join('\n');
 }
 
