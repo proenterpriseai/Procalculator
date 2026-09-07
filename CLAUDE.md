@@ -8,7 +8,7 @@
 | 항목 | 값 |
 |------|-----|
 | 버전 태그 | **v=20260907e** (flag 주석 기준. 계산기는 단일 HTML이라 `?v=` 에셋 태그 없음) |
-| main 커밋 | `ba361da` 위 v=e 커밋 (아래 Flag 표와 함께 갱신) |
+| main 커밋 | **`fcb9629`** (2026-09-07 · 이후 배포마다 이 칸 갱신) |
 | 공개 Flag | `FEATURE_CALC_USAGE_LOGGING`(v=20260512b) · `FEATURE_CALC_REPORT`(v=20260907a) · `FEATURE_CALC_RESET`(v=20260907d) — **미공개 0** |
 | Flag 오버라이드 | `sessionStorage._flag_calc_report` / `_flag_calc_reset` (브라우저 닫으면 소멸) |
 
