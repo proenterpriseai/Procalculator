@@ -8,9 +8,10 @@
 | 항목 | 값 |
 |------|-----|
 | 버전 태그 | **v=20260907e** (flag 주석 기준. 계산기는 단일 HTML이라 `?v=` 에셋 태그 없음) |
-| main 커밋 | **`fcb9629`** (2026-09-07 · 이후 배포마다 이 칸 갱신) |
+| 기능 최종 커밋 | **`fcb9629`** (2026-09-07 · 코드 변경 커밋 기준. 이후 문서 전용 커밋은 제외) |
 | 공개 Flag | `FEATURE_CALC_USAGE_LOGGING`(v=20260512b) · `FEATURE_CALC_REPORT`(v=20260907a) · `FEATURE_CALC_RESET`(v=20260907d) — **미공개 0** |
-| Flag 오버라이드 | `sessionStorage._flag_calc_report` / `_flag_calc_reset` (브라우저 닫으면 소멸) |
+| Flag 오버라이드 | `sessionStorage._flag_calc_report` / `_flag_calc_reset` (탭 닫으면 소멸, Chrome 세션 복원 시 지연 가능) |
+| 배포 원장 | 2026-09-07 하루 13커밋 상세 → `memory/ledger-calculator-2026-09-07.md` |
 
 ## 파일 구조
 | 파일 | 역할 |
