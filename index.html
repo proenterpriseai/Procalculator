@@ -6007,11 +6007,24 @@ function _crChartImage(canvasId) {
     try {
         var c = (typeof Chart !== 'undefined' && Chart.getChart) ? Chart.getChart(canvasId) : null;
         if (!c) return '';
-        c.stop();
-        c.resize();       // 숨김 탭에서 생성된 차트(캔버스 0×0) 대비 — 현재 컨테이너 크기로 동기 재계산
-        c.update('none'); // 애니메이션 없이 즉시 렌더 → 빈 캔버스 방지
-        var data = c.toBase64Image('image/png', 1);
-        return (data && data.length > 100) ? data : ''; // 'data:,' 같은 빈 이미지는 섹션 자체 생략
+        // 숨김 문서(document.hidden)·백그라운드 탭에서는 rAF가 멈춰 update('none')만으로는 그리지 않음(보장분석 인쇄 교훈).
+        // animation=false로 animator를 우회해 update→draw를 동기 실행. 복원은 원래 키 유무 기준(리뷰 권고):
+        // c.options 게터는 프록시를 반환하므로 그 값을 되쓰면 config.options에 키가 잔류 → 미설정이던 차트는 delete로 원상 복구.
+        var hadAnim = Object.prototype.hasOwnProperty.call(c.config.options || {}, 'animation');
+        var prevAnim = hadAnim ? c.config.options.animation : null;
+        try {
+            c.options.animation = false;
+            c.stop();
+            c.resize();       // 숨김 탭에서 생성된 차트(캔버스 0×0) 대비 — 현재 컨테이너 크기로 동기 재계산
+            c.update('none'); // animation=false라 update 내부 render가 동기 draw까지 수행
+            c.draw();         // rAF 없이 한 번 더 직접 페인트(멱등)
+            var data = c.toBase64Image('image/png', 1);
+            // 크기 임계는 HiDPI에서 빈 PNG도 통과시켜 무의미(리뷰 지적) → 형식·캔버스 검사로 대체
+            return (c.width > 0 && c.height > 0 && typeof data === 'string' && data.indexOf('data:image/png;base64,') === 0) ? data : '';
+        } finally {
+            if (hadAnim) c.options.animation = prevAnim;
+            else delete c.options.animation;
+        }
     } catch (e) { return ''; }
 }
 
