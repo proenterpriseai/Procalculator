@@ -49,9 +49,9 @@ jobs:
             exit 1
           fi
 
-      - name: 리포트 출력 기능 잔존 확인 (v=20260907a 공개)
+      - name: 리포트 출력 기능 잔존 확인 (v=20260907e 공개)
         run: |
-          for pat in "var FEATURE_CALC_REPORT = true" "_crInit" "_crBuildReportHtml" "_CR_SPECS" "cr-tablewrap"; do
+          for pat in "var FEATURE_CALC_REPORT = true" "_crInit" "_crBuildReportHtml" "_CR_SPECS" "cr-tablewrap" "_crFlagOverride"; do
             if grep -qF "$pat" index.html; then
               echo "✅ $pat 존재"
             else
@@ -60,7 +60,7 @@ jobs:
             fi
           done
 
-      - name: 초기화 버튼·확인 모달 잔존 확인 (v=20260907d 공개)
+      - name: 초기화 버튼·확인 모달 잔존 확인 (v=20260907e 공개)
         run: |
           for pat in "var FEATURE_CALC_RESET = true" "_crResetTab" "_crResetTabApply" "_crModal" "_crShowUndo" "cr-btn-reset"; do
             if grep -qF "$pat" index.html; then

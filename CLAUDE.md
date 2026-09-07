@@ -4,10 +4,18 @@
 통합금융계산기의 Vercel 배포용 프론트엔드. 단일 `index.html` + API.
 700명 보험설계사 사용 중인 프로덕션 시스템.
 
+## 🟢 현재 LIVE (버전 단일 진실원 — 배포마다 이 표 갱신 의무)
+| 항목 | 값 |
+|------|-----|
+| 버전 태그 | **v=20260907e** (flag 주석 기준. 계산기는 단일 HTML이라 `?v=` 에셋 태그 없음) |
+| main 커밋 | `ba361da` 위 v=e 커밋 (아래 Flag 표와 함께 갱신) |
+| 공개 Flag | `FEATURE_CALC_USAGE_LOGGING`(v=20260512b) · `FEATURE_CALC_REPORT`(v=20260907a) · `FEATURE_CALC_RESET`(v=20260907d) — **미공개 0** |
+| Flag 오버라이드 | `sessionStorage._flag_calc_report` / `_flag_calc_reset` (브라우저 닫으면 소멸) |
+
 ## 파일 구조
 | 파일 | 역할 |
 |------|------|
-| `index.html` | 메인 UI (9개 탭: 부동산, 상속증여, 예적금, 은퇴, 목적자금, 달러, 전월세, 대출, 종합소득세) |
+| `index.html` | 메인 UI (**11개 탭**: 부동산, 상속증여, 예적금, 은퇴, 목적자금, 달러, 갱신형/비갱신형, 실손, 전월세, 대출, 종합소득세) |
 | `api/` | Vercel Serverless Functions |
 | `vercel.json` | Vercel 배포 설정 |
 
@@ -41,16 +49,23 @@
 - **page-title**: 각 탭의 `<h1 class="page-title">` 제목
 - **page-desc**: 각 탭의 `<p class="page-desc">` 설명문 (부동산 포함 모든 탭에 존재해야 함)
 
-## 🧾 리포트 출력 (v=20260907a, `FEATURE_CALC_REPORT=true` **700명 공개** — 전체 11탭)
+## 🧾 리포트 출력 + 탭 초기화 (v=20260907e, 두 Flag **true 700명 공개** — 전체 11탭)
+
+### 🔑 Flag 오버라이드 = sessionStorage (v=20260907e, **영구 룰 — 신규 Flag 전부 적용**)
+- `_crFlagOverride(key)` 단일 헬퍼. `sessionStorage._flag_calc_report` / `_flag_calc_reset` = `'true'`|`'false'`, 그 외/미설정이면 상수값. 탭을 닫으면 소멸(⚠️ Chrome 세션 복원 시 지연될 수 있음).
+- 🔴 **신규 Flag를 추가할 때도 오버라이드는 sessionStorage**. 기존 `FEATURE_CALC_USAGE_LOGGING`(~2612)의 localStorage 패턴을 복사하지 말 것.
+- 🔴 **배경(실사고 2026-09-07)**: 종전 localStorage(영구)라 옵트아웃 명령을 한 번 실행한 브라우저에서 "공개했는데 버튼이 안 보인다"가 조용히 발생. sessionStorage 전환으로 **이미 박힌 localStorage 값은 무해**(자기치유). 보장분석 시스템 관례와 동일. **localStorage로 되돌리지 말 것.**
+- 예외: 설계사명·연락처(`pro_calc_report_agent`)는 영구 보존이 목적이라 localStorage 유지. 기존 `FEATURE_CALC_USAGE_LOGGING`(~2612)은 종전 localStorage 방식(기존 코드, 이번 범위 밖).
+- ⚠️ **사용자에게 옵트아웃 명령을 실행 가능한 형태로 안내할 때는 해제 방법을 반드시 함께** 제공(이번 사고의 직접 원인).
 
 ### 개요
 - 카테고리별 상담 결과를 A4 리포트로 출력. **A안 = 브라우저 인쇄 뷰**(새 창 미리보기 → 인쇄/PDF 저장). 서버 PDF 없음.
 - 독립 블록 위치: `INITIAL CALCULATIONS` 직전 (`var FEATURE_CALC_REPORT`부터 `document.addEventListener('DOMContentLoaded', _crInit)`까지). 접두사 `_cr`.
 - **기존 calc 함수·DOMContentLoaded 초기화 수정 없음** (예외 1건: calcSilson 상세표 루프 `ratio`→`rowRatio` 개명 — ESLint no-redeclare 해소, 전략실장 승인 2026-09-06, 동작 동일). 리포트는 화면 DOM에 이미 계산된 결과를 읽어 재배치만 한다(새 계산 0). 기존 마크업 변경은 속성뿐(동작 무영향): `data-calc-report="appendix"` 6곳(실손 4·갱신형 2) + `data-cr="cr-*"` 9곳(id 없는 결과 카드 컨테이너 표식 — 대출·종소세 2·부동산 5·상속 종신전략).
-- **2026-09-07 v=20260907a `true` 공개** (main `5497b2b`, 전략실장 승인. 트리플 A 4회 GO=Phase1·차트 델타·Phase2·true 전환 / 실측 피드백 5건 반영 완결). 문제 신고 시 개인 롤백: `localStorage._flag_calc_report='false'` 후 새로고침(버튼·스타일·모달 전부 미생성, 화면 바이트 동일). 전체 롤백=상수 false 재배포.
+- **2026-09-07 v=20260907a `true` 공개** (main `5497b2b`, 전략실장 승인. 트리플 A 4회 GO=Phase1·차트 델타·Phase2·true 전환 / 실측 피드백 5건 반영 완결). 문제 신고 시 개인 롤백: `sessionStorage._flag_calc_report='false'` 후 새로고침(버튼·스타일·모달 전부 미생성, 화면 바이트 동일). 전체 롤백=상수 false 재배포.
 ### ↺ 탭별 초기화 버튼 (v=20260907d, `FEATURE_CALC_RESET=true` **700명 공개**)
 - 위치: 리포트 출력 버튼 **왼쪽**(같은 `.cr-btn-row`, 보조 톤 `.cr-btn-reset`). 11탭 전체.
-- **2026-09-07 v=20260907d `true` 공개**(전략실장 승인, 트리플 A GO 🔴0). 개인 롤백 `localStorage._flag_calc_reset='false'`+새로고침 / 전체 롤백=상수 false 재배포. CI grep 6패턴 가드.
+- **2026-09-07 v=20260907d `true` 공개**(전략실장 승인, 트리플 A GO 🔴0). 개인 롤백 `sessionStorage._flag_calc_reset='false'`+새로고침 / 전체 롤백=상수 false 재배포. CI grep 6패턴 가드.
 - **파괴적 액션 안전장치 3중**(제거 금지): ①확인 모달 ②모달 기본 포커스=**취소**(warning/danger+취소 있을 때. 습관적 Enter 사고 방지) ③초기화 후 **8초 되돌리기 토스트**(`_crShowUndo`, 직전 값 스냅샷 복원). ESC·배경 클릭은 항상 취소 의미.
 - 되돌리기 `_crRestoreSnapshot`은 복원도 "값 대입 + 동일 이벤트 발화" 방식이고 **2차 패스**로 연쇄 덮어쓰기(나이→갱신률) 보정. 실측: 상속 탭 23입력 마구 변경→초기화→되돌리기 = 직전 상태와 완전 일치.
 - 초기화 시 함께 정리: 역산 결과 라벨(`[id$="-hist-result"]`), **실시간 환율 수신 시각**(`[id$="-rate-timestamp"]` — 값은 기본값인데 "방금 받은 환율"로 오인 방지).

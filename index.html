@@ -5839,14 +5839,14 @@ function calcRenewal() {
 }
 
 /* ============================================================
-   리포트 출력 (v=20260907a, FEATURE_CALC_REPORT=true 공개 — 2026-09-07 전략실장 승인)
+   리포트 출력 + 탭 초기화 (v=20260907e, FEATURE_CALC_REPORT / FEATURE_CALC_RESET 둘 다 true 공개 — 2026-09-07 전략실장 승인)
    목적: 카테고리별 상담 결과를 A4 리포트로 출력(브라우저 인쇄 뷰 → 인쇄/PDF 저장).
    4대 원칙:
      #1 기존 기능 불변 — 이 블록은 완전 독립. 기존 calc 함수·DOMContentLoaded 초기화 수정 없음
         (예외 1건: calcSilson 상세표 루프 `ratio`→`rowRatio` 개명, ESLint no-redeclare 해소, 전략실장 승인 2026-09-06, 동작 동일).
         화면 DOM에 이미 계산된 결과를 읽어 재배치만 한다(새 계산 0 → 화면·리포트 수치 불일치 불가).
      #2 Feature Flag — false면 버튼·스타일·모달 어느 것도 렌더되지 않음(700명 영향 0).
-        옵트인: localStorage._flag_calc_report='true' 후 새로고침 / 해제: 'false' 또는 removeItem.
+        오버라이드: sessionStorage._flag_calc_report / _flag_calc_reset = 'true'|'false' (브라우저 닫으면 자동 소멸).
      #3 외부 스크립트 추가 없음 — 차트는 기존 Chart.js 인스턴스(Chart.getChart) → toBase64Image.
      #4 Lazy init — 자체 DOMContentLoaded 리스너에서 flag 확인 후에만 버튼/스타일 삽입.
    Phase 2 전체 11탭 (v=20260907): 실손·갱신형·은퇴 + 부동산(취득/보유/양도)·상속증여(증여/상속)·
@@ -5855,26 +5855,32 @@ function calcRenewal() {
    리포트 6블록: 표지 헤더 → 입력 조건 요약 → 핵심 결과 → 차트 → 산출 과정·판정·상세표 → 면책·출처.
    공통 제외: 입력 UI, 교육용 참고 박스(data-calc-report="appendix" → '근거 자료 첨부' 옵션일 때만 부록).
    ============================================================ */
-var FEATURE_CALC_REPORT = true; // v=20260907a 700명 공개 (전략실장 승인 2026-09-07, 트리플 A 3회 GO·실측 피드백 5건 반영). 비활성: localStorage._flag_calc_report='false'
-var FEATURE_CALC_RESET = true; // v=20260907d 700명 공개 (전략실장 승인 2026-09-07 "사용자들이 사용할 수 있도록 노출", 트리플 A GO·모달 v=20260907c 확인 완료). 비활성: localStorage._flag_calc_reset='false'
+var FEATURE_CALC_REPORT = true; // v=20260907e 700명 공개 (전략실장 승인 2026-09-07, 트리플 A 3회 GO·실측 피드백 5건 반영). 비활성: sessionStorage._flag_calc_report='false'
+var FEATURE_CALC_RESET = true; // v=20260907e 700명 공개 (전략실장 승인 2026-09-07 "사용자들이 사용할 수 있도록 노출", 트리플 A GO·안전장치 3중). 비활성: sessionStorage._flag_calc_reset='false'
 var _CR_AGENT_KEY = 'pro_calc_report_agent'; // 설계사명·연락처 기억(localStorage, JSON)
 var _CR_TABLE_STEP = 5; // 연도별 상세표 요약 간격(년)
 
-function _isCalcReportOn() {
+/* Flag 오버라이드는 sessionStorage — 탭을 닫으면 소멸(v=20260907e).
+   ⚠️ 단, Chrome 세션 복원(Ctrl+Shift+T·"이전 페이지 계속 보기")은 sessionStorage도 복원하므로 소멸이 지연될 수 있다.
+      → 사용자에게 옵트아웃 명령을 안내할 때는 해제 명령을 반드시 함께 줄 것.
+   배경: localStorage는 영구 저장이라 옵트아웃을 한 번 실행하면 이후 배포와 무관하게 계속 꺼진 채로 남아
+   "공개했는데 안 보인다"가 조용히 발생(2026-09-07 실사고). 보장분석 시스템도 동일하게 sessionStorage 사용.
+   ⚠️ 여기를 localStorage로 되돌리지 말 것. 설계사 정보 기억(pro_calc_report_agent)은 영구 보존이 목적이라 localStorage 유지. */
+function _crFlagOverride(key) {
     try {
-        var ss = localStorage.getItem('_flag_calc_report');
+        var ss = sessionStorage.getItem(key);
         if (ss === 'true') return true;
         if (ss === 'false') return false;
     } catch (e) {}
-    return FEATURE_CALC_REPORT;
+    return null;
+}
+function _isCalcReportOn() {
+    var ov = _crFlagOverride('_flag_calc_report');
+    return ov === null ? FEATURE_CALC_REPORT : ov;
 }
 function _isCalcResetOn() {
-    try {
-        var ss = localStorage.getItem('_flag_calc_reset');
-        if (ss === 'true') return true;
-        if (ss === 'false') return false;
-    } catch (e) {}
-    return FEATURE_CALC_RESET;
+    var ov = _crFlagOverride('_flag_calc_reset');
+    return ov === null ? FEATURE_CALC_RESET : ov;
 }
 
 /* ── 확인 모달 (v=20260907c) — 브라우저 기본 confirm/alert 대체 ──
