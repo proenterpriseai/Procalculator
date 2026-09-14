@@ -8,7 +8,7 @@
 | 항목 | 값 |
 |------|-----|
 | 버전 태그 | **v=20260914a** (flag 주석 기준. 계산기는 단일 HTML이라 `?v=` 에셋 태그 없음) |
-| 기능 최종 커밋 | **(커밋 중 — 인쇄 페이지 채움 2차)** 직전 `e2e5b0d`(2026-09-14, Phase 3 v=20260910a) · 라이브 `62ec58e`(2026-09-07) |
+| 기능 최종 커밋 | **`566b2f8`** (2026-09-14, 인쇄 페이지 채움 2차 v=20260914a. 트리플 A GO 🔴0) — 직전 `e2e5b0d`(Phase 3) |
 | 공개 Flag | `FEATURE_CALC_USAGE_LOGGING`(v=20260512b) · `FEATURE_CALC_REPORT`(v=20260907a) · `FEATURE_CALC_RESET`(v=20260907d) |
 | **미공개 Flag** | **2** — `FEATURE_CALC_REPORT_COMBINED`(통합 리포트) · `FEATURE_CALC_LOAN_SCHEDULE`(대출 연차 스케줄표), 둘 다 v=20260910a false. 옵트인 `sessionStorage._flag_calc_report_combined='true'` / `_flag_calc_loan_schedule='true'` → 새로고침. **해제** = 같은 키 `'false'` 또는 `sessionStorage.removeItem(키)` |
 | Flag 오버라이드 | `sessionStorage._flag_calc_report` / `_flag_calc_reset` / `_flag_calc_report_combined` / `_flag_calc_loan_schedule` (탭 닫으면 소멸, Chrome 세션 복원 시 지연 가능) |
