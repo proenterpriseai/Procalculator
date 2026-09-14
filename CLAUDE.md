@@ -7,8 +7,8 @@
 ## 🟢 현재 LIVE (버전 단일 진실원 — 배포마다 이 표 갱신 의무)
 | 항목 | 값 |
 |------|-----|
-| 버전 태그 | **v=20260910a** (flag 주석 기준. 계산기는 단일 HTML이라 `?v=` 에셋 태그 없음) |
-| 기능 최종 커밋 | **`e2e5b0d`** (2026-09-14, Phase 3 v=20260910a. 트리플 A GO 🔴0) — 직전 라이브 `62ec58e`(2026-09-07) |
+| 버전 태그 | **v=20260914a** (flag 주석 기준. 계산기는 단일 HTML이라 `?v=` 에셋 태그 없음) |
+| 기능 최종 커밋 | **(커밋 중 — 인쇄 페이지 채움 2차)** 직전 `e2e5b0d`(2026-09-14, Phase 3 v=20260910a) · 라이브 `62ec58e`(2026-09-07) |
 | 공개 Flag | `FEATURE_CALC_USAGE_LOGGING`(v=20260512b) · `FEATURE_CALC_REPORT`(v=20260907a) · `FEATURE_CALC_RESET`(v=20260907d) |
 | **미공개 Flag** | **2** — `FEATURE_CALC_REPORT_COMBINED`(통합 리포트) · `FEATURE_CALC_LOAN_SCHEDULE`(대출 연차 스케줄표), 둘 다 v=20260910a false. 옵트인 `sessionStorage._flag_calc_report_combined='true'` / `_flag_calc_loan_schedule='true'` → 새로고침. **해제** = 같은 키 `'false'` 또는 `sessionStorage.removeItem(키)` |
 | Flag 오버라이드 | `sessionStorage._flag_calc_report` / `_flag_calc_reset` / `_flag_calc_report_combined` / `_flag_calc_loan_schedule` (탭 닫으면 소멸, Chrome 세션 복원 시 지연 가능) |
@@ -138,6 +138,7 @@
 - **cards 섹션**: innerHTML 복제라 `.result-cards` 래퍼가 소실되므로 빌더가 `<div class="result-cards">`로 다시 감쌈(트리플 A 지적). `.result-card`에 `break-inside:avoid`.
 - **역산 라벨**: `_crHistApplied(id, currentRate)` — 역산 결과 문구의 "연 평균 X%"와 현재 입력값이 일치할 때만 "고객 증권 기반 역산" 표기(역산 후 수동 변경 시 오표기 방지).
 - **인쇄 CSS**: 리포트 창은 메인 `<style>` 전체 복사 + `_crReportCss()` 오버라이드(`body{display:block}` 필수, 메인은 flex). 카드 그리드·step-box·표 행 `break-inside:avoid`, 부록은 `break-before:page`. 러닝 바닥글·페이지 번호는 A안 한계로 미지원(B안 서버 PDF 검토 항목).
+- **페이지 채움 압축 2차 (v=20260914a, 전략실장 실측 피드백 5건)**: 취득세 세목 구성·예금 바닥글·달러 은행 환산·갱신형 월 보험료 추이·대출 연차 스케줄이 p1 잔여 공간에 못 들어가 밀림 → `@media print`에 압축 추가(h1 1.45rem·meta/inputs 행 padding 5px·섹션 margin 12px·h2 여백 축소·차트 img **60%/80mm**·result-card 16px 18px·바닥글 margin 14px). **인쇄 전용이라 화면 미리보기 불변**. 계측=인쇄높이 994px 기준 5건 전부 bot 860~918(여유 76px+). 동반: ①raw avoid 섹션에 `cls` 옵션(keep 래퍼에 클래스 부여, 미지정 시 바이트 동일) — 달러 배너 `cr-bank`(인라인 padding 32px→인쇄 20px `!important`) ②대출 연차 스케줄 안내문+표를 `cr-keep` 한 덩이로(종전엔 표만 avoid라 제목·안내문 고아). 압축 해제 금지.
 - **페이지 채움 규칙 (v=20260907, 전략실장 실측 피드백)**: 차트 이미지 `width:72%` 가운데 정렬 + `max-height:95mm`(정사각 도넛 차트 세로 과대 방지) — 잔여 공간에 들어가 페이지 하단 여백 최소화(실손 p1에 차트 동반). 판정 카드 `.verdict-card{break-inside:avoid}`·avoid 섹션 `.cr-keep` — 잔여 공간에 안 들어가면 통째로 다음 페이지 처음부터(어중간 분할 금지). `@media print` STEP 박스 압축(패딩 12/16·표 행 3px !important·섹션 16px) — 양도세 FINAL 박스 앞 페이지 동반용, 인쇄 전용이라 화면 미리보기 불변. `.cr-tablewrap`(표 래퍼) 인쇄 avoid — 한 페이지에 들어가는 표는 통째 이동, 초과 표는 avoid 무시로 행 분할+thead 반복. 어중간 분할 신고 시 처방=해당 블록 avoid(모놀리식). 100% 복원·avoid 제거·압축 해제 금지.
 - 설계사명·연락처 = `localStorage.pro_calc_report_agent`(JSON). 사용량 로그 action `calc_report_print`.
 - 문서 제목 = `고객명_리포트명_상담일` → 크롬 "PDF로 저장" 기본 파일명.

@@ -6655,7 +6655,7 @@ Object.assign(_CR_SPECS, {
         },
         sections: [
             { kind: 'cards', id: 'dol-result-cards', title: '핵심 결과' },
-            { kind: 'raw', id: 'dol-bank-yield-banner', title: '은행 적금 환산 수익률', avoid: true },
+            { kind: 'raw', id: 'dol-bank-yield-banner', title: '은행 적금 환산 수익률', avoid: true, cls: 'cr-bank' }, // cr-bank=인쇄 시 배너 padding 압축(p1 수용, v=20260914a)
             { kind: 'cards', id: 'dol-scenario-cards', title: '환율 시나리오별 수령액' },
             { kind: 'chart', id: 'dol-refund-chart', title: '환급률 추이' },
             { kind: 'chart', id: 'dol-scenario-chart', title: '시나리오 비교' },
@@ -6784,7 +6784,9 @@ function _crLoanScheduleHtml(meta) {
     });
     // 월 납입액은 화면 카드 문구를 그대로 인용(연 납입 = 월 납입 × 12). 표 자체는 detached라 _crVisible이 display ''→true.
     var note = '<p class="cr-note">원리금균등 상환 기준 · 월 납입액 ' + _crEsc(_crText('loan-equal-pmt')) + ' (연 납입 = 월 납입 × 12). 연 이자·원금은 매월 상환분을 연 단위로 합산한 값입니다.</p>';
-    return note + _crTableHtml(tbl, !!(meta && meta.fullTable), _CR_TABLE_STEP, '년');
+    // cr-keep: 안내문+표를 한 덩이로 — 종전엔 표(cr-tablewrap)만 avoid라 제목·안내문이 앞 페이지에 홀로 남았음(2026-09-14 실측 피드백).
+    // 페이지보다 큰 전체 상세표는 Chromium이 avoid를 무시하고 행 분할(thead 반복) — 기존 동작 유지.
+    return '<div class="cr-keep">' + note + _crTableHtml(tbl, !!(meta && meta.fullTable), _CR_TABLE_STEP, '년') + '</div>';
 }
 
 function _crChartImage(canvasId) {
@@ -6920,7 +6922,19 @@ function _crReportCss() {
         // 패딩·행간을 줄여 FINAL이 STEP 3과 같은 페이지에 들어가도록. !important=인라인 padding(6px 0) 우선 제압.
         '  .step-box{padding:12px 16px;margin-bottom:10px}',
         '  .step-box .step-content td{padding-top:3px !important;padding-bottom:3px !important}',
-        '  .cr-section{margin-top:16px}',
+        // 페이지 채움 압축 2차(2026-09-14 v=20260914a 전략실장 실측 피드백 5건: 취득세 세목 구성·예금 바닥글·달러 은행 환산·
+        // 갱신형 월 보험료 추이·대출 연차 스케줄이 p1 잔여 공간에 아슬아슬하게 못 들어가 밀림 → 인쇄 전용 압축으로 p1 수용.
+        // 계측(A4 인쇄높이 994px 기준): 5건 전부 bot 860~918로 수용, 여유 76px+. 화면 미리보기는 불변. 해제 금지.)
+        '  .cr-page h1{font-size:1.45rem;margin:4px 0 8px}',
+        '  .cr-meta th,.cr-meta td{padding:5px 10px}',
+        '  .cr-section{margin-top:12px}',
+        '  .cr-section h2{padding-bottom:4px;margin-bottom:10px}',
+        '  .cr-inputs th,.cr-inputs td{padding:5px 10px}',
+        '  .cr-chart{padding:6px 8px}',
+        '  .cr-chart img{width:60%;max-height:80mm}',
+        '  .result-card{padding:16px 18px}',
+        '  .cr-foot{margin-top:14px;padding-top:8px}',
+        '  .cr-bank > div{padding:20px 22px !important}', // 달러 은행 환산 배너(인라인 padding 32px 28px) 압축 — cls:"cr-bank" 스코프
         // 한 페이지에 들어가는 표는 통째 유지 — 페이지 초과 표는 avoid 무시되어 기존처럼 행 분할(thead 반복)
         '  .cr-tablewrap{break-inside:avoid;page-break-inside:avoid}',
         '}'
@@ -6948,7 +6962,7 @@ function _crPartBody(tabId, spec, meta, partNo) {
             inner = cardsInner ? '<div class="result-cards">' + cardsInner + '</div>' : ''; // 그리드 래퍼 복원(innerHTML 복제 시 소실 — 트리플 A 🟡1)
         } else if (s.kind === 'raw') {
             inner = _crCloneHtml(el, s.outer);
-            if (inner && s.avoid) inner = '<div class="cr-keep">' + inner + '</div>';
+            if (inner && s.avoid) inner = '<div class="cr-keep' + (s.cls ? ' ' + s.cls : '') + '">' + inner + '</div>'; // cls=인쇄 압축 등 스코프용(미지정 시 기존과 바이트 동일, v=20260914a)
         } else if (s.kind === 'chart') {
             var img = _crChartImage(s.id);
             inner = img ? '<div class="cr-chart"><img src="' + img + '" alt="' + _crEsc(s.title) + '"></div>' : '';
