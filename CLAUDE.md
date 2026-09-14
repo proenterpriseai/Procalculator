@@ -7,11 +7,12 @@
 ## 🟢 현재 LIVE (버전 단일 진실원 — 배포마다 이 표 갱신 의무)
 | 항목 | 값 |
 |------|-----|
-| 버전 태그 | **v=20260907f** (flag 주석 기준. 계산기는 단일 HTML이라 `?v=` 에셋 태그 없음) |
-| 기능 최종 커밋 | **`fcb9629`** (2026-09-07 · 코드 변경 커밋 기준. 이후 문서 전용 커밋은 제외) |
-| 공개 Flag | `FEATURE_CALC_USAGE_LOGGING`(v=20260512b) · `FEATURE_CALC_REPORT`(v=20260907a) · `FEATURE_CALC_RESET`(v=20260907d) — **미공개 0** |
-| Flag 오버라이드 | `sessionStorage._flag_calc_report` / `_flag_calc_reset` (탭 닫으면 소멸, Chrome 세션 복원 시 지연 가능) |
-| 배포 원장 | 2026-09-07 하루 13커밋 상세 → `memory/ledger-calculator-2026-09-07.md` |
+| 버전 태그 | **v=20260910a** (flag 주석 기준. 계산기는 단일 HTML이라 `?v=` 에셋 태그 없음) |
+| 기능 최종 커밋 | **(미커밋 — 2026-09-10 Phase 3 작업트리)** 직전 라이브 `62ec58e`(2026-09-07). 커밋 시 이 칸 갱신 |
+| 공개 Flag | `FEATURE_CALC_USAGE_LOGGING`(v=20260512b) · `FEATURE_CALC_REPORT`(v=20260907a) · `FEATURE_CALC_RESET`(v=20260907d) |
+| **미공개 Flag** | **2** — `FEATURE_CALC_REPORT_COMBINED`(통합 리포트) · `FEATURE_CALC_LOAN_SCHEDULE`(대출 연차 스케줄표), 둘 다 v=20260910a false. 옵트인 `sessionStorage._flag_calc_report_combined='true'` / `_flag_calc_loan_schedule='true'` → 새로고침. **해제** = 같은 키 `'false'` 또는 `sessionStorage.removeItem(키)` |
+| Flag 오버라이드 | `sessionStorage._flag_calc_report` / `_flag_calc_reset` / `_flag_calc_report_combined` / `_flag_calc_loan_schedule` (탭 닫으면 소멸, Chrome 세션 복원 시 지연 가능) |
+| 배포 원장 | 2026-09-07 하루 13커밋 상세 → `memory/ledger-calculator-2026-09-07.md` · Phase 3 → `memory/pending-calc-phase3-2026-09-10.md` |
 
 ## 파일 구조
 | 파일 | 역할 |
@@ -53,6 +54,14 @@
 - **탭 구조**: `tab-content` 클래스 div로 분리 (tab-realestate, tab-dollar 등)
 - **page-title**: 각 탭의 `<h1 class="page-title">` 제목
 - **page-desc**: 각 탭의 `<p class="page-desc">` 설명문 (부동산 포함 모든 탭에 존재해야 함)
+
+## 📱 모바일(≤768px) 가로 넘침 방지 규칙 (v=20260910a, 영구)
+- 실측(375px): 부동산 탭 문서 폭 502px·달러 탭 470px → 페이지 전체가 가로 스크롤. 원인 3가지, 처방은 전부 `@media (max-width: 768px)` 블록 끝 주석 블록에 있음.
+  1. `body{display:flex}`의 `.main-content`(flex item)와 `.two-col` 그리드 열은 **`min-width:auto`** → 자식의 min-content(예: `<select>` 긴 옵션 문구 "메트라이프 (백만인을 위한 달러종신)")까지 늘어남 → `.main-content,.two-col>div{min-width:0}`.
+  2. `.two-col.left-wide`(클래스 2개)가 모바일 `.two-col{1fr}`(클래스 1개)보다 특이성이 높아 **모바일에서도 2열 유지**(부동산·종소세) → 모바일 블록에 `.two-col.left-wide{grid-template-columns:1fr}` 명시.
+  3. `.result-cards` 3·4열 **인라인 style**은 모바일 `.result-cards{1fr}`을 이김 → 해당 id/data-cr에 `!important`(달러 결과·시나리오·취득 세목·양도 카드=1열, 달러 환율 통계 4카드=2×2). 2열 인라인(실손·증여·상속·보유)은 375px에 들어가므로 유지.
+- 🔴 **새 탭·새 카드 그리드 추가 시**: 인라인 `grid-template-columns`로 3열 이상을 쓰면 위 3번 목록에 동반 추가. `left-wide` 같은 다중 클래스 변형을 만들면 모바일 블록에 1fr 재선언 동반.
+- ℹ️ 검증 중 관찰(별건, 미수정): 데스크톱 폭에서 그린 Chart.js 캔버스는 뷰포트를 375로 줄인 직후 px 폭(400)을 잠시 유지해 `scrollWidth` 436이 나옴(전월세·달러). ResizeObserver가 곧 재조정하며 **실기기 신규 로드에서는 재현 안 됨**(375 확인). 가설 단계라 `canvas{max-width:100%}` 추가는 보류.
 
 ## 🧾 리포트 출력 + 탭 초기화 (v=20260907f, 두 Flag **true 700명 공개** — 전체 11탭)
 
@@ -110,6 +119,15 @@
 | tab-jeonwolse | 탭 | cards+차트×2+판정(outer) | 법정 상한 초과 시 입력 행에 경고 병기 |
 | tab-loan | 탭 | cards(data-cr)+차트×2+상세 리포트 | guard=원금>0 |
 | tab-incometax | 탭 | cards+종합vs분리 그리드(outer·avoid)+판정+파이 | guard=6개 소득 합>0 |
+
+### 🧩 Phase 3 (v=20260910a, Flag 2종 **false** — 전략실장 실측·승인 후 true)
+- **빌더 분리**: `_crBuildReportHtml` = `_crPartBody`(1부 본문: 입력 조건+섹션, `partNo` 접두) + `_crDocHtml`(문서 껍데기). 단일 리포트 출력은 **바이트 동일**(리팩터 전후 7탭 HTML 해시 비교 PASS, 이미지·style 제외). 새 섹션 kind **`html`**: `{kind:'html', html:function(meta){…}}` — 함수가 HTML 문자열 반환, 예외는 try/catch로 섹션 생략. `table:true`면 모달 "전체 상세표" 옵션 노출 대상.
+- **서브탭 명세 분리 `_CR_SUB_SPECS`**(`re-sub-acq`/`re-sub-hold`/`re-sub-transfer`/`inh-gift`/`inh-inherit`): 내용은 Phase 2 그대로, `_CR_SPECS['tab-realestate']`/`['tab-inheritance']` 함수는 활성 서브탭 키만 골라 반환. `_CR_SPECS`는 기본 3탭 리터럴 + `Object.assign(_CR_SPECS, {…8탭})` 두 덩이(키 11개 불변).
+- **통합 리포트 `FEATURE_CALC_REPORT_COMBINED`** (`_CR_COMBINED`: 부동산 취득·보유·양도 3종 / 증여+상속): 리포트 모달에 체크박스(Flag on + 정의된 탭만) → `meta.combined` → `_crGenerate`가 **Flag 2중 게이트** 후 `_crBuildCombinedHtml`. 부(PART)마다 `.cr-part-head` + 2부부터 `.cr-part-break`(새 페이지), 섹션 번호 `1.1 …`. **입력값 있는 부(guard 통과)만 포함** — 모달 안내 문구와 빌더가 같은 판정(`_crCombinedParts`). 출처는 부별 접두로 결합. 사용량 로그 detail `tabId:combined`.
+  - 🔴 **숨김 서브탭 차트 함정**: `.hidden` 서브탭의 캔버스는 0×0이라 이미지가 빈다 → 빌드 동안만 모든 서브탭의 `.hidden`을 벗기고 `finally`에서 원상 복구(동기 구간=페인트 0, 깜빡임 없음). 실측: 3서브탭 차트 3장 전부 포함, hidden 상태 복구 확인.
+  - 새 통합 조합 = `_CR_COMBINED`에 정의만 추가(빌더 수정 금지). 부의 명세는 `_CR_SUB_SPECS`에 있어야 함.
+- **대출 연차 스케줄표 `FEATURE_CALC_LOAN_SCHEDULE`**: `_crLoanScheduleRows`(순수함수, tests §5 5건) + `_crLoanScheduleHtml`. **새 계산 0** — `calcLoan`이 `loan-amort-chart`에 넣은 labels(`1개월·12개월·…`)/잔여 원금/누적 이자 배열을 12의 배수 지점만 연차 행으로 재배치(연 이자=누적 차분, 연 원금=잔액 차분). 열: 연차·연 이자·연 원금 상환·연말 잔여 원금·누적 이자. **연 납입액 열은 의도적으로 없음**(월 반올림 값 합산이라 연도별 ±수 원 흔들림 → 대신 화면 카드 문구 "월 납입액 …"을 인용). 마지막 연차 행 `font-weight:700`(요약 시 유지). 실측: 30년 → 요약 7행/전체 30행, 연 원금 합=대출 원금, 마지막 누적 이자=카드 "총 이자" 일치.
+  - ⚠️ `calcLoan`의 label push 규칙(`m===1 || m%12===0 || m===tm`)에 의존 — 규칙을 바꾸면 이 표가 비거나(섹션 자동 생략) 행이 빠진다. 변경 시 tests §5와 동반 점검.
 
 ### 규칙 (영구)
 - **리포트 6블록 고정**: 표지 헤더(고객명·상담일·설계사·연락처) → 입력 조건 → 핵심 결과 → 차트 → 산출 과정·판정·상세표 → 면책·출처. 새 탭 추가 시 `_CR_SPECS`에 명세만 추가, 빌더 수정 금지.

@@ -809,6 +809,26 @@ details.expander .expander-body {
     .sub-tabs {
         overflow-x: auto;
     }
+    /* 좁은 화면 가로 넘침 차단 (v=20260910a, 부동산·달러 탭 실측 375px: 문서 폭 502/470px)
+       원인 ①body{display:flex}의 .main-content(flex item)와 .two-col 그리드 열은 min-width:auto → 자식 min-content(select 옵션 긴 문구 등)까지 늘어나 문서가 가로 스크롤
+           ②.two-col.left-wide(클래스 2개)가 위 .two-col{1fr}(클래스 1개)보다 특이성이 높아 모바일에서도 2열 유지
+           ③result-cards 3·4열 인라인 style이 위 .result-cards{1fr}보다 우선 → 4번째 카드가 화면 밖 */
+    .main-content,
+    .two-col > div {
+        min-width: 0;
+    }
+    .two-col.left-wide {
+        grid-template-columns: 1fr;
+    }
+    #dol-result-cards,
+    #dol-scenario-cards,
+    [data-cr="cr-re-acq-metrics"],
+    [data-cr="cr-re-tf-cards"] {
+        grid-template-columns: 1fr !important;
+    }
+    #dol-history-cards {
+        grid-template-columns: 1fr 1fr !important;
+    }
 }
 
 /* Presentation mode */
@@ -5856,11 +5876,17 @@ function calcRenewal() {
    Phase 2 전체 11탭 (v=20260907): 실손·갱신형·은퇴 + 부동산(취득/보유/양도)·상속증여(증여/상속)·
    예적금(예금/적금)·목적자금·달러·전월세·대출·종합소득세. 서브탭 탭은 "활성 서브탭 1개 = 리포트 1부"
    (_CR_SPECS 값이 함수면 호출 시점의 활성 서브탭 명세를 반환). 새 탭 추가 = 명세만 추가, 빌더 수정 금지.
+   Phase 3 (v=20260910a, Flag 2종 false): ①통합 리포트 FEATURE_CALC_REPORT_COMBINED — 부동산 3종·증여+상속을 한 문서로(_CR_COMBINED 정의,
+   서브탭 명세는 _CR_SUB_SPECS로 분리해 단일·통합이 공유, 부마다 새 페이지) ②FEATURE_CALC_LOAN_SCHEDULE — 대출 연차별 상환 스케줄표
+   (kind 'html': 화면 차트 데이터 재배치, 새 계산 0). 빌더는 _crPartBody(1부 본문)+_crDocHtml(껍데기)로 분리(단일 출력 바이트 동일).
    리포트 6블록: 표지 헤더 → 입력 조건 요약 → 핵심 결과 → 차트 → 산출 과정·판정·상세표 → 면책·출처.
    공통 제외: 입력 UI, 교육용 참고 박스(data-calc-report="appendix" → '근거 자료 첨부' 옵션일 때만 부록).
    ============================================================ */
 var FEATURE_CALC_REPORT = true; // v=20260907e 700명 공개 (전략실장 승인 2026-09-07, 트리플 A 3회 GO·실측 피드백 5건 반영). 비활성: sessionStorage._flag_calc_report='false'
 var FEATURE_CALC_RESET = true; // v=20260907e 700명 공개 (전략실장 승인 2026-09-07 "사용자들이 사용할 수 있도록 노출", 트리플 A GO·안전장치 3중). 비활성: sessionStorage._flag_calc_reset='false'
+/* Phase 3 (v=20260910a) — 검증 전 false. 옵트인: sessionStorage._flag_calc_report_combined='true' / _flag_calc_loan_schedule='true' (해제: 같은 키 'false' 또는 removeItem) */
+var FEATURE_CALC_REPORT_COMBINED = false; // 부동산 취득·보유·양도 3종 / 증여+상속 통합 리포트(리포트 모달 체크박스). false면 체크박스·통합 빌더 어느 것도 노출 안 됨
+var FEATURE_CALC_LOAN_SCHEDULE = false;   // 대출 리포트 연차별 상환 스케줄표(원리금균등, 화면 차트 데이터 재배치). false면 섹션 자체가 명세에서 제외
 var _CR_AGENT_KEY = 'pro_calc_report_agent'; // 설계사명·연락처 기억(localStorage, JSON)
 var _CR_TABLE_STEP = 5; // 연도별 상세표 요약 간격(년)
 
@@ -5885,6 +5911,14 @@ function _isCalcReportOn() {
 function _isCalcResetOn() {
     var ov = _crFlagOverride('_flag_calc_reset');
     return ov === null ? FEATURE_CALC_RESET : ov;
+}
+function _isCalcReportCombinedOn() {
+    var ov = _crFlagOverride('_flag_calc_report_combined');
+    return ov === null ? FEATURE_CALC_REPORT_COMBINED : ov;
+}
+function _isCalcLoanScheduleOn() {
+    var ov = _crFlagOverride('_flag_calc_loan_schedule');
+    return ov === null ? FEATURE_CALC_LOAN_SCHEDULE : ov;
 }
 
 /* ── 확인 모달 (v=20260907c) — 브라우저 기본 confirm/alert 대체 ──
@@ -6333,157 +6367,192 @@ var _CR_SPECS = {
             { kind: 'raw', id: 'ret-steps-body', title: '산출 과정' }
         ],
         sources: '계산 가정: 입력한 물가상승률·투자수익률을 적용한 월복리 방식. 실제 수익률과 물가는 변동될 수 있으며 세금·수수료는 반영되지 않았습니다'
+    }
+};
+
+/* ══ 서브탭 명세 (Phase 2 v=20260907 → v=20260910a 분리) ══
+   "활성 서브탭 1개 = 리포트 1부"(_CR_SPECS 함수)와 통합 리포트(_CR_COMBINED)가 같은 명세를 공유한다. 내용은 Phase 2 그대로. */
+var _CR_SUB_SPECS = {
+    're-sub-acq': {
+        title: '부동산 취득세 분석',
+        nameField: null,
+        guard: function () {
+            return parseNumberInput(document.getElementById('re-acq-price')) > 0 ? '' : '취득 가액을 입력하면 리포트를 만들 수 있습니다.';
+        },
+        inputs: function () {
+            var rows = [
+                ['부동산 종류', _crText('re-acq-type')],
+                ['전용면적', _crText('re-acq-area') + '㎡'],
+                ['취득 가액 (실거래가)', _crWon('re-acq-price')],
+                ['주택수 (취득시점)', _crText('re-acq-hcount')],
+                ['조정대상지역', _crText('re-acq-adj')]
+            ];
+            if (_crChk('re-acq-first')) rows.push(['생애최초 감면', '적용 (한도 200만원)']);
+            return rows;
+        },
+        sections: [
+            { kind: 'cards', sel: '[data-cr="cr-re-acq-total"]', title: '취득세 합계' },
+            { kind: 'cards', sel: '[data-cr="cr-re-acq-metrics"]', title: '세목별 내역' },
+            { kind: 'raw', id: 're-acq-first-msg', title: '생애최초 감면' },
+            { kind: 'chart', id: 're-acq-chart', title: '세목 구성' },
+            { kind: 'raw', id: 're-acq-detail-body', title: '상세 분석 보고서' }
+        ],
+        sources: '지방세법상 취득세·지방교육세·농어촌특별세율을 단순화해 적용한 참고 계산입니다. 생애최초 감면(한도 200만원)·조정대상지역 중과 반영. 실제 세액은 감면 요건 심사에 따라 달라질 수 있습니다'
     },
-    /* ══ Phase 2 (v=20260907) — 부동산: 활성 서브탭 1개 = 리포트 1부 ══ */
+    're-sub-hold': {
+        title: '부동산 보유세 분석',
+        nameField: null,
+        guard: function () {
+            return parseNumberInput(document.getElementById('re-hold-price')) > 0 ? '' : '주택 공시가격을 입력하면 리포트를 만들 수 있습니다.';
+        },
+        inputs: function () {
+            return [
+                ['주택 공시가격 (총합)', _crWon('re-hold-price')],
+                ['보유 형태', _crRadioLabel('re-hold-type')],
+                ['연령', _crText('re-hold-age-label') + '세'],
+                ['보유기간', _crText('re-hold-period-label') + '년']
+            ];
+        },
+        sections: [
+            { kind: 'cards', sel: '[data-cr="cr-re-hold-cards"]', title: '재산세 · 종합부동산세' },
+            { kind: 'cards', sel: '[data-cr="cr-re-hold-total"]', title: '보유세 합계' },
+            { kind: 'raw', id: 're-hold-ded-info', title: '공제 적용 내역' },
+            { kind: 'chart', id: 're-hold-chart', title: '세목 구성' },
+            { kind: 'raw', id: 're-hold-detail-body', title: '상세 분석 보고서' }
+        ],
+        sources: '재산세(지방세법)·종합부동산세(종부세법) 세율과 1세대 1주택 연령·보유기간 세액공제를 단순화해 적용한 참고 계산입니다. 실제 세액은 공정시장가액비율·공제 요건에 따라 달라질 수 있습니다'
+    },
+    're-sub-transfer': {
+        title: '부동산 양도소득세 분석',
+        nameField: null,
+        guard: function () {
+            return parseNumberInput(document.getElementById('re-tf-sell')) > 0 ? '' : '양도가액을 입력하면 리포트를 만들 수 있습니다.';
+        },
+        inputs: function () {
+            var rows = [
+                ['자산 유형', _crText('re-tf-asset')],
+                ['양도가액', _crWon('re-tf-sell')],
+                ['취득가액', _crWon('re-tf-buy')],
+                ['필요경비', _crWon('re-tf-expenses')],
+                ['1세대 1주택 비과세', _crText('re-tf-1h')],
+                ['다주택 중과', _crText('re-tf-multi')],
+                ['보유기간', _crText('re-tf-hold-label') + '년']
+            ];
+            if (_crVisible(document.getElementById('re-tf-reside-group'))) rows.push(['거주기간', _crText('re-tf-reside-label') + '년']);
+            return rows;
+        },
+        sections: [
+            { kind: 'cards', sel: '[data-cr="cr-re-tf-cards"]', title: '양도소득세 · 실수령액' },
+            { kind: 'raw', id: 're-tf-info', title: '적용 내역', avoid: true },
+            { kind: 'chart', id: 're-tf-chart', title: '양도차익 구성' },
+            { kind: 'raw', id: 're-tf-detail-body', title: '상세 분석 보고서' }
+        ],
+        sources: '소득세법상 양도소득세율(기본 6~45%·다주택 중과 +20~30%p)·장기보유특별공제·1세대 1주택 비과세(12억)를 단순화해 적용한 참고 계산입니다'
+    },
+    'inh-gift': {
+        title: '증여세 분석',
+        nameField: null,
+        guard: function () {
+            return parseNumberInput(document.getElementById('gift-amount')) > 0 ? '' : '증여 가액을 입력하면 리포트를 만들 수 있습니다.';
+        },
+        inputs: function () {
+            var rows = [
+                ['증여 가액', _crWon('gift-amount')],
+                ['수증자 관계', _crText('gift-relation')]
+            ];
+            if (parseNumberInput(document.getElementById('gift-prev')) > 0) rows.push(['10년 내 사전증여액', _crWon('gift-prev')]);
+            if (parseNumberInput(document.getElementById('gift-prev-tax')) > 0) rows.push(['기납부 증여세액', _crWon('gift-prev-tax')]);
+            if (parseNumberInput(document.getElementById('gift-debt')) > 0) rows.push(['부담부 채무액', _crWon('gift-debt')]);
+            if (parseNumberInput(document.getElementById('gift-used-ded')) > 0) rows.push(['10년 내 사용한 공제액', _crWon('gift-used-ded')]);
+            var sp = [];
+            if (_crChk('gift-startup')) sp.push('창업자금 과세특례');
+            if (_crChk('gift-overseas')) sp.push('국외 재산');
+            if (_crChk('gift-gen-skip')) sp.push('세대생략 할증');
+            if (_crChk('gift-minor')) sp.push('수증자 미성년');
+            if (sp.length) rows.push(['특례·할증', sp.join(' · ')]);
+            return rows;
+        },
+        sections: [
+            { kind: 'cards', id: 'gift-result-cards', title: '핵심 결과' },
+            { kind: 'chart', id: 'gift-pie-chart', title: '증여 재산 구성' },
+            { kind: 'raw', id: 'gift-steps-body', title: '산출 과정' },
+            { kind: 'raw', id: 'gift-payment-info', title: '납부 안내', outer: true, avoid: true }
+        ],
+        sources: '상속세 및 증여세법상 세율(10~50%)·관계별 공제·세대생략 할증(30~40%)·신고세액공제 3%를 적용한 참고 계산입니다. 실제 세액은 재산 평가액에 따라 달라질 수 있습니다'
+    },
+    'inh-inherit': {
+        title: '상속세 분석',
+        nameField: null,
+        guard: function () {
+            return parseNumberInput(document.getElementById('inh-estate')) > 0 ? '' : '상속 재산 총액을 입력하면 리포트를 만들 수 있습니다.';
+        },
+        inputs: function () {
+            var rows = [['상속 재산 총액', _crWon('inh-estate')]];
+            if (parseNumberInput(document.getElementById('inh-nontax')) > 0) rows.push(['비과세 재산', _crWon('inh-nontax')]);
+            if (parseNumberInput(document.getElementById('inh-prev-gift')) > 0) rows.push(['상속인 10년내 사전증여', _crWon('inh-prev-gift')]);
+            if (parseNumberInput(document.getElementById('inh-prev-gift-other')) > 0) rows.push(['상속인 외 5년내 사전증여', _crWon('inh-prev-gift-other')]);
+            if (parseNumberInput(document.getElementById('inh-prev-tax')) > 0) rows.push(['기납부 증여세', _crWon('inh-prev-tax')]);
+            if (parseNumberInput(document.getElementById('inh-debt')) > 0) rows.push(['공제대상 채무', _crWon('inh-debt')]);
+            rows.push(['장례비용', _crWon('inh-funeral')]);
+            rows.push(['배우자 생존', _crText('inh-spouse-alive')]);
+            if (_crChk('inh-spouse-alive')) rows.push(['배우자 상속공제액', _crWon('inh-spouse-ded')]);
+            rows.push(['공제 방식', _crRadioLabel('inh-ded-method')]);
+            if (_crChk('inh-ded-detail')) {
+                rows.push(['자녀 수', _crText('inh-children') + '명 (미성년 ' + _crText('inh-minor-children') + '명)']);
+                if (parseInt(document.getElementById('inh-elderly').value, 10) > 0) rows.push(['65세 이상 피부양자', _crText('inh-elderly') + '명']);
+                if (parseInt(document.getElementById('inh-disabled').value, 10) > 0) rows.push(['장애인', _crText('inh-disabled') + '명 (기대여명 ' + _crText('inh-disabled-years') + '년)']);
+            }
+            if (parseNumberInput(document.getElementById('inh-finance')) > 0) rows.push(['순금융재산가액', _crWon('inh-finance')]);
+            if (parseNumberInput(document.getElementById('inh-housing-ded')) > 0) rows.push(['동거주택 상속공제', _crWon('inh-housing-ded')]);
+            if (parseNumberInput(document.getElementById('inh-business-ded')) > 0) rows.push(['가업상속공제', _crWon('inh-business-ded')]);
+            if (parseNumberInput(document.getElementById('inh-farm-ded')) > 0) rows.push(['영농상속공제', _crWon('inh-farm-ded')]);
+            if (_crChk('inh-gen-skip')) rows.push(['세대생략 상속', '해당 (30% 할증)']);
+            return rows;
+        },
+        sections: [
+            { kind: 'cards', id: 'inh-result-cards', title: '핵심 결과' },
+            { kind: 'chart', id: 'inh-waterfall-chart', title: '과세표준 산출 구조' },
+            { kind: 'raw', id: 'inh-steps-body', title: '산출 과정' },
+            { kind: 'raw', sel: '[data-cr="cr-inh-insurance"]', title: '종신보험 전략', outer: true, avoid: true }
+        ],
+        sources: '상속세 및 증여세법상 세율(10~50%)·일괄공제(5억)·배우자공제(5~30억)·금융재산공제·신고세액공제 3%를 적용한 참고 계산입니다. 실제 세액은 재산 평가와 공제 요건 심사에 따라 달라질 수 있습니다'
+    }
+};
+
+/* ══ 통합 리포트 정의 (Phase 3 v=20260910a, FEATURE_CALC_REPORT_COMBINED) ══
+   parts 순서 = 리포트 순서(부 단위 페이지 나눔). 입력값이 있는 부(guard 통과)만 포함, 활성 서브탭은 모달을 열 수 있었으니 항상 포함.
+   새 통합 조합 추가 = 여기에 정의만 추가(빌더 수정 금지). */
+var _CR_COMBINED = {
+    'tab-realestate': {
+        title: '부동산 세금 통합 분석',
+        label: '취득세 · 보유세 · 양도소득세를 한 리포트로 (3종 통합)',
+        parts: [
+            { sub: 're-sub-acq', short: '취득세' },
+            { sub: 're-sub-hold', short: '보유세' },
+            { sub: 're-sub-transfer', short: '양도소득세' }
+        ]
+    },
+    'tab-inheritance': {
+        title: '상속·증여세 통합 분석',
+        label: '증여세 · 상속세를 한 리포트로 (통합)',
+        parts: [
+            { sub: 'inh-gift', short: '증여세' },
+            { sub: 'inh-inherit', short: '상속세' }
+        ]
+    }
+};
+
+/* ══ Phase 2 (v=20260907) 나머지 탭 — 서브탭 탭은 함수(호출 시점의 활성 서브탭 명세 반환) ══ */
+Object.assign(_CR_SPECS, {
+    /* 부동산: 활성 서브탭 1개 = 리포트 1부. 폴백 = 양도 서브탭 (switchRealEstateSubTab이 항상 정확히 1개만 활성 보장 — 트리플 A ℹ️) */
     'tab-realestate': function () {
-        if (_crSubActive('re-sub-acq')) return {
-            title: '부동산 취득세 분석',
-            nameField: null,
-            guard: function () {
-                return parseNumberInput(document.getElementById('re-acq-price')) > 0 ? '' : '취득 가액을 입력하면 리포트를 만들 수 있습니다.';
-            },
-            inputs: function () {
-                var rows = [
-                    ['부동산 종류', _crText('re-acq-type')],
-                    ['전용면적', _crText('re-acq-area') + '㎡'],
-                    ['취득 가액 (실거래가)', _crWon('re-acq-price')],
-                    ['주택수 (취득시점)', _crText('re-acq-hcount')],
-                    ['조정대상지역', _crText('re-acq-adj')]
-                ];
-                if (_crChk('re-acq-first')) rows.push(['생애최초 감면', '적용 (한도 200만원)']);
-                return rows;
-            },
-            sections: [
-                { kind: 'cards', sel: '[data-cr="cr-re-acq-total"]', title: '취득세 합계' },
-                { kind: 'cards', sel: '[data-cr="cr-re-acq-metrics"]', title: '세목별 내역' },
-                { kind: 'raw', id: 're-acq-first-msg', title: '생애최초 감면' },
-                { kind: 'chart', id: 're-acq-chart', title: '세목 구성' },
-                { kind: 'raw', id: 're-acq-detail-body', title: '상세 분석 보고서' }
-            ],
-            sources: '지방세법상 취득세·지방교육세·농어촌특별세율을 단순화해 적용한 참고 계산입니다. 생애최초 감면(한도 200만원)·조정대상지역 중과 반영. 실제 세액은 감면 요건 심사에 따라 달라질 수 있습니다'
-        };
-        if (_crSubActive('re-sub-hold')) return {
-            title: '부동산 보유세 분석',
-            nameField: null,
-            guard: function () {
-                return parseNumberInput(document.getElementById('re-hold-price')) > 0 ? '' : '주택 공시가격을 입력하면 리포트를 만들 수 있습니다.';
-            },
-            inputs: function () {
-                return [
-                    ['주택 공시가격 (총합)', _crWon('re-hold-price')],
-                    ['보유 형태', _crRadioLabel('re-hold-type')],
-                    ['연령', _crText('re-hold-age-label') + '세'],
-                    ['보유기간', _crText('re-hold-period-label') + '년']
-                ];
-            },
-            sections: [
-                { kind: 'cards', sel: '[data-cr="cr-re-hold-cards"]', title: '재산세 · 종합부동산세' },
-                { kind: 'cards', sel: '[data-cr="cr-re-hold-total"]', title: '보유세 합계' },
-                { kind: 'raw', id: 're-hold-ded-info', title: '공제 적용 내역' },
-                { kind: 'chart', id: 're-hold-chart', title: '세목 구성' },
-                { kind: 'raw', id: 're-hold-detail-body', title: '상세 분석 보고서' }
-            ],
-            sources: '재산세(지방세법)·종합부동산세(종부세법) 세율과 1세대 1주택 연령·보유기간 세액공제를 단순화해 적용한 참고 계산입니다. 실제 세액은 공정시장가액비율·공제 요건에 따라 달라질 수 있습니다'
-        };
-        // 폴백 = 양도 서브탭 (switchRealEstateSubTab이 항상 정확히 1개만 활성 보장 — 트리플 A ℹ️)
-        return {
-            title: '부동산 양도소득세 분석',
-            nameField: null,
-            guard: function () {
-                return parseNumberInput(document.getElementById('re-tf-sell')) > 0 ? '' : '양도가액을 입력하면 리포트를 만들 수 있습니다.';
-            },
-            inputs: function () {
-                var rows = [
-                    ['자산 유형', _crText('re-tf-asset')],
-                    ['양도가액', _crWon('re-tf-sell')],
-                    ['취득가액', _crWon('re-tf-buy')],
-                    ['필요경비', _crWon('re-tf-expenses')],
-                    ['1세대 1주택 비과세', _crText('re-tf-1h')],
-                    ['다주택 중과', _crText('re-tf-multi')],
-                    ['보유기간', _crText('re-tf-hold-label') + '년']
-                ];
-                if (_crVisible(document.getElementById('re-tf-reside-group'))) rows.push(['거주기간', _crText('re-tf-reside-label') + '년']);
-                return rows;
-            },
-            sections: [
-                { kind: 'cards', sel: '[data-cr="cr-re-tf-cards"]', title: '양도소득세 · 실수령액' },
-                { kind: 'raw', id: 're-tf-info', title: '적용 내역', avoid: true },
-                { kind: 'chart', id: 're-tf-chart', title: '양도차익 구성' },
-                { kind: 'raw', id: 're-tf-detail-body', title: '상세 분석 보고서' }
-            ],
-            sources: '소득세법상 양도소득세율(기본 6~45%·다주택 중과 +20~30%p)·장기보유특별공제·1세대 1주택 비과세(12억)를 단순화해 적용한 참고 계산입니다'
-        };
+        if (_crSubActive('re-sub-acq')) return _CR_SUB_SPECS['re-sub-acq'];
+        if (_crSubActive('re-sub-hold')) return _CR_SUB_SPECS['re-sub-hold'];
+        return _CR_SUB_SPECS['re-sub-transfer'];
     },
-    /* ══ 상속·증여: 활성 서브탭 1개 = 리포트 1부 ══ */
+    /* 상속·증여: 활성 서브탭 1개 = 리포트 1부 */
     'tab-inheritance': function () {
-        if (_crSubActive('inh-gift')) return {
-            title: '증여세 분석',
-            nameField: null,
-            guard: function () {
-                return parseNumberInput(document.getElementById('gift-amount')) > 0 ? '' : '증여 가액을 입력하면 리포트를 만들 수 있습니다.';
-            },
-            inputs: function () {
-                var rows = [
-                    ['증여 가액', _crWon('gift-amount')],
-                    ['수증자 관계', _crText('gift-relation')]
-                ];
-                if (parseNumberInput(document.getElementById('gift-prev')) > 0) rows.push(['10년 내 사전증여액', _crWon('gift-prev')]);
-                if (parseNumberInput(document.getElementById('gift-prev-tax')) > 0) rows.push(['기납부 증여세액', _crWon('gift-prev-tax')]);
-                if (parseNumberInput(document.getElementById('gift-debt')) > 0) rows.push(['부담부 채무액', _crWon('gift-debt')]);
-                if (parseNumberInput(document.getElementById('gift-used-ded')) > 0) rows.push(['10년 내 사용한 공제액', _crWon('gift-used-ded')]);
-                var sp = [];
-                if (_crChk('gift-startup')) sp.push('창업자금 과세특례');
-                if (_crChk('gift-overseas')) sp.push('국외 재산');
-                if (_crChk('gift-gen-skip')) sp.push('세대생략 할증');
-                if (_crChk('gift-minor')) sp.push('수증자 미성년');
-                if (sp.length) rows.push(['특례·할증', sp.join(' · ')]);
-                return rows;
-            },
-            sections: [
-                { kind: 'cards', id: 'gift-result-cards', title: '핵심 결과' },
-                { kind: 'chart', id: 'gift-pie-chart', title: '증여 재산 구성' },
-                { kind: 'raw', id: 'gift-steps-body', title: '산출 과정' },
-                { kind: 'raw', id: 'gift-payment-info', title: '납부 안내', outer: true, avoid: true }
-            ],
-            sources: '상속세 및 증여세법상 세율(10~50%)·관계별 공제·세대생략 할증(30~40%)·신고세액공제 3%를 적용한 참고 계산입니다. 실제 세액은 재산 평가액에 따라 달라질 수 있습니다'
-        };
-        return {
-            title: '상속세 분석',
-            nameField: null,
-            guard: function () {
-                return parseNumberInput(document.getElementById('inh-estate')) > 0 ? '' : '상속 재산 총액을 입력하면 리포트를 만들 수 있습니다.';
-            },
-            inputs: function () {
-                var rows = [['상속 재산 총액', _crWon('inh-estate')]];
-                if (parseNumberInput(document.getElementById('inh-nontax')) > 0) rows.push(['비과세 재산', _crWon('inh-nontax')]);
-                if (parseNumberInput(document.getElementById('inh-prev-gift')) > 0) rows.push(['상속인 10년내 사전증여', _crWon('inh-prev-gift')]);
-                if (parseNumberInput(document.getElementById('inh-prev-gift-other')) > 0) rows.push(['상속인 외 5년내 사전증여', _crWon('inh-prev-gift-other')]);
-                if (parseNumberInput(document.getElementById('inh-prev-tax')) > 0) rows.push(['기납부 증여세', _crWon('inh-prev-tax')]);
-                if (parseNumberInput(document.getElementById('inh-debt')) > 0) rows.push(['공제대상 채무', _crWon('inh-debt')]);
-                rows.push(['장례비용', _crWon('inh-funeral')]);
-                rows.push(['배우자 생존', _crText('inh-spouse-alive')]);
-                if (_crChk('inh-spouse-alive')) rows.push(['배우자 상속공제액', _crWon('inh-spouse-ded')]);
-                rows.push(['공제 방식', _crRadioLabel('inh-ded-method')]);
-                if (_crChk('inh-ded-detail')) {
-                    rows.push(['자녀 수', _crText('inh-children') + '명 (미성년 ' + _crText('inh-minor-children') + '명)']);
-                    if (parseInt(document.getElementById('inh-elderly').value, 10) > 0) rows.push(['65세 이상 피부양자', _crText('inh-elderly') + '명']);
-                    if (parseInt(document.getElementById('inh-disabled').value, 10) > 0) rows.push(['장애인', _crText('inh-disabled') + '명 (기대여명 ' + _crText('inh-disabled-years') + '년)']);
-                }
-                if (parseNumberInput(document.getElementById('inh-finance')) > 0) rows.push(['순금융재산가액', _crWon('inh-finance')]);
-                if (parseNumberInput(document.getElementById('inh-housing-ded')) > 0) rows.push(['동거주택 상속공제', _crWon('inh-housing-ded')]);
-                if (parseNumberInput(document.getElementById('inh-business-ded')) > 0) rows.push(['가업상속공제', _crWon('inh-business-ded')]);
-                if (parseNumberInput(document.getElementById('inh-farm-ded')) > 0) rows.push(['영농상속공제', _crWon('inh-farm-ded')]);
-                if (_crChk('inh-gen-skip')) rows.push(['세대생략 상속', '해당 (30% 할증)']);
-                return rows;
-            },
-            sections: [
-                { kind: 'cards', id: 'inh-result-cards', title: '핵심 결과' },
-                { kind: 'chart', id: 'inh-waterfall-chart', title: '과세표준 산출 구조' },
-                { kind: 'raw', id: 'inh-steps-body', title: '산출 과정' },
-                { kind: 'raw', sel: '[data-cr="cr-inh-insurance"]', title: '종신보험 전략', outer: true, avoid: true }
-            ],
-            sources: '상속세 및 증여세법상 세율(10~50%)·일괄공제(5억)·배우자공제(5~30억)·금융재산공제·신고세액공제 3%를 적용한 참고 계산입니다. 실제 세액은 재산 평가와 공제 요건 심사에 따라 달라질 수 있습니다'
-        };
+        return _crSubActive('inh-gift') ? _CR_SUB_SPECS['inh-gift'] : _CR_SUB_SPECS['inh-inherit'];
     },
     /* ══ 예적금: 활성 서브탭 1개 = 리포트 1부 ══ */
     'tab-savings': function () {
@@ -6642,6 +6711,8 @@ var _CR_SPECS = {
         sections: [
             { kind: 'cards', sel: '[data-cr="cr-loan-cards"]', title: '상환 방식별 부담' },
             { kind: 'chart', id: 'loan-amort-chart', title: '원리금균등 상환 추이' },
+            // Phase 3: 연차 스케줄표 — kind html(함수가 HTML 반환), table:true=모달 "전체 상세표" 옵션 노출. Flag off면 when()이 섹션을 제외
+            { kind: 'html', html: _crLoanScheduleHtml, table: true, title: '연차별 상환 스케줄 (원리금균등)', when: function () { return _isCalcLoanScheduleOn(); } },
             { kind: 'chart', id: 'loan-compare-chart', title: '총 이자 비교' },
             { kind: 'raw', id: 'loan-report-body', title: '상세 분석 리포트' }
         ],
@@ -6676,7 +6747,45 @@ var _CR_SPECS = {
         ],
         sources: '2025 종합소득세 누진세율(6~45%)·지방소득세 10%·금융소득 2,000만원 초과 종합과세 기준의 간이 계산입니다. 실제 신고 세액은 각종 공제·감면에 따라 달라질 수 있습니다'
     }
-};
+});
+
+/* ── 대출 연차별 상환 스케줄 (Phase 3 v=20260910a, FEATURE_CALC_LOAN_SCHEDULE) ──
+   새 계산 0: calcLoan이 화면 차트(loan-amort-chart)에 이미 넣어 둔 연말 잔여 원금·누적 이자 배열을 연 단위로 재배치한다.
+   순수 함수 _crLoanScheduleRows는 tests/unit-tests.js §5 대상. */
+function _crLoanScheduleRows(principal, labels, remaining, cumInterest) {
+    // labels: '1개월'·'12개월'·'24개월'… (calcLoan이 m===1, m%12===0, m===tm에 push). 12의 배수만 연차 행으로.
+    var rows = [];
+    var prevBal = principal, prevCum = 0;
+    for (var i = 0; i < labels.length; i++) {
+        var m = parseInt(String(labels[i]), 10);
+        if (!m || m % 12 !== 0) continue;
+        var bal = Number(remaining[i]) || 0, cum = Number(cumInterest[i]) || 0;
+        rows.push({ year: m / 12, interest: cum - prevCum, principal: prevBal - bal, balance: bal, cumInterest: cum });
+        prevBal = bal; prevCum = cum;
+    }
+    return rows;
+}
+function _crLoanScheduleHtml(meta) {
+    var c = (typeof Chart !== 'undefined' && Chart.getChart) ? Chart.getChart('loan-amort-chart') : null;
+    if (!c || !c.data || !c.data.datasets || c.data.datasets.length < 2) return '';
+    var rows = _crLoanScheduleRows(parseNumberInput(document.getElementById('loan-amount')), c.data.labels, c.data.datasets[0].data, c.data.datasets[1].data);
+    if (!rows.length) return '';
+    var tbl = document.createElement('table');
+    tbl.className = 'data-table';
+    tbl.innerHTML = '<thead><tr><th>연차</th><th>연 이자</th><th>연 원금 상환</th><th>연말 잔여 원금</th><th>누적 이자</th></tr></thead><tbody></tbody>';
+    var tb = tbl.querySelector('tbody');
+    rows.forEach(function (r, i) {
+        var last = i === rows.length - 1;
+        var tr = document.createElement('tr');
+        if (last) tr.setAttribute('style', 'font-weight:700'); // 마지막 연차 = 상환 완료(요약 시에도 유지되는 강조 행 규칙)
+        tr.innerHTML = '<td>' + r.year + '년차</td><td style="text-align:right">' + f_w(r.interest) + '원</td><td style="text-align:right">' + f_w(r.principal) + '원</td>' +
+            '<td style="text-align:right">' + f_w(r.balance) + '원</td><td style="text-align:right">' + f_w(r.cumInterest) + '원</td>';
+        tb.appendChild(tr);
+    });
+    // 월 납입액은 화면 카드 문구를 그대로 인용(연 납입 = 월 납입 × 12). 표 자체는 detached라 _crVisible이 display ''→true.
+    var note = '<p class="cr-note">원리금균등 상환 기준 · 월 납입액 ' + _crEsc(_crText('loan-equal-pmt')) + ' (연 납입 = 월 납입 × 12). 연 이자·원금은 매월 상환분을 연 단위로 합산한 값입니다.</p>';
+    return note + _crTableHtml(tbl, !!(meta && meta.fullTable), _CR_TABLE_STEP, '년');
+}
 
 function _crChartImage(canvasId) {
     try {
@@ -6783,6 +6892,11 @@ function _crReportCss() {
         '.cr-chart img{display:block;width:72%;max-width:620px;max-height:95mm;height:auto;object-fit:contain;margin:0 auto}',
         '.cr-note{font-size:0.75rem;color:#64748b;margin:0 0 8px}',
         '.cr-appendix{break-before:page;page-break-before:always}',
+        // 통합 리포트 부(PART) 머리 — 2부부터 새 페이지(Phase 3 v=20260910a)
+        '.cr-part-break{break-before:page;page-break-before:always}',
+        '.cr-part-head{margin-top:26px;padding:10px 14px;border-left:5px solid #1e3a8a;background:#f1f5f9;border-radius:0 10px 10px 0;break-after:avoid;page-break-after:avoid}',
+        '.cr-part-head .cr-part-no{display:block;font-size:.72rem;letter-spacing:.1em;color:#64748b;font-weight:700}',
+        '.cr-part-head h2{font-size:1.25rem;font-weight:800;color:#1e3a8a;margin:2px 0 0;line-height:1.3}',
         '.cr-foot{margin-top:28px;padding-top:12px;border-top:2px solid #1e3a8a;font-size:0.74rem;color:#64748b;line-height:1.6}',
         '.cr-foot .cr-brandline{display:flex;justify-content:space-between;font-weight:600;color:#1e3a8a;margin-bottom:6px}',
         '.result-cards{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:0}',
@@ -6813,24 +6927,20 @@ function _crReportCss() {
     ].join('\n');
 }
 
-function _crBuildReportHtml(tabId, spec, meta) {
-    var baseStyle = document.querySelector('head style');
-    var fontLink = document.querySelector('link[href*="pretendard"]');
-    var disclaimerEl = document.querySelector('.sidebar-disclaimer');
-    var disclaimer = disclaimerEl ? disclaimerEl.textContent.trim() : '';
-    var customer = (meta.name || '').trim();
-    var docTitle = (customer ? customer + '_' : '') + spec.title + '_' + meta.date;
-
+/* 리포트 본문 1부(입력 조건 + 명세 섹션). partNo=''면 단일 리포트("1. 제목"), 통합 리포트는 부 번호 접두("2.1 제목").
+   v=20260910a에서 _crBuildReportHtml 본문을 분리(단일 리포트 출력 바이트 동일 — 리팩터 전후 HTML 해시 비교로 확인). */
+function _crPartBody(tabId, spec, meta, partNo) {
     var n = 1;
+    var label = function () { return partNo ? partNo + '.' + (n++) + ' ' : (n++) + '. '; };
     var body = '';
-    body += '<section class="cr-section"><h2>' + (n++) + '. 입력 조건</h2><table class="cr-inputs"><tbody>';
+    body += '<section class="cr-section"><h2>' + label() + '입력 조건</h2><table class="cr-inputs"><tbody>';
     spec.inputs().forEach(function (r) {
         body += '<tr><th>' + _crEsc(r[0]) + '</th><td>' + _crEsc(r[1]) + '</td></tr>';
     });
     body += '</tbody></table></section>';
 
     spec.sections.forEach(function (s) {
-        if (s.when && !s.when()) return; // 토글 게이트(예: 3종 비교)가 꺼져 있으면 리포트에도 없음
+        if (s.when && !s.when()) return; // 토글 게이트(예: 3종 비교·Phase 3 Flag)가 꺼져 있으면 리포트에도 없음
         var el = s.sel ? document.querySelector(s.sel) : (s.id ? document.getElementById(s.id) : null);
         var inner = '';
         if (s.kind === 'cards') {
@@ -6843,15 +6953,20 @@ function _crBuildReportHtml(tabId, spec, meta) {
             var img = _crChartImage(s.id);
             inner = img ? '<div class="cr-chart"><img src="' + img + '" alt="' + _crEsc(s.title) + '"></div>' : '';
         } else if (s.kind === 'table') inner = _crTableHtml(el, !!meta.fullTable, s.step, s.unit);
+        else if (s.kind === 'html') { try { inner = typeof s.html === 'function' ? (s.html(meta) || '') : ''; } catch (e) { inner = ''; } } // Phase 3: 함수가 HTML 반환(대출 연차 스케줄). 예외는 섹션 생략으로 격리
         if (!inner) return; // 화면에 없는(꺼진·숨김·빈) 영역은 리포트에도 없음
-        body += '<section class="cr-section"><h2>' + (n++) + '. ' + _crEsc(s.title) + '</h2>' + inner + '</section>';
+        body += '<section class="cr-section"><h2>' + label() + _crEsc(s.title) + '</h2>' + inner + '</section>';
     });
+    return body;
+}
 
-    if (meta.appendix) {
-        var apx = _crAppendixHtml(tabId);
-        if (apx) body += '<section class="cr-section cr-appendix"><h2>부록. 근거 자료</h2>' + apx + '</section>';
-    }
-
+/* 리포트 문서 껍데기(헤더·메타·바닥글) — 단일·통합 공용 */
+function _crDocHtml(title, docTitle, meta, body, sources) {
+    var baseStyle = document.querySelector('head style');
+    var fontLink = document.querySelector('link[href*="pretendard"]');
+    var disclaimerEl = document.querySelector('.sidebar-disclaimer');
+    var disclaimer = disclaimerEl ? disclaimerEl.textContent.trim() : '';
+    var customer = (meta.name || '').trim();
     return '<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">' +
         '<title>' + _crEsc(docTitle.replace(/[\\/:*?"<>|]/g, '')) + '</title>' +
         (fontLink ? '<link href="' + _crEsc(fontLink.getAttribute('href')) + '" rel="stylesheet">' : '') +
@@ -6860,22 +6975,72 @@ function _crBuildReportHtml(tabId, spec, meta) {
         '<div class="cr-toolbar"><div><span class="cr-tb-title">리포트 미리보기</span><span class="cr-tb-sub">인쇄 대화상자에서 "PDF로 저장"을 선택하면 파일로 저장됩니다</span></div>' +
         '<div><button type="button" class="cr-print" onclick="window.print()">&#x1F5A8;&#xFE0F; 인쇄 / PDF 저장</button><button type="button" class="cr-close" onclick="window.close()">닫기</button></div></div>' +
         '<div class="cr-page">' +
-        '<header><div class="cr-brand">PRO Calculator · 금융 솔루션 상담 리포트</div><h1>' + _crEsc(spec.title) + '</h1>' +
+        '<header><div class="cr-brand">PRO Calculator · 금융 솔루션 상담 리포트</div><h1>' + _crEsc(title) + '</h1>' +
         '<table class="cr-meta"><tbody>' +
         '<tr><th>고객명</th><td>' + (customer ? _crEsc(customer) : '－') + '</td><th>상담일</th><td>' + _crEsc(meta.date) + '</td></tr>' +
         '<tr><th>담당 설계사</th><td>' + (meta.agent ? _crEsc(meta.agent) : '－') + '</td><th>연락처</th><td>' + (meta.phone ? _crEsc(meta.phone) : '－') + '</td></tr>' +
         '</tbody></table></header>' +
         body +
         '<footer class="cr-foot"><div class="cr-brandline"><span>PRO Calculator · 금융 솔루션 상담 리포트</span><span>출력일 ' + _crEsc(_crTodayStr()) + '</span></div>' +
-        '<div>출처·가정: ' + _crEsc(spec.sources) + '</div>' +
+        '<div>출처·가정: ' + _crEsc(sources) + '</div>' +
         (disclaimer ? '<div>' + _crEsc(disclaimer) + '</div>' : '') +
         '</footer></div></body></html>';
+}
+
+function _crBuildReportHtml(tabId, spec, meta) {
+    var customer = (meta.name || '').trim();
+    var docTitle = (customer ? customer + '_' : '') + spec.title + '_' + meta.date;
+    var body = _crPartBody(tabId, spec, meta, '');
+    if (meta.appendix) {
+        var apx = _crAppendixHtml(tabId);
+        if (apx) body += '<section class="cr-section cr-appendix"><h2>부록. 근거 자료</h2>' + apx + '</section>';
+    }
+    return _crDocHtml(spec.title, docTitle, meta, body, spec.sources);
+}
+
+/* ── 통합 리포트 (Phase 3 v=20260910a, FEATURE_CALC_REPORT_COMBINED) ── */
+function _crCombinedParts(tabId) {
+    // 부 목록 + 포함 여부(guard 통과 = 입력값 있음). 모달 안내 문구와 빌더가 같은 판정을 쓴다.
+    var combo = _CR_COMBINED[tabId];
+    if (!combo) return [];
+    return combo.parts.map(function (p) {
+        var spec = _CR_SUB_SPECS[p.sub];
+        var msg = spec && spec.guard ? spec.guard() : '';
+        return { sub: p.sub, short: p.short, spec: spec, ok: !!spec && !msg };
+    });
+}
+function _crBuildCombinedHtml(tabId, meta) {
+    var combo = _CR_COMBINED[tabId];
+    var parts = _crCombinedParts(tabId).filter(function (p) { return p.ok; });
+    if (!combo || !parts.length) return '';
+    var customer = (meta.name || '').trim();
+    var docTitle = (customer ? customer + '_' : '') + combo.title + '_' + meta.date;
+    var body = '', sources = [];
+    // 숨김 서브탭의 차트는 캔버스 0×0이라 이미지가 비므로 빌드 동안만 모든 서브탭의 .hidden을 벗기고 finally에서 원상 복구.
+    // 동기 구간이라 페인트가 없어 화면 깜빡임 0. 차트 입장에선 사용자가 서브탭을 오갈 때와 같은 표시→숨김 사이클.
+    var subs = combo.parts.map(function (p) { return document.getElementById(p.sub); });
+    var wasHidden = subs.map(function (el) { return !!el && el.classList.contains('hidden'); });
+    try {
+        subs.forEach(function (el) { if (el) el.classList.remove('hidden'); });
+        parts.forEach(function (p, i) {
+            var no = i + 1;
+            body += '<section class="cr-part' + (i > 0 ? ' cr-part-break' : '') + '">' +
+                '<div class="cr-part-head"><span class="cr-part-no">PART ' + no + '</span><h2>' + _crEsc(p.spec.title) + '</h2></div>' +
+                _crPartBody(tabId, p.spec, meta, String(no)) + '</section>';
+            if (p.spec.sources) sources.push(p.short + ': ' + p.spec.sources);
+        });
+    } finally {
+        subs.forEach(function (el, i) { if (el) el.classList.toggle('hidden', wasHidden[i]); });
+    }
+    return _crDocHtml(combo.title, docTitle, meta, body, sources.join(' / '));
 }
 
 function _crGenerate(tabId, meta) {
     var spec = _crSpec(tabId); // 서브탭 탭은 이 시점의 활성 서브탭 명세
     if (!spec) return;
-    var html = _crBuildReportHtml(tabId, spec, meta);
+    var html = '';
+    if (meta.combined && _isCalcReportCombinedOn()) html = _crBuildCombinedHtml(tabId, meta); // Phase 3 통합 — Flag 2중 게이트. 빈 문자열이면(정의 없음·포함 부 0) 단일 리포트로 폴백
+    if (!html) html = _crBuildReportHtml(tabId, spec, meta);
     var w = null;
     try { w = window.open('', '_blank'); } catch (e) { w = null; }
     if (w) {
@@ -6885,7 +7050,7 @@ function _crGenerate(tabId, meta) {
     } else {
         _crShowInline(html); // 팝업 차단 환경(일부 모바일·인앱 브라우저) → 같은 탭 전체화면 뷰어 폴백
     }
-    try { _logCalcUsageImmediate('calc_report_print', tabId); } catch (e) {}
+    try { _logCalcUsageImmediate('calc_report_print', meta.combined && html.indexOf('cr-part-head') >= 0 ? tabId + ':combined' : tabId); } catch (e) {} // 통합 사용률 관찰용 접미
 }
 
 function _crCloseInline() {
@@ -6939,7 +7104,17 @@ function _crOpenModal(tabId) {
     var saved = _crLoadAgent();
     var defName = spec.nameField ? (_crText(spec.nameField) || '') : '';
     var hasAppendix = document.querySelectorAll('#' + tabId + ' [data-calc-report="appendix"]').length > 0;
-    var hasTable = spec.sections.some(function (s) { return s.kind === 'table'; });
+    // Phase 3 통합 리포트 — Flag on + 정의된 탭만 체크박스 노출. 포함/제외 부 안내는 빌더와 같은 판정(_crCombinedParts)
+    var combo = _isCalcReportCombinedOn() ? (_CR_COMBINED[tabId] || null) : null;
+    var comboParts = combo ? _crCombinedParts(tabId) : [];
+    var comboInc = comboParts.filter(function (p) { return p.ok; }).map(function (p) { return p.short; });
+    var comboExc = comboParts.filter(function (p) { return !p.ok; }).map(function (p) { return p.short; });
+    var comboNote = combo ? ('포함: ' + comboInc.join(' · ') + (comboExc.length ? ' / 입력값이 없는 ' + comboExc.join(' · ') + ' 부분은 제외됩니다' : '') + ' — 부마다 새 페이지에서 시작합니다.') : '';
+    // "전체 상세표" 옵션 = table 섹션 또는 표를 만드는 html 섹션(table:true)이 하나라도 살아 있을 때(when 게이트 반영). 통합이면 포함 부의 명세도 본다
+    var tableSpecs = [spec].concat(comboParts.filter(function (p) { return p.ok; }).map(function (p) { return p.spec; }));
+    var hasTable = tableSpecs.some(function (sp) {
+        return sp.sections.some(function (s) { return (s.kind === 'table' || (s.kind === 'html' && s.table)) && (!s.when || s.when()); });
+    });
 
     var ov = document.createElement('div');
     ov.id = 'cr-overlay';
@@ -6954,6 +7129,8 @@ function _crOpenModal(tabId) {
         '<div><label for="cr-f-phone">연락처</label><input type="tel" id="cr-f-phone" placeholder="010-0000-0000" value="' + _crEsc(saved.phone || '') + '"></div></div>' +
         (hasAppendix ? '<label class="cr-check"><input type="checkbox" id="cr-f-appendix"> 근거 자료 첨부 (참고 통계·제도 안내를 부록으로)</label>' : '') +
         (hasTable ? '<label class="cr-check"><input type="checkbox" id="cr-f-full"> 전체 상세표 출력 (기본은 주요 행 요약)</label>' : '') +
+        (combo ? '<label class="cr-check"><input type="checkbox" id="cr-f-combined"> ' + _crEsc(combo.label) + '</label>' +
+            '<p class="cr-sub cr-combined-note" id="cr-combined-note" hidden>' + _crEsc(comboNote) + '</p>' : '') +
         '<div class="cr-actions"><button type="button" class="cr-cancel" id="cr-btn-cancel">취소</button><button type="button" class="cr-go" id="cr-btn-go">리포트 만들기</button></div>' +
         '</div>';
     document.body.appendChild(ov);
@@ -6961,6 +7138,11 @@ function _crOpenModal(tabId) {
     ov.addEventListener('click', function (e) { if (e.target === ov) _crCloseModal(); });
     ov.addEventListener('keydown', function (e) { if (e.key === 'Escape') _crCloseModal(); });
     document.getElementById('cr-btn-cancel').addEventListener('click', _crCloseModal);
+    var comboChk = document.getElementById('cr-f-combined');
+    if (comboChk) comboChk.addEventListener('change', function () { // 체크 시에만 포함/제외 안내 노출
+        var note = document.getElementById('cr-combined-note');
+        if (note) note.hidden = !comboChk.checked;
+    });
     document.getElementById('cr-btn-go').addEventListener('click', function () {
         var meta = {
             name: document.getElementById('cr-f-name').value,
@@ -6968,7 +7150,8 @@ function _crOpenModal(tabId) {
             agent: document.getElementById('cr-f-agent').value.trim(),
             phone: document.getElementById('cr-f-phone').value.trim(),
             appendix: !!(document.getElementById('cr-f-appendix') && document.getElementById('cr-f-appendix').checked),
-            fullTable: !!(document.getElementById('cr-f-full') && document.getElementById('cr-f-full').checked)
+            fullTable: !!(document.getElementById('cr-f-full') && document.getElementById('cr-f-full').checked),
+            combined: !!(comboChk && comboChk.checked)
         };
         _crSaveAgent(meta.agent, meta.phone);
         _crCloseModal();
@@ -6996,6 +7179,7 @@ function _crScreenCss() {
         '.cr-modal .cr-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}',
         '.cr-modal .cr-check{display:flex;align-items:center;gap:8px;font-size:.82rem;color:#334155;margin-top:12px;font-weight:500;cursor:pointer}',
         '.cr-modal .cr-check input{width:16px;height:16px;accent-color:#1e3a8a}',
+        '.cr-modal .cr-combined-note{margin:4px 0 0 24px;font-size:.76rem}', // 통합 체크 시 포함/제외 안내(Phase 3)
         '.cr-modal .cr-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}',
         '.cr-modal .cr-actions button{padding:11px 18px;border-radius:12px;border:0;font-weight:700;cursor:pointer;font-family:inherit;font-size:.88rem;transition:all .2s}',
         '.cr-modal .cr-go{background:#1e3a8a;color:#fff;box-shadow:0 4px 12px rgba(30,58,138,.2)}',

@@ -232,3 +232,54 @@ describe('_crKeepRowIndex', () => {
     assert.equal(kept, 14);
   });
 });
+
+// ============================================================
+// 5. _crLoanScheduleRows(principal, labels, remaining, cumInterest) — 대출 연차 스케줄표 (Phase 3 v=20260910a)
+//    calcLoan이 차트에 넣은 배열(1개월·12개월·24개월…)을 연 단위 행으로 재배치하는 순수 함수. 새 계산 0.
+// ============================================================
+describe('_crLoanScheduleRows', () => {
+  let rows;
+  // vm 샌드박스의 Array는 다른 realm이라 deepEqual이 프로토타입 불일치로 실패 → JSON 왕복으로 평범한 값으로 비교
+  const plain = v => JSON.parse(JSON.stringify(v));
+
+  it('함수 로딩', () => {
+    const sandbox = createSandbox();
+    rows = extractFunction(HTML_PATH, '_crLoanScheduleRows', sandbox);
+    assert.ok(typeof rows === 'function');
+  });
+
+  // 원금 1,200 / 3년 — calcLoan 규칙대로 m=1, 12, 24, 36 지점만 존재
+  const labels = ['1개월', '12개월', '24개월', '36개월'];
+  const remaining = [1170, 800, 400, 0];
+  const cum = [10, 100, 170, 210];
+
+  it('12의 배수 지점만 연차 행이 되고(1개월 지점 제외) 연차는 m/12', () => {
+    const r = rows(1200, labels, remaining, cum);
+    assert.deepEqual(plain(r.map(x => x.year)), [1, 2, 3]);
+  });
+
+  it('연 이자 = 누적 이자 차분, 연 원금 = 잔여 원금 차분(1년차는 대출 원금 기준)', () => {
+    const r = rows(1200, labels, remaining, cum);
+    assert.deepEqual(plain(r.map(x => x.interest)), [100, 70, 40]);
+    assert.deepEqual(plain(r.map(x => x.principal)), [400, 400, 400]);
+    assert.deepEqual(plain(r.map(x => x.balance)), [800, 400, 0]);
+    assert.deepEqual(plain(r.map(x => x.cumInterest)), [100, 170, 210]);
+  });
+
+  it('연 원금 합 = 대출 원금, 마지막 누적 이자 = 총 이자 (차트 데이터와 정합)', () => {
+    const r = rows(1200, labels, remaining, cum);
+    assert.equal(r.reduce((s, x) => s + x.principal, 0), 1200);
+    assert.equal(r[r.length - 1].cumInterest, cum[cum.length - 1]);
+  });
+
+  it('빈 배열·라벨 형식 불일치 → 빈 행 (섹션 생략 경로)', () => {
+    assert.deepEqual(plain(rows(1000, [], [], [])), []);
+    assert.deepEqual(plain(rows(1000, ['1개월', '7개월'], [900, 500], [5, 30])), []);
+  });
+
+  it('30년 대출(361 라벨 중 31개 지점) → 30행', () => {
+    const L = ['1개월'], R = [0], C = [0];
+    for (let y = 1; y <= 30; y++) { L.push((y * 12) + '개월'); R.push(300 - y * 10); C.push(y * 3); }
+    assert.equal(rows(300, L, R, C).length, 30);
+  });
+});
